@@ -1,0 +1,3 @@
+# Minimale Hygiene für Agents
+*.sh text eol=lf
+*.md text eol=lf
