@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pre-push guard: verhindert versehentliches Committen sensibler Dateien.
+
+fail() { printf "BLOCKED: %s\n" "$*" >&2; exit 1; }
+note() { printf "INFO: %s\n" "$*"; }
+
+# 1) Tracked file patterns
+tracked="$(git ls-files)"
+
+bad_patterns=(
+  '\.env$'
+  '\.key$'
+  '\.pem$'
+  'wireguard'
+  'wg0\.conf$'
+  'rules\.v4$'
+  'rules\.v6$'
+  'audit-snapshots'
+  'server-facts'
+)
+
+for pat in "${bad_patterns[@]}"; do
+  if echo "$tracked" | grep -E "$pat" >/dev/null 2>&1; then
+    fail "Tracked file matches forbidden pattern: $pat"
+  fi
+done
+
+# 2) Content scan: conservative, scans tracked files (text-like) for key markers.
+for f in $tracked; do
+  if [ -f "$f" ]; then
+    if file -b --mime-type "$f" | grep -qE '^text/'; then
+      if grep -nE '^\s*PrivateKey\s*=' "$f" >/dev/null 2>&1; then
+        fail "WireGuard PrivateKey detected in tracked file: $f"
+      fi
+      if grep -nE '-----BEGIN .*PRIVATE KEY-----' "$f" >/dev/null 2>&1; then
+        fail "Private key block detected in tracked file: $f"
+      fi
+    fi
+  fi
+done
+
+note "pre-push checks passed."

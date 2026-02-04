@@ -1,0 +1,16 @@
+# Template: wg0.conf (keine Secrets)
+# Render-Ziel typischerweise: /etc/wireguard/wg0.conf
+
+[Interface]
+Address = 10.7.0.1/24
+ListenPort = 51820
+# PrivateKey = (aus /etc/heimserver/secrets/wireguard/wg0.key)
+
+# Optional:
+# PostUp / PostDown gehören hierhin, wenn du NAT/Forwarding steuern willst.
+
+# Peer: iPad (PublicKey only)
+[Peer]
+# PublicKey = <ipad-public-key>
+AllowedIPs = 10.7.0.2/32
+PersistentKeepalive = 25

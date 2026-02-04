@@ -1,0 +1,23 @@
+# Template: Caddyfile (keine Secrets)
+# Produktives Caddyfile liegt lokal/auf dem Server (nicht zwingend im Repo).
+
+{
+  # Admin darf nicht nach außen
+  # admin off
+}
+
+leitstand.lan {
+  encode zstd gzip
+
+  reverse_proxy leitstand:3000
+
+  handle_path /acs/* {
+    reverse_proxy acs:8099
+  }
+
+  handle /health {
+    respond 200
+  }
+
+  tls internal
+}
