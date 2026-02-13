@@ -4,7 +4,8 @@ Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agen
 
 ## Kanon (was ist „wahr“?)
 
-- **Kanonischer Kontext:** `heimserver.context.md`
+- **Kanonische Runtime (IST-Zustand):** `heimserver.runtime.md`
+- **Kanonischer Kontext (Architektur):** `heimserver.context.md`
 - **Operative Checks (Wahrheitsquelle):** `ops/checks/preflight.sh`
 - **Runbooks (Handlungsabläufe):** `runbooks/`
 - **Templates (keine Secrets):** `security/templates/`
@@ -34,12 +35,12 @@ Repo enthält nur:
    - `bash ops/checks/preflight.sh`
 
 2) **Drift prüfen**
-   - Ports: 80/443 nur loopback-published
+   - Vergleiche Output mit `heimserver.runtime.md`
    - Caddy Admin 2019 darf nicht lauschen
    - DOCKER-USER: allow LAN/WG, drop rest für 80/443
 
 3) **Wenn Änderungen nötig**
-   - Dokument: `heimserver.context.md` aktualisieren
+   - Dokument: `heimserver.runtime.md` (bei Drift) oder `heimserver.context.md` (bei Architektur) aktualisieren
    - Runbook referenzieren (oder anlegen)
 
 ## Hard Rules

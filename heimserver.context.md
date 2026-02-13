@@ -6,11 +6,13 @@ Kanonischer operativer System-, Netzwerk- und Architekturkontext
   - Repo privat halten
   - keine Logs, Snapshots, Schlüssel oder Exporte committen
 
-Stand: 2026-02-12
+Stand: 2026-02-13
 Host: heimserver
 Modus: produktiv, Clean-Reset validiert
 Primärer Nutzer: alex
-Dokumentklasse: OPERATIV · KANONISCH
+Dokumentklasse: ARCHITEKTUR · KONTEXT
+
+Hinweis: Der aktuelle Laufzeit-Status, Ports und Netzwerke werden in `heimserver.runtime.md` gepflegt.
 
 ────────────────────────────────────────────────────────────
 
@@ -54,32 +56,7 @@ DNS-Hoheit (Host):
 
 ⸻
 
-3. Netzwerk – auditierter Ist-Zustand
-
-Interfaces
-
-Loopback
-	•	127.0.0.1/8
-	•	::1/128
-
-LAN
-	•	eno2: 192.168.178.46/24
-
-WireGuard
-	•	wg0: 10.7.0.1/24
-
-IPv6
-	•	Nur link-local (fe80::)
-	•	Keine globale IPv6-Exposition
-
-Docker-Netze (nicht vertrauenswürdig)
-	•	docker0: 172.17.0.0/16 (derzeit DOWN)
-	•	br-*: 172.18.0.0/16 (aktiv)
-	•	veth*: Container-Links (link-local)
-
-⸻
-
-4. Vertrauenszonen (KANONISCH)
+3. Vertrauenszonen (KANONISCH)
 
 Vertrauenswürdig
 	•	Loopback: 127.0.0.1/8
@@ -95,32 +72,7 @@ Docker gilt explizit nicht als Vertrauenszone.
 
 ⸻
 
-5. WireGuard – Transport-Layer
-
-Server (heimserver)
-
-Interface: wg0
-Address: 10.7.0.1/24
-ListenPort: 51820/udp
-PrivateKey: nur lokal gespeichert
-
-Peers
-
-iPad
-	•	Address: 10.7.0.2/32
-	•	AllowedIPs:
-	•	10.7.0.0/24
-	•	192.168.178.0/24
-	•	PersistentKeepalive: 25
-
-Status:
-	•	Handshake aktiv
-	•	RX/TX vorhanden
-	•	Latenz unauffällig
-
-⸻
-
-6. Architekturgrundsatz (KANONISCH)
+4. Architekturgrundsatz (KANONISCH)
 
 Leitprinzipien
 	•	Dienste bleiben lokal
@@ -150,147 +102,7 @@ ohne die Angriffsfläche real zu vergrößern.
 
 ⸻
 
-7. Firewall – KANONISCHER IST-ZUSTAND
-
-Firewall-Stack
-	•	iptables-nft (KANONISCH)
-	•	netfilter-persistent (Persistenz)
-	•	Backend: nftables
-
-Policy:
-	•	filter: ACCEPT (Default)
-	•	Explizite Regeln für Inbound Traffic
-
-Explizite Regeln (Auszug):
-	•	iifname "eno2" tcp/udp dport 53 accept
-	•	iifname "wg0" tcp/udp dport 53 accept
-	•	SSH (22): via Policy ACCEPT (LAN/WG Zugang)
-
-NAT:
-	•	Masquerade: 10.7.0.0/24 → eno2
-	•	Docker-managed chains aktiv
-
-IPv6 Filter:
-	•	Policy ACCEPT (Kein restriktives IPv6-Regime)
-
-Persistenzstatus (belegt)
-	•	netfilter-persistent aktiv
-	•	iptables Regeln persistent gespeichert
-	•	nft Ruleset via iptables-nft verwaltet
-
-⸻
-
-8. Routing / Forwarding (WireGuard → LAN)
-
-Status:
-	•	IP-Forwarding aktiv (net.ipv4.ip_forward = 1)
-	•	Aktuell keine expliziten FORWARD-Regeln notwendig
-
-Hinweis (Kernel-Filter/Asymmetrie)
-	•	rp_filter ist auf 2 (loose) gesetzt (all/default)
-
-⸻
-
-9. Docker & Firewall-Käfig (KANONISCH)
-
-Docker ist aktiv, aber nicht vertrauenswürdig.
-
-Regeln:
-	•	keine Container-Ports nach WAN
-	•	Reverse Proxy ist einziger Eintrittspunkt
-	•	zusätzliche Absicherung über DOCKER-USER Chain
-
-⸻
-
-10. DOCKER-USER Chain – Umsetzung & Persistenz
-
-Status:
-	•	aktiv
-	•	persistent (netfilter-persistent)
-	•	auditfest
-
-Regeln (KANONISCH):
-	•	ACCEPT TCP 80/443 aus:
-	•	192.168.178.0/24
-	•	10.7.0.0/24
-	•	DROP sonst für 80/443
-	•	RETURN für nicht relevante Pakete
-
-⸻
-
-11. Reverse Proxy (Caddy)
-
-Implementierung: Caddy (Docker)
-Rolle: Entry-Gateway
-
-Status:
-	•	Docker-Caddy ist kanonisch
-	•	Host-Caddy (systemd) ist verboten
-
-Caddy-Admin:
-	•	kein Publish
-	•	keine Host-Exposition
-
-TLS:
-	•	internal CA
-
-Sichtbarkeit:
-	•	ausschließlich LAN + WireGuard
-
-Explizite Verbote (Caddy)
-	•	Caddy-Admin-Port (2019/tcp) darf niemals aus LAN,
-		WireGuard oder WAN erreichbar sein
-	•	HTTP/3 / QUIC (443/udp) ist nur erlaubt, wenn bewusst
-		benötigt und explizit dokumentiert
-	•	Default-Bind an 0.0.0.0 ist verboten
-
-⸻
-
-12. Docker-Caddy: Publish-Matrix (IST)
-
-IST-Snapshot:
-	•	80/tcp  → 127.0.0.1
-	•	443/tcp → 127.0.0.1
-	•	kein 443/udp
-	•	kein 2019/tcp
-
-Status:
-loopback-gekäfigt, kein Admin-Port, kein QUIC
-
-⸻
-
-13. Aktive Listener (Host-Sicht)
-
-Port	Service	Scope
-22	sshd	0.0.0.0 + ::
-53	pihole-FTL	0.0.0.0 + ::
-5335	docker-proxy (unbound)	127.0.0.1
-80	docker-proxy	127.0.0.1
-443	docker-proxy	127.0.0.1
-
-Eigentümer Port 53:
-→ ausschließlich pihole-FTL
-
-⸻
-
-14. Audit-Pflichtprüfungen (KANONISCH)
-
-Bei jeder Änderung an Docker, Compose, Firewall, Ports
-oder Reverse Proxy müssen folgende Checks ausgeführt werden:
-	•	docker ps --format 'table {{.Names}}\t{{.Ports}}' | grep caddy
-	•	ss -lntup | egrep '(:80|:443|:2019)\b'
-	•	iptables -S DOCKER-USER
-	•	sysctl net.ipv4.ip_forward
-	•	wg show
-
-Abweichungen vom dokumentierten IST gelten als Drift.
-
-Belegpfad (außerhalb des Repos):
-	•	/home/alex/server-facts/audit-snapshots/<timestamp>/
-
-⸻
-
-15. Weltgewebe-Caddy (bestehende Site)
+5. Weltgewebe-Caddy (bestehende Site)
 
 Aktive Routen:
 	•	/api/*        → api:8080
@@ -302,7 +114,7 @@ Diese Site bleibt unverändert.
 
 ⸻
 
-16. Leitstand – Zielintegration
+6. Leitstand – Zielintegration
 
 Rolle:
 	•	permanenter Beobachtungsraum
@@ -317,7 +129,7 @@ Status:
 
 ⸻
 
-17. ACS – Zielintegration
+7. ACS – Zielintegration
 
 Rolle:
 	•	Operations-Interface
@@ -330,7 +142,7 @@ Status:
 
 ⸻
 
-18. Leitstand – Zugriffs- und Aktionspolicy
+8. Leitstand – Zugriffs- und Aktionspolicy
 
 Standardmodus:
 	•	READ-ONLY
@@ -342,7 +154,7 @@ Aktionen:
 
 ⸻
 
-19. code-server (VS Code Web)
+9. code-server (VS Code Web)
 
 Bindung:
 	•	127.0.0.1:8080
@@ -357,7 +169,7 @@ code-server bleibt Host-Service und wird nicht in Compose integriert.
 
 ⸻
 
-20. Jules
+10. Jules
 
 Jules ist CLI/TUI-only.
 	•	kein Webserver
@@ -371,7 +183,7 @@ Typischer Workflow:
 
 ⸻
 
-21. Docker DNS-Stack (Unbound + Pi-hole)
+11. Docker DNS-Stack (Unbound + Pi-hole)
 
 Pfad: /opt/heimgewebe/dns/docker-compose.yml
 
@@ -394,7 +206,7 @@ DNS-Policy + Forwarder + Filter.
 
 ⸻
 
-22. Interne Namensauflösung (KANONISCH)
+12. Interne Namensauflösung (KANONISCH)
 
 Quelle:
 	•	Pi-hole (192.168.178.46)
@@ -414,7 +226,7 @@ Drift-Verbot:
 
 ⸻
 
-23. Firewall-Strategie – Entscheidung
+13. Firewall-Strategie – Entscheidung
 
 Entscheidung:
 iptables bleibt kanonisch (via nft backend).
@@ -427,7 +239,7 @@ Begründung:
 
 ⸻
 
-24. Service-Orchestrierung – Kanonische Regel
+14. Service-Orchestrierung – Kanonische Regel
 
 systemd:
 	•	Transport
@@ -445,7 +257,7 @@ Mischformen:
 
 ⸻
 
-25. Kritische Persistenz (Hinweis)
+15. Kritische Persistenz (Hinweis)
 
 Kritisch:
 	•	WireGuard-Schlüssel
@@ -460,32 +272,7 @@ Nicht kritisch:
 
 ⸻
 
-26. Drift-Regel (bindend)
-
-Jede Änderung an:
-	•	Firewall
-	•	Routing
-	•	Ports
-	•	Proxies
-	•	Services
-
-→ Pflicht zur Aktualisierung dieser Datei.
-
-Drift-Trigger (bindend)
-Eine Neubewertung dieses Dokuments ist zwingend, wenn:
-	•	Änderung an docker-compose.yml
-	•	Hinzufügen oder Entfernen eines published Ports
-	•	Änderung an iptables / netfilter-persistent
-	•	Wechsel des Docker-Backends
-	•	Aktivierung von HTTP/3 oder TLS-Optionen in Caddy
-	•	Änderung der DNS-Quelle
-
-Versionshoheit
-Dieses Dokument ersetzt alle früheren Versionen.
-
-⸻
-
-27. Verdichtete Essenz
+16. Verdichtete Essenz
 
 Der Dienst bleibt lokal.
 Der Zugriff reist.
@@ -496,24 +283,3 @@ Entscheidende Lehre (2026-02-12):
 Firewall-Härtung ohne Baseline-Definition erzeugt Self-Lockout-Risiko.
 Service → Netzwerk → Security → Persistenz.
 Nicht umgekehrt.
-
-⸻
-
-28. Ungewissheitsursachenanalyse
-
-Unsicherheitsgrad: 0.16
-Ursache:
-	•	Router-Konfiguration nicht einsehbar
-	•	Kein vollständiger Persistenz-Dump
-
-Interpolationsgrad: 0.11
-Annahme:
-	•	Keine WAN-Portfreigaben aktiv
-	•	Fritzbox verteilt 192.168.178.46 als DNS
-
-Gesamtrisiko:
-mittel-niedrig (kein WAN-Portforwarding angenommen)
-
-────────────────────────────────────────────────────────────
-ENDE DER KANONISCHEN DATEI
-────────────────────────────────────────────────────────────

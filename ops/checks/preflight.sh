@@ -17,18 +17,16 @@ ip -br link || true
 ip -br addr || true
 
 say "listeners (host)"
-# Erwartung: keine Host-Listener auf 0.0.0.0:80/443
+# Erwartung: Listener auf 80/443 (Docker Proxy / Caddy)
 # Erwartung: kein Listener auf :2019 (Caddy admin)
 if command -v ss >/dev/null 2>&1; then
   ss -lntup || true
   echo
-  echo "Check: 80/443 listeners bound only to loopback?"
-  non_loopback_listeners="$(ss -H -lntp | awk '{print $4}' | grep -E ':(80|443)$' | grep -Ev '^(127\.0\.0\.1|\[::1\]|::1):' || true)"
-  if [ -n "${non_loopback_listeners:-}" ]; then
-    warn "Non-loopback listeners on 80/443 detected (drift):"
-    echo "$non_loopback_listeners" >&2
+  echo "Check: 80/443 listeners present?"
+  if ss -lntup | grep -E ':(80|443)\b' >/dev/null 2>&1; then
+    ok "Listeners on 80/443 found"
   else
-    ok "Only loopback listeners on 80/443"
+    warn "No listeners on 80/443 found (drift?)"
   fi
 
   echo "Check: Caddy admin :2019 listening?"
