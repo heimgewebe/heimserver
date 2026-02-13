@@ -1,4 +1,3 @@
-!ops/audit/snapshots/README.md
 !security/templates/wireguard/
 !security/templates/wireguard/**
 # niemals ins Repo
@@ -21,3 +20,4 @@ rules.v4
 rules.v6
 server-facts/
 wireguard/
+!ops/audit/snapshots/README.md

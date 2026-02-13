@@ -116,11 +116,17 @@ if command -v iptables >/dev/null 2>&1; then
               fi
           fi
 
-          # Drop Rest Logic
-          if echo "$docker_user_rules" | grep -E -q -- "-j (DROP|RETURN|REJECT)"; then
-              ok "Drop/Return/Reject policy found (heuristic)"
+          # Drop Rest Logic: specific drops for 80/443 OR generic drop/return at end
+          # We look for a rule that drops/rejects traffic to 80/443 (without specific source allow)
+          # OR a generic policy at the end.
+
+          if echo "$docker_user_rules" | grep -E -- "(--dport 80|--dport 443|multiport.*80|multiport.*443)" | grep -E -q -- "-j (DROP|REJECT)"; then
+              ok "Explicit Drop/Reject rule for 80/443 found"
+          elif echo "$docker_user_rules" | grep -E -q -- "-j (DROP|RETURN|REJECT)$"; then
+               # Matches rules ending in -j DROP/RETURN/REJECT (generic catch-all)
+              ok "Generic Drop/Return/Reject policy found (heuristic)"
           else
-              warn "No explicit Drop/Return policy found (verify manually: sudo iptables -S DOCKER-USER)"
+              warn "No explicit Drop/Return policy found for 80/443 (verify manually: sudo iptables -S DOCKER-USER)"
           fi
       fi
   fi
