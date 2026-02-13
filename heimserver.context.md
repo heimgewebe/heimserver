@@ -1,270 +1,89 @@
 heimserver.context.md
 
-Version 3.0 · konsolidiert · kanonisch
+Version 4.0 · Konsolidierte Verfassung
 Stand: 2026-02-13
+Host: heimserver
+Dokumentklasse: ARCHITEKTUR · KANONISCH
 
 ⸻
 
-0. Identität
+0. Identität & Zweck
 
-Heimserver ist:
-	•	physischer Host im LAN
-	•	DNS-Autorität für *.home.arpa
-	•	Reverse-Proxy-Gateway
-	•	WireGuard-Ingress
-	•	Heimgewebe-Runtime-Träger
+Der Heimserver ist der Trust-Pivot des Heimgewebes.
+Er ist kein öffentlicher Server, sondern ein kontrollierter Binnenraum.
+Er vereint Identität, Routing und Namensauflösung in einer kohärenten Runtime.
 
-Er ist kein Public-Server.
-Er ist ein kontrollierter Binnenraum.
+Scope:
+Dieses Dokument definiert die unverhandelbaren Grundsätze (Verfassung).
+Details befinden sich in den spezifischen Kanon-Dokumenten.
 
 ⸻
 
-1. Systemkern
+1. Kanon-Struktur (Zuständigkeit)
 
-Host
-	•	IP: 192.168.178.46
-	•	Interface LAN: eno2
-	•	Interface VPN: wg0
-	•	OS: Ubuntu
-	•	Docker Runtime aktiv
+Die Wahrheit ist föderal organisiert:
 
-⸻
-
-Docker-Netze
-	•	heimnet (interne Servicekommunikation)
-	•	edge (Caddy Gateway)
-	•	weitere isolierte Bridge-Netze
+Dokument	Zuständigkeit	Inhalt
+heimserver.context.md (dieses)	Verfassung	Zweck, Verbote, Drift-Trigger
+heimserver.runtime.md	Realität	Aktuelle Ports, IPs, Container
+heimserver.network.md	Transport	Routing, NAT, WireGuard, Firewall
+heimserver.naming.md	Semantik	DNS-Zonen, TLS, Hostnames
+heimserver.operations.md	Handeln	Checks, Wiederherstellung, Backups
 
 ⸻
 
-2. DNS-Architektur
+2. Hard Rules (Unverhandelbare Verbote)
 
-Autorität
+1. Kein Public Exposing
+   Dienste dürfen niemals direkt ins Internet exponiert werden (kein Port-Forwarding im Router).
+   Einziger Ingress ist WireGuard oder der Reverse Proxy (intern).
 
-Pi-hole (FTL) läuft im Host-Netz (network_mode: host).
+2. Kein Host-Caddy
+   Caddy läuft ausschließlich als Docker-Container. Systemd-Caddy ist verboten.
 
-Wichtig:
+3. Kein Caddy Admin Exposing
+   Der Admin-Port (2019) darf niemals lauschen (außer localhost innerhalb des Containers).
 
-etc_dnsmasq_d = true
+4. DNS-Souveränität
+   Die Zone `home.arpa` wird niemals an externe Resolver (8.8.8.8 etc.) weitergeleitet.
+   Pi-hole ist die einzige Quelle der Wahrheit für interne Namen.
 
-DNS-Records liegen in:
-
-/opt/heimgewebe/dns/pihole/etc-dnsmasq.d/
-
-Canonical Records:
-
-leitstand.heimgewebe.home.arpa → 192.168.178.46
-api.heimgewebe.home.arpa       → 192.168.178.46
-heimgewebe.home.arpa           → 192.168.178.46
-
-
-⸻
-
-DNS-Philosophie
-
-These: Client-DNS individuell konfigurieren.
-Antithese: Router-DNS global erzwingen.
-Synthese: Router verweist auf Pi-hole → Clients automatisch.
-
-Empfehlung:
-Fritzbox DNS → 192.168.178.46
-Clients → „Automatisch“
+5. Kein Splitbrain
+   Ein Hostname hat im gesamten Heimgewebe (LAN + WireGuard) genau eine IP.
+   Split-Horizon-DNS ist zu vermeiden.
 
 ⸻
 
-3. Reverse Proxy
+3. Drift-Trigger (Wann muss dokumentiert werden?)
 
-Caddy
+Jede Änderung an folgenden Komponenten erfordert eine Aktualisierung der Kanon-Dokumente:
 
-Bind-Mount:
+Komponente	Dokument
+Docker Container / Compose	runtime.md
+Firewall / iptables / NAT	network.md
+WireGuard Peers / Routes	network.md
+DNS Zonen / TLS Zertifikate	naming.md
+Backup-Strategie / Notfall	operations.md
 
-/opt/heimgewebe/edge/Caddyfile → /etc/caddy/Caddyfile
-
-Canonical Host:
-
-leitstand.heimgewebe.home.arpa
-
-HTTP → 308 Redirect
-HTTPS → reverse_proxy → deploy-leitstand-1:3000
-TLS → internal CA
+Pflege-Regel:
+Erst die Architektur klären (context/network/naming), dann die Runtime ändern (runtime), dann die Realität prüfen (operations).
 
 ⸻
 
-TLS
+4. Sicherheits-Invarianten (Guard)
 
-Root-CA:
+Diese Invarianten werden durch `ops/checks/preflight.sh` überwacht:
 
-/opt/heimgewebe/edge/certs/caddy-local-root.crt
-
-Muss auf Clients vertraut werden.
-
-⸻
-
-4. WireGuard
-
-Interface
-
-10.7.0.1/24
-
-Peer (iPad):
-
-10.7.0.2/32
-
-Server wg0.conf:
-
-AllowedIPs = 10.7.0.2/32
-
-Client AllowedIPs:
-
-192.168.178.0/24, 10.7.0.0/24
-
-DNS im WG-Profil:
-
-192.168.178.46
-
+1.	Port 80/443 sind vorhanden (Dienst läuft).
+2.	Port 2019 ist tot (Sicherheit).
+3.	Firewall (DOCKER-USER) erlaubt nur LAN (192.168.178.0/24) und WireGuard (10.7.0.0/24). Alles andere wird verworfen.
 
 ⸻
 
-NAT
+5. Essenz
 
-iptables -t nat -A POSTROUTING -s 10.7.0.0/24 -o eno2 -j MASQUERADE
+Architektur ist das, was stabil bleibt, wenn man den Stecker zieht.
+Runtime ist das, was passiert, wenn man ihn wieder einsteckt.
+Drift ist der Unterschied zwischen beiden.
 
-IP-Forward:
-
-net.ipv4.ip_forward = 1
-
-
-⸻
-
-5. Service-Layer
-
-Leitstand
-
-Container: deploy-leitstand-1
-Port intern: 3000
-
-Nur via Caddy erreichbar.
-
-⸻
-
-Weltgewebe API
-
-Container: weltgewebe-api
-Port intern: 8080
-
-Exposed via Caddy.
-
-⸻
-
-6. Zugriffsmatrix
-
-Herkunft	DNS	Routing	TLS	Ergebnis
-LAN	Pi-hole	direkt	trusted CA	OK
-WireGuard	Pi-hole	NAT → LAN	trusted CA	OK
-Internet	—	nicht geroutet	—	blockiert
-
-
-⸻
-
-7. Drift-Gefahren
-	•	Router-DNS ≠ Pi-hole
-	•	WG-Client-DNS falsch
-	•	Falsche AllowedIPs
-	•	Caddyfile nicht neu geladen
-	•	etc_dnsmasq_d deaktiviert
-
-⸻
-
-8. Systemessenz
-
-Heimserver ist kohärent, wenn:
-	•	DNS autoritativ ist
-	•	Caddy Host-Match korrekt ist
-	•	WG Routing deterministisch ist
-	•	Kein Split-Brain existiert
-
-⸻
-
-Unsicherheitsgrad
-
-0.08
-
-Ursachen:
-	•	IPv6 nur teilvalidiert
-	•	Router-Konfig nicht versioniert
-	•	Kein zentrales Health-Monitoring
-
-Interpolationsgrad:
-
-0.05
-
-Annahmen:
-	•	Fritzbox DNS stabil
-	•	Kein zweiter Resolver aktiv
-	•	Keine parallele VLAN-Topologie
-
-⸻
-
-Verdichtete Essenz
-
-Heimserver = DNS + Routing + Proxy + Tunnel.
-
-Fällt einer dieser vier Pfeiler,
-zerfällt der Zugriff.
-
-⸻
-
-⸻
-
-Architektur-Topologie (ASCII)
-
-                     INTERNET
-                         │
-                         │ (UDP 51820)
-                         ▼
-                    [ Fritzbox ]
-                         │
-                         │
-        ┌────────────────┴────────────────┐
-        │                                   │
-        ▼                                   ▼
-   LAN 192.168.178.0/24              WireGuard 10.7.0.0/24
-        │                                   │
-        │                                   │
-        ▼                                   ▼
-               ┌─────────────────────────┐
-               │      Heimserver         │
-               │ 192.168.178.46          │
-               │                         │
-               │  ┌───────────────────┐  │
-               │  │ Pi-hole (DNS)     │  │
-               │  │ Port 53           │  │
-               │  └───────────────────┘  │
-               │                         │
-               │  ┌───────────────────┐  │
-               │  │ Caddy             │  │
-               │  │ :80 / :443        │  │
-               │  └───────────────────┘  │
-               │            │            │
-               │            ▼            │
-               │     deploy-leitstand    │
-               │          :3000          │
-               │                         │
-               └─────────────────────────┘
-
-
-⸻
-
-Betriebszustand (grün)
-	•	dig → 192.168.178.46
-	•	curl HTTP → 308
-	•	curl HTTPS → 200
-	•	wg show → handshake aktiv
-	•	iPad WireGuard aktiv → Seite lädt
-
-⸻
-
-Trockene Wahrheit:
-
-Netzwerke sterben nie durch Gewalt.
-Sie sterben durch Nebenannahmen.
+Dieses Repository minimiert Drift.

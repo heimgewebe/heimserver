@@ -49,14 +49,33 @@ fi
 say "iptables (DOCKER-USER / policy)"
 if command -v iptables >/dev/null 2>&1; then
   # DOCKER-USER chain rules
-  sudo iptables -S DOCKER-USER || warn "Could not read DOCKER-USER (need sudo?)"
+  sudo iptables -S DOCKER-USER >/dev/null 2>&1 || warn "Could not read DOCKER-USER (need sudo?)"
   echo
-  echo "Check: DOCKER-USER contains allow LAN/WG + drop rest for 80/443?"
-  # This is heuristic: looks for explicit allow rules to 80/443 for RFC1918 + WG and a drop for 80/443
-  if sudo iptables -S DOCKER-USER 2>/dev/null | grep -E -- '--dport (80|443)' >/dev/null 2>&1; then
-    ok "Found DOCKER-USER rules mentioning 80/443"
+  echo "Check: DOCKER-USER rules for 80/443 (Security Guard)?"
+
+  if sudo iptables -S DOCKER-USER 2>/dev/null | grep -q '^-A DOCKER-USER'; then
+      # LAN Access
+      if sudo iptables -S DOCKER-USER | grep -q -- "-s 192.168.178.0/24 .* --dport 80"; then
+          ok "LAN Access (192.168.178.0/24) allowed"
+      else
+          warn "LAN Access rule missing/unverified"
+      fi
+
+      # WireGuard Access
+      if sudo iptables -S DOCKER-USER | grep -q -- "-s 10.7.0.0/24 .* --dport 80"; then
+          ok "WireGuard Access (10.7.0.0/24) allowed"
+      else
+          warn "WireGuard Access rule missing/unverified"
+      fi
+
+      # Drop Rest (Heuristic: Look for a DROP or RETURN at the end or specific drop rules)
+      if sudo iptables -S DOCKER-USER | grep -E -q -- "-j (DROP|RETURN|REJECT)"; then
+           ok "Drop/Return policy found (heuristic)"
+      else
+           warn "No Drop/Return policy found in DOCKER-USER"
+      fi
   else
-    warn "No DOCKER-USER rules mentioning 80/443 found (verify manually)."
+      warn "iptables DOCKER-USER chain not found or empty (verify manually)."
   fi
 else
   warn "iptables not available"
