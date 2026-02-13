@@ -10,6 +10,7 @@ set -euo pipefail
 
 LAN_SUBNET="${LAN_SUBNET:-192.168.178.0/24}"
 WG_SUBNET="${WG_SUBNET:-10.7.0.0/24}"
+ALLOW_QUIC="${ALLOW_QUIC:-0}"
 
 say() { printf "\n== %s ==\n" "$*"; }
 ok()  { printf "OK: %s\n" "$*"; }
@@ -38,16 +39,20 @@ if command -v ss >/dev/null 2>&1; then
 
   # Check UDP 443 (QUIC)
   if ss -lunp | grep -E ':443\b' >/dev/null 2>&1; then
-      ok "UDP Listener on 443 found (QUIC active)"
+      if [ "${ALLOW_QUIC}" = "1" ]; then
+          ok "UDP 443 listener present (QUIC allowed)"
+      else
+          warn "UDP 443 listener present (QUIC/HTTP3 active). Set ALLOW_QUIC=1 if intentional."
+      fi
   else
-      warn "No UDP listener on 443 found (QUIC disabled or failed?)"
+      ok "No UDP 443 listener (QUIC disabled)"
   fi
 
-  echo "Check: Caddy admin :2019 listening?"
+  echo "Check: Caddy admin :2019 host-exposed?"
   if ss -lntup | grep -E ':(2019)\b' >/dev/null 2>&1; then
-    warn "Listener on :2019 detected (drift)."
+    warn "Host listener on :2019 detected (drift). Admin port exposed?"
   else
-    ok "No listener on :2019"
+    ok "No host listener on :2019"
   fi
 else
   warn "ss not available"
@@ -75,42 +80,40 @@ if command -v iptables >/dev/null 2>&1; then
       if [ -z "$docker_user_rules" ]; then
           warn "DOCKER-USER chain empty or not found."
       else
-          # LAN -> TCP 80 & 443
-          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -F -- "--dport 80" | grep -q -- "-j ACCEPT"; then
-              ok "LAN ($LAN_SUBNET) -> TCP 80 allowed"
+          # Heuristic: Scan for ACCEPT rules covering subnets + ports (tolerant match)
+          # We grep for subnet AND port AND ACCEPT in the same line.
+
+          # LAN (TCP)
+          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -E -- "(--dport 80|multiport.*80)" | grep -q -- "-j ACCEPT"; then
+              ok "LAN ($LAN_SUBNET) -> TCP 80 allowed (heuristic)"
           else
-              warn "LAN ($LAN_SUBNET) -> TCP 80 allow rule missing"
+              warn "LAN ($LAN_SUBNET) -> TCP 80 allow rule not confident. MANUAL REVIEW REQUIRED."
           fi
-          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -F -- "--dport 443" | grep -q -- "-j ACCEPT"; then
-              ok "LAN ($LAN_SUBNET) -> TCP 443 allowed"
+          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -E -- "(--dport 443|multiport.*443)" | grep -q -- "-j ACCEPT"; then
+              ok "LAN ($LAN_SUBNET) -> TCP 443 allowed (heuristic)"
           else
-              warn "LAN ($LAN_SUBNET) -> TCP 443 allow rule missing"
+              warn "LAN ($LAN_SUBNET) -> TCP 443 allow rule not confident. MANUAL REVIEW REQUIRED."
           fi
 
-          # LAN -> UDP 443 (QUIC) - Optional but recommended if QUIC is active
-          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -F -- "--dport 443" | grep -i "udp" | grep -q -- "-j ACCEPT"; then
-              ok "LAN ($LAN_SUBNET) -> UDP 443 (QUIC) allowed"
+          # WireGuard (TCP)
+          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -E -- "(--dport 80|multiport.*80)" | grep -q -- "-j ACCEPT"; then
+              ok "WG ($WG_SUBNET) -> TCP 80 allowed (heuristic)"
           else
-              warn "LAN ($LAN_SUBNET) -> UDP 443 (QUIC) allow rule missing (Check DOCKER-USER)"
+              warn "WG ($WG_SUBNET) -> TCP 80 allow rule not confident. MANUAL REVIEW REQUIRED."
+          fi
+          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -E -- "(--dport 443|multiport.*443)" | grep -q -- "-j ACCEPT"; then
+              ok "WG ($WG_SUBNET) -> TCP 443 allowed (heuristic)"
+          else
+              warn "WG ($WG_SUBNET) -> TCP 443 allow rule not confident. MANUAL REVIEW REQUIRED."
           fi
 
-          # WireGuard -> TCP 80 & 443
-          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -F -- "--dport 80" | grep -q -- "-j ACCEPT"; then
-              ok "WG ($WG_SUBNET) -> TCP 80 allowed"
-          else
-              warn "WG ($WG_SUBNET) -> TCP 80 allow rule missing"
-          fi
-          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -F -- "--dport 443" | grep -q -- "-j ACCEPT"; then
-              ok "WG ($WG_SUBNET) -> TCP 443 allowed"
-          else
-              warn "WG ($WG_SUBNET) -> TCP 443 allow rule missing"
-          fi
-
-          # WireGuard -> UDP 443 (QUIC)
-          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -F -- "--dport 443" | grep -i "udp" | grep -q -- "-j ACCEPT"; then
-              ok "WG ($WG_SUBNET) -> UDP 443 (QUIC) allowed"
-          else
-              warn "WG ($WG_SUBNET) -> UDP 443 (QUIC) allow rule missing"
+          # UDP 443 (QUIC) checks if enabled
+          if [ "${ALLOW_QUIC}" = "1" ]; then
+              if echo "$docker_user_rules" | grep -i "udp" | grep -E -- "(--dport 443|multiport.*443)" | grep -q -- "-j ACCEPT"; then
+                   ok "UDP 443 allow rule found (heuristic)"
+              else
+                   warn "UDP 443 allow rule missing/unverified (Check DOCKER-USER)"
+              fi
           fi
 
           # Drop Rest Logic
