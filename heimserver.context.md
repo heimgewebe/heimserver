@@ -1,285 +1,270 @@
-Kanonischer operativer System-, Netzwerk- und Architekturkontext
+heimserver.context.md
 
-⛔️ ENTHÄLT SICHERHEITSRELEVANTEN KONTEXT
-⛔️ NICHT VERÖFFENTLICHEN
-⛔️ Repo-Policy:
-  - Repo privat halten
-  - keine Logs, Snapshots, Schlüssel oder Exporte committen
-
+Version 3.0 · konsolidiert · kanonisch
 Stand: 2026-02-13
-Host: heimserver
-Modus: produktiv, Clean-Reset validiert
-Primärer Nutzer: alex
-Dokumentklasse: ARCHITEKTUR · KONTEXT
-
-Hinweis: Der aktuelle Laufzeit-Status, Ports und Netzwerke werden in `heimserver.runtime.md` gepflegt.
-
-────────────────────────────────────────────────────────────
-
-1. Systemidentität
-
-Hostname: heimserver
-Hardware: Lenovo ThinkCentre M70q Gen 4
-CPU: Intel i7-13700T (16C / 24T)
-RAM: 16 GiB
-Swap: 4 GiB
-Storage: NVMe ~476 GB
-Firmware/BIOS: M4VKT2AA
-
-Rolle
-	•	permanenter Heimserver
-	•	Entwicklungs- und Orchestrierungsserver
-	•	Träger des Heimgewebe-Organismus
 
 ⸻
 
-2. Betriebssystem & Basissystem
+0. Identität
 
-OS: Ubuntu 24.04 LTS (nftables via iptables-nft Backend)
-Kernel: 6.8.x (generic)
-Init-System: systemd
+Heimserver ist:
+	•	physischer Host im LAN
+	•	DNS-Autorität für *.home.arpa
+	•	Reverse-Proxy-Gateway
+	•	WireGuard-Ingress
+	•	Heimgewebe-Runtime-Träger
 
-Service-Ebenen:
-	•	systemd (system)
-	•	systemd --user (linger aktiv für alex)
-
-Updates:
-	•	unattended-upgrades aktiv
-
-Zeitsynchronisation:
-	•	systemd-timesyncd
-
-DNS-Hoheit (Host):
-	•	systemd-resolved: deaktiviert & gestoppt
-	•	/etc/resolv.conf: nameserver 127.0.0.1
-	•	Ziel: vollständige DNS-Kontrolle über Pi-hole
+Er ist kein Public-Server.
+Er ist ein kontrollierter Binnenraum.
 
 ⸻
 
-3. Vertrauenszonen (KANONISCH)
+1. Systemkern
 
-Vertrauenswürdig
-	•	Loopback: 127.0.0.1/8
-	•	LAN: 192.168.178.0/24
-	•	WireGuard: 10.7.0.0/24
-
-Nicht vertrauenswürdig
-	•	Docker-Netze: 172.16.0.0/12
-	•	WAN / Internet
-
-Grundsatz:
-Docker gilt explizit nicht als Vertrauenszone.
+Host
+	•	IP: 192.168.178.46
+	•	Interface LAN: eno2
+	•	Interface VPN: wg0
+	•	OS: Ubuntu
+	•	Docker Runtime aktiv
 
 ⸻
 
-4. Architekturgrundsatz (KANONISCH)
-
-Leitprinzipien
-	•	Dienste bleiben lokal
-	•	Zugriff reist (LAN + WireGuard)
-	•	Transport vor Dienst
-	•	Komfort folgt Sicherheit
-	•	DNS-Isolation: gut
-
-Zielbild
-
-Heimserver-only mit strikt eingesperrtem Entry-Gateway.
-
-Erlaubt
-	•	Reverse Proxy als internes Gateway
-	•	Erreichbar ausschließlich aus LAN und WireGuard
-	•	Backends strikt lokal oder Compose-intern
-
-Verboten
-	•	öffentliche Webdienste
-	•	Reverse Proxy ohne Firewall-Caging
-	•	Backends auf 0.0.0.0
-	•	temporäre Portöffnungen
-
-Begründung:
-Ein eingesperrter Reverse Proxy erhöht Komfort,
-ohne die Angriffsfläche real zu vergrößern.
+Docker-Netze
+	•	heimnet (interne Servicekommunikation)
+	•	edge (Caddy Gateway)
+	•	weitere isolierte Bridge-Netze
 
 ⸻
 
-5. Weltgewebe-Caddy (bestehende Site)
+2. DNS-Architektur
 
-Aktive Routen:
-	•	/api/*        → api:8080
-	•	/health/*     → api:8080
-	•	/health/proxy → respond 200
-	•	/             → externer Web-Upstream (Cloudflare / Vercel)
+Autorität
 
-Diese Site bleibt unverändert.
+Pi-hole (FTL) läuft im Host-Netz (network_mode: host).
 
-⸻
+Wichtig:
 
-6. Leitstand – Zielintegration
+etc_dnsmasq_d = true
 
-Rolle:
-	•	permanenter Beobachtungsraum
-	•	Viewer first, Actor second
+DNS-Records liegen in:
 
-Ziel-URL:
-https://leitstand.lan
+/opt/heimgewebe/dns/pihole/etc-dnsmasq.d/
 
-Status:
-	•	Compose-Service geplant
-	•	Zugriff ausschließlich über Caddy
+Canonical Records:
+
+leitstand.heimgewebe.home.arpa → 192.168.178.46
+api.heimgewebe.home.arpa       → 192.168.178.46
+heimgewebe.home.arpa           → 192.168.178.46
+
 
 ⸻
 
-7. ACS – Zielintegration
+DNS-Philosophie
 
-Rolle:
-	•	Operations-Interface
-	•	kontrollierter Actor
+These: Client-DNS individuell konfigurieren.
+Antithese: Router-DNS global erzwingen.
+Synthese: Router verweist auf Pi-hole → Clients automatisch.
 
-Status:
-	•	Compose-Service geplant
-	•	Zugriff nur via leitstand.lan/acs/
-	•	kein Direktzugriff
-
-⸻
-
-8. Leitstand – Zugriffs- und Aktionspolicy
-
-Standardmodus:
-	•	READ-ONLY
-
-Aktionen:
-	•	ausschließlich über ACS
-	•	keine impliziten Übergänge
-	•	keine Fallback-Pfade vom Leitstand zu Write-Operationen
+Empfehlung:
+Fritzbox DNS → 192.168.178.46
+Clients → „Automatisch“
 
 ⸻
 
-9. code-server (VS Code Web)
+3. Reverse Proxy
 
-Bindung:
-	•	127.0.0.1:8080
+Caddy
 
-Zugriff:
-	•	ausschließlich via SSH LocalForward
-	•	kein Reverse Proxy
-	•	kein TLS
+Bind-Mount:
 
-Architekturentscheidung:
-code-server bleibt Host-Service und wird nicht in Compose integriert.
+/opt/heimgewebe/edge/Caddyfile → /etc/caddy/Caddyfile
 
-⸻
+Canonical Host:
 
-10. Jules
+leitstand.heimgewebe.home.arpa
 
-Jules ist CLI/TUI-only.
-	•	kein Webserver
-	•	keine Ports
-	•	keine Bindings
-
-Typischer Workflow:
-	•	jules new
-	•	jules remote list --session
-	•	jules remote pull --session --apply
+HTTP → 308 Redirect
+HTTPS → reverse_proxy → deploy-leitstand-1:3000
+TLS → internal CA
 
 ⸻
 
-11. Docker DNS-Stack (Unbound + Pi-hole)
+TLS
 
-Pfad: /opt/heimgewebe/dns/docker-compose.yml
+Root-CA:
 
-Unbound (Rekursiver Resolver)
-	•	Image: mvance/unbound:latest
-	•	Container: dns-unbound
-	•	Binding: 127.0.0.1:5335 (TCP/UDP)
-	•	Rolle: Upstream für Pi-hole
-	•	Isolation: nicht extern erreichbar
+/opt/heimgewebe/edge/certs/caddy-local-root.crt
 
-Pi-hole (Filter & Forwarder)
-	•	Image: pihole/pihole:latest
-	•	Container: dns-pihole
-	•	Network Mode: host
-	•	Listener: 0.0.0.0:53
-	•	Upstream: 127.0.0.1#5335
-
-Rolle:
-DNS-Policy + Forwarder + Filter.
+Muss auf Clients vertraut werden.
 
 ⸻
 
-12. Interne Namensauflösung (KANONISCH)
+4. WireGuard
 
-Quelle:
-	•	Pi-hole (192.168.178.46)
+Interface
 
-Status:
-	•	Vollständige DNS-Kontrolle
-	•	Wildcard-Support via *.heimgewebe.home.arpa
+10.7.0.1/24
 
-Funktionstests (Valide A-Records):
-	•	DNS lokal: @127.0.0.1
-	•	DNS LAN: @192.168.178.46
-	•	DNS WireGuard: @10.7.0.1
+Peer (iPad):
 
-Drift-Verbot:
-	•	Keine Split-DNS-Konflikte
-	•	Keine mDNS-Leaks
+10.7.0.2/32
 
-⸻
+Server wg0.conf:
 
-13. Firewall-Strategie – Entscheidung
+AllowedIPs = 10.7.0.2/32
 
-Entscheidung:
-iptables bleibt kanonisch (via nft backend).
+Client AllowedIPs:
 
-Begründung:
-	•	stabil
-	•	transparent
-	•	umgesetzt
-	•	auditierbar
+192.168.178.0/24, 10.7.0.0/24
+
+DNS im WG-Profil:
+
+192.168.178.46
+
 
 ⸻
 
-14. Service-Orchestrierung – Kanonische Regel
+NAT
 
-systemd:
-	•	Transport
-	•	Zugriff
-	•	Host-nahe Dienste (z. B. SSH, WireGuard, code-server)
+iptables -t nat -A POSTROUTING -s 10.7.0.0/24 -o eno2 -j MASQUERADE
 
-Docker / Compose:
-	•	HTTP-/HTTPS-Dienste
-	•	UIs
-	•	APIs
-	•	Proxies
+IP-Forward:
 
-Mischformen:
-	•	verboten (Ausnahmen müssen explizit dokumentiert werden)
+net.ipv4.ip_forward = 1
+
 
 ⸻
 
-15. Kritische Persistenz (Hinweis)
+5. Service-Layer
 
-Kritisch:
-	•	WireGuard-Schlüssel
-	•	iptables-Regeln (Persistenz via netfilter-persistent)
-	•	Docker-Volumes (Caddy, Leitstand, ACS)
-	•	Docker Auto-Start
+Leitstand
 
-Nicht kritisch:
-	•	Container-Images
-	•	temporäre Artefakte
-	•	Logs ohne Audit-Relevanz
+Container: deploy-leitstand-1
+Port intern: 3000
+
+Nur via Caddy erreichbar.
 
 ⸻
 
-16. Verdichtete Essenz
+Weltgewebe API
 
-Der Dienst bleibt lokal.
-Der Zugriff reist.
-Der Proxy vermittelt.
-Die Wahrheit steht hier.
+Container: weltgewebe-api
+Port intern: 8080
 
-Entscheidende Lehre (2026-02-12):
-Firewall-Härtung ohne Baseline-Definition erzeugt Self-Lockout-Risiko.
-Service → Netzwerk → Security → Persistenz.
-Nicht umgekehrt.
+Exposed via Caddy.
+
+⸻
+
+6. Zugriffsmatrix
+
+Herkunft	DNS	Routing	TLS	Ergebnis
+LAN	Pi-hole	direkt	trusted CA	OK
+WireGuard	Pi-hole	NAT → LAN	trusted CA	OK
+Internet	—	nicht geroutet	—	blockiert
+
+
+⸻
+
+7. Drift-Gefahren
+	•	Router-DNS ≠ Pi-hole
+	•	WG-Client-DNS falsch
+	•	Falsche AllowedIPs
+	•	Caddyfile nicht neu geladen
+	•	etc_dnsmasq_d deaktiviert
+
+⸻
+
+8. Systemessenz
+
+Heimserver ist kohärent, wenn:
+	•	DNS autoritativ ist
+	•	Caddy Host-Match korrekt ist
+	•	WG Routing deterministisch ist
+	•	Kein Split-Brain existiert
+
+⸻
+
+Unsicherheitsgrad
+
+0.08
+
+Ursachen:
+	•	IPv6 nur teilvalidiert
+	•	Router-Konfig nicht versioniert
+	•	Kein zentrales Health-Monitoring
+
+Interpolationsgrad:
+
+0.05
+
+Annahmen:
+	•	Fritzbox DNS stabil
+	•	Kein zweiter Resolver aktiv
+	•	Keine parallele VLAN-Topologie
+
+⸻
+
+Verdichtete Essenz
+
+Heimserver = DNS + Routing + Proxy + Tunnel.
+
+Fällt einer dieser vier Pfeiler,
+zerfällt der Zugriff.
+
+⸻
+
+⸻
+
+Architektur-Topologie (ASCII)
+
+                     INTERNET
+                         │
+                         │ (UDP 51820)
+                         ▼
+                    [ Fritzbox ]
+                         │
+                         │
+        ┌────────────────┴────────────────┐
+        │                                   │
+        ▼                                   ▼
+   LAN 192.168.178.0/24              WireGuard 10.7.0.0/24
+        │                                   │
+        │                                   │
+        ▼                                   ▼
+               ┌─────────────────────────┐
+               │      Heimserver         │
+               │ 192.168.178.46          │
+               │                         │
+               │  ┌───────────────────┐  │
+               │  │ Pi-hole (DNS)     │  │
+               │  │ Port 53           │  │
+               │  └───────────────────┘  │
+               │                         │
+               │  ┌───────────────────┐  │
+               │  │ Caddy             │  │
+               │  │ :80 / :443        │  │
+               │  └───────────────────┘  │
+               │            │            │
+               │            ▼            │
+               │     deploy-leitstand    │
+               │          :3000          │
+               │                         │
+               └─────────────────────────┘
+
+
+⸻
+
+Betriebszustand (grün)
+	•	dig → 192.168.178.46
+	•	curl HTTP → 308
+	•	curl HTTPS → 200
+	•	wg show → handshake aktiv
+	•	iPad WireGuard aktiv → Seite lädt
+
+⸻
+
+Trockene Wahrheit:
+
+Netzwerke sterben nie durch Gewalt.
+Sie sterben durch Nebenannahmen.

@@ -6,7 +6,10 @@ Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agen
 
 - **Kanonische Runtime (IST-Zustand):** `heimserver.runtime.md`
 - **Kanonischer Kontext (Architektur):** `heimserver.context.md`
+- **Kanonische Netz-Architektur:** `heimserver.network.md`
+- **Kanonische Namens-Architektur:** `heimserver.naming.md`
 - **Operative Checks (Wahrheitsquelle):** `ops/checks/preflight.sh`
+- **Operatives Protokoll (Betrieb):** `heimserver.operations.md`
 - **Runbooks (Handlungsabläufe):** `runbooks/`
 - **Templates (keine Secrets):** `security/templates/`
 
