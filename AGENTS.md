@@ -13,6 +13,12 @@ Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agen
 - **Runbooks (Handlungsabläufe):** `runbooks/`
 - **Templates (keine Secrets):** `security/templates/`
 
+## Repo-Policy (Privat vs. Public)
+
+**Status:** Privat
+**Regel:** Reale IPs, Subnetze und Pfade sind im Repo erlaubt, um die operative Realität abzubilden.
+**Verbot:** Niemals Keys, Secrets, Zertifikate (Private Keys), Logs oder unredacted Snapshots committen.
+
 ## Grundsatz: Secrets-Shadow-Pfad (außerhalb von Git)
 
 **NIEMALS** Private Keys/Root-CA Keys in Git committen.

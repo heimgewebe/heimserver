@@ -1,21 +1,23 @@
-# niemals ins Repo
-logs/
-server-facts/
-**/audit-snapshots/
-**/*.key
-**/*.pem
-wireguard/
+!ops/audit/snapshots/README.md
 !security/templates/wireguard/
 !security/templates/wireguard/**
+# niemals ins Repo
+**/*.bak
+**/*.key
 **/*.log
+**/*.pem
 **/*.sqlite
 **/*.sqlite3
-**/*.bak
 **/*.tar
 **/*.tar.gz
 **/*.zip
-Caddyfile
-rules.v4
-rules.v6
+**/audit-snapshots/
 **/docker-compose.override.yml
 .env
+Caddyfile
+logs/
+ops/audit/snapshots/*
+rules.v4
+rules.v6
+server-facts/
+wireguard/

@@ -302,9 +302,14 @@ edge-caddy	Reverse Proxy / TLS	kritisch
 deploy-leitstand-1	UI / Leitstand	hoch
 weltgewebe-api	API Backend	hoch
 
-Audit:
+Audit (Ist-Zustand 2026-02-13):
 
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Networks}}"
+Container            Rolle            Status         Netzwerke
+dns-pihole           DNS              healthy        host (implizit 53/tcp+udp, 80/tcp)
+edge-caddy           Proxy            Up             edge, heimnet
+deploy-leitstand-1   Leitstand        Up             deploy_default, heimnet
+dns-unbound          Resolver         healthy        dns_default
+weltgewebe-api       API              Up             -
 
 Invariante:
 
@@ -339,22 +344,23 @@ Drift-Indikator:
 
 ⸻
 
-5.3 Published Ports
+5.3 Published Ports (Ist-Zustand 2026-02-13)
 
-Erwartet (Audit-Ergebnis):
+Port        Proto   Dienst              Binding       Anmerkung
+53          TCP/UDP Pi-hole (Host-Net)  0.0.0.0, ::   DNS Service
+80          TCP     Caddy               0.0.0.0, ::   HTTP -> Redirect
+443         TCP     Caddy               0.0.0.0, ::   HTTPS
+443         UDP     Caddy               0.0.0.0, ::   QUIC/HTTP3 (Aktiviert & Erlaubt)
+51820       UDP     WireGuard           0.0.0.0, ::   VPN Ingress
+22          TCP     SSHD                0.0.0.0, ::   Admin Access
 
-Port	Dienst	Binding
-53	Pi-hole	0.0.0.0, ::
-80	Caddy	0.0.0.0, ::
-443	Caddy	0.0.0.0, ::
-22	SSHD	0.0.0.0, ::
-51820/udp	WireGuard	0.0.0.0, ::
+Local Listeners (127.0.0.1 Only):
+3000        TCP     deploy-leitstand-1  127.0.0.1
+5335        TCP/UDP dns-unbound         127.0.0.1     Pi-hole Upstream
+8080        TCP     code-server         127.0.0.1     SSH-Tunnel Access
 
-Local Listeners (127.0.0.1):
-3000	(deploy-leitstand-1)
-5335	(unbound)
-8080	(code-server)
-8099	(uvicorn)
+Caddy Admin:
+Port 2019 ist NICHT published (nur container-intern erreichbar).
 
 Audit:
 
