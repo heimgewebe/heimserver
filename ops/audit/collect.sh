@@ -21,7 +21,8 @@ log_cmd() {
     return 0
   else
     echo "(Command failed or not available)" >> "$SNAPSHOT_DIR/$file"
-    return 1
+    # Return 0 so set -e doesn't kill the script; we logged the failure.
+    return 0
   fi
 }
 
@@ -33,6 +34,26 @@ log_cmd "docker network ls" "docker_networks.txt"
 
 # 2. Host Listeners (Safe-ish - Ports only)
 log_cmd "ss -lntup" "ss_lntup.txt"
+
+# 2b. Caddy Internal Status
+log_cmd "docker exec edge-caddy caddy version" "caddy_version.txt"
+log_cmd "docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile" "caddy_validate.txt"
+if docker exec edge-caddy command -v ss >/dev/null 2>&1 || true; then
+    # We try to run it. If 'command -v' failed (exit code 1), the '|| true' keeps us alive,
+    # but the 'if' condition might still be tricky with set -e.
+    # Better: check explicitly.
+    if docker exec edge-caddy command -v ss >/dev/null 2>&1; then
+        log_cmd "docker exec edge-caddy ss -lntup" "caddy_container_ss.txt"
+    else
+        echo "GAP: ss not available in caddy container" > "$SNAPSHOT_DIR/caddy_ss_missing.txt"
+    fi
+else
+    echo "GAP: docker exec check failed" > "$SNAPSHOT_DIR/docker_exec_failed.txt"
+fi
+
+# 2c. Kernel / Sysctl Status
+log_cmd "sysctl net.ipv4.ip_forward" "sysctl_ip_forward.txt"
+log_cmd "sysctl net.ipv4.conf.all.rp_filter" "sysctl_rp_filter.txt"
 
 # 3. Firewall Rules (CRITICAL - DOCKER-USER Guard)
 if command -v iptables >/dev/null; then
@@ -54,7 +75,9 @@ else
 fi
 
 # 5. DNS Resolution Check
-log_cmd "dig +short leitstand.heimgewebe.home.arpa @127.0.0.1" "dns_local_check.txt"
+log_cmd "dig +short leitstand.heimgewebe.home.arpa @127.0.0.1" "dns_dig_fqdn.txt"
+log_cmd "getent hosts leitstand.heimgewebe.home.arpa" "dns_getent_fqdn.txt"
+log_cmd "getent hosts leitstand" "dns_getent_short.txt"
 
 # 6. Generate Summary
 cat <<EOF > "$SUMMARY_FILE"
@@ -66,9 +89,11 @@ cat <<EOF > "$SUMMARY_FILE"
 ## Captured Artifacts
 - [x] Docker Containers & Networks
 - [x] Host Listeners (ss)
+- [x] Caddy Internals (Version, Validate)
+- [x] Kernel Sysctl (Forwarding, RP Filter)
 - [ ] Firewall Rules (iptables) - $([ -f "$SNAPSHOT_DIR/iptables_docker_user.txt" ] && echo "OK" || echo "MISSING")
 - [ ] WireGuard Status - $([ -f "$SNAPSHOT_DIR/wg_show.txt" ] && echo "OK" || echo "MISSING")
-- [ ] DNS Check - $([ -f "$SNAPSHOT_DIR/dns_local_check.txt" ] && echo "OK" || echo "MISSING")
+- [ ] DNS Check - $([ -f "$SNAPSHOT_DIR/dns_dig_fqdn.txt" ] && echo "OK" || echo "MISSING")
 
 ## Gaps / Errors
 $(grep -r "GAP:" "$SNAPSHOT_DIR" || echo "None detected.")

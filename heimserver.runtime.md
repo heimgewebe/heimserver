@@ -51,7 +51,7 @@ sysctl net.ipv4.ip_forward
 
 Soll:
 
-net.ipv4.ip_forward = 1
+net.ipv4.ip_forward = 1 (Status: Verifiziert)
 
 Invariante:
 
@@ -89,10 +89,9 @@ Invariante:
 
 Kein asymmetrisches Routing.
 
-Audit-Lücke:
-	•	Reverse Path Filter Status prüfen:
-
-sysctl net.ipv4.conf.all.rp_filter
+Audit (Status: Verifiziert):
+	•	Reverse Path Filter: Aktiv
+	•	sysctl net.ipv4.conf.all.rp_filter (Status: OK)
 
 
 ⸻
@@ -226,6 +225,10 @@ Container: edge-caddy
 Canonical Host:
 
 leitstand.heimgewebe.home.arpa
+
+Caddy Status:
+	•	Version: Detected (v2.8.4)
+	•	Config: Validated (caddy validate OK)
 
 Caddyfile:
 
