@@ -26,7 +26,7 @@ if command -v ss >/dev/null 2>&1; then
   if ss -lntup | grep -E ':(80|443)\b' >/dev/null 2>&1; then
     ok "Listeners on 80/443 found"
   else
-    warn "No listeners on 80/443 found (drift?)"
+    warn "No listeners on 80/443 found (Caddy/Docker down?)"
   fi
 
   echo "Check: Caddy admin :2019 listening?"
@@ -49,33 +49,49 @@ fi
 say "iptables (DOCKER-USER / policy)"
 if command -v iptables >/dev/null 2>&1; then
   # DOCKER-USER chain rules
-  sudo iptables -S DOCKER-USER >/dev/null 2>&1 || warn "Could not read DOCKER-USER (need sudo?)"
-  echo
-  echo "Check: DOCKER-USER rules for 80/443 (Security Guard)?"
+  # Guard logic: 80/443 must be explicitly allowed for LAN/WG and dropped for others.
 
-  if sudo iptables -S DOCKER-USER 2>/dev/null | grep -q '^-A DOCKER-USER'; then
-      # LAN Access
-      if sudo iptables -S DOCKER-USER | grep -q -- "-s 192.168.178.0/24 .* --dport 80"; then
-          ok "LAN Access (192.168.178.0/24) allowed"
-      else
-          warn "LAN Access rule missing/unverified"
-      fi
-
-      # WireGuard Access
-      if sudo iptables -S DOCKER-USER | grep -q -- "-s 10.7.0.0/24 .* --dport 80"; then
-          ok "WireGuard Access (10.7.0.0/24) allowed"
-      else
-          warn "WireGuard Access rule missing/unverified"
-      fi
-
-      # Drop Rest (Heuristic: Look for a DROP or RETURN at the end or specific drop rules)
-      if sudo iptables -S DOCKER-USER | grep -E -q -- "-j (DROP|RETURN|REJECT)"; then
-           ok "Drop/Return policy found (heuristic)"
-      else
-           warn "No Drop/Return policy found in DOCKER-USER"
-      fi
+  if ! sudo iptables -S DOCKER-USER >/dev/null 2>&1; then
+      warn "Could not read DOCKER-USER (need sudo?)"
   else
-      warn "iptables DOCKER-USER chain not found or empty (verify manually)."
+      docker_user_rules="$(sudo iptables -S DOCKER-USER 2>/dev/null)"
+      echo
+      echo "Check: DOCKER-USER rules for 80/443 (Security Guard)?"
+
+      if [ -z "$docker_user_rules" ]; then
+          warn "DOCKER-USER chain empty or not found."
+      else
+          # LAN (192.168.178.0/24) -> 80 & 443
+          if echo "$docker_user_rules" | grep -F -- "-s 192.168.178.0/24" | grep -F -- "--dport 80" | grep -q -- "-j ACCEPT"; then
+              ok "LAN -> 80 allowed"
+          else
+              warn "LAN -> 80 allow rule missing"
+          fi
+          if echo "$docker_user_rules" | grep -F -- "-s 192.168.178.0/24" | grep -F -- "--dport 443" | grep -q -- "-j ACCEPT"; then
+              ok "LAN -> 443 allowed"
+          else
+              warn "LAN -> 443 allow rule missing"
+          fi
+
+          # WireGuard (10.7.0.0/24) -> 80 & 443
+          if echo "$docker_user_rules" | grep -F -- "-s 10.7.0.0/24" | grep -F -- "--dport 80" | grep -q -- "-j ACCEPT"; then
+              ok "WG -> 80 allowed"
+          else
+              warn "WG -> 80 allow rule missing"
+          fi
+          if echo "$docker_user_rules" | grep -F -- "-s 10.7.0.0/24" | grep -F -- "--dport 443" | grep -q -- "-j ACCEPT"; then
+              ok "WG -> 443 allowed"
+          else
+              warn "WG -> 443 allow rule missing"
+          fi
+
+          # Drop Rest Heuristic
+          if echo "$docker_user_rules" | grep -E -q -- "-j (DROP|RETURN|REJECT)"; then
+              ok "Drop/Return policy found (heuristic)"
+          else
+              warn "No explicit Drop/Return policy found (verify manually: sudo iptables -S DOCKER-USER)"
+          fi
+      fi
   fi
 else
   warn "iptables not available"
