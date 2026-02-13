@@ -265,8 +265,8 @@ Port	Service	Scope
 22	sshd	0.0.0.0 + ::
 53	pihole-FTL	0.0.0.0 + ::
 5335	docker-proxy (unbound)	127.0.0.1
-80	docker-proxy	öffentlich LAN
-443	docker-proxy	öffentlich LAN
+80	docker-proxy	127.0.0.1
+443	docker-proxy	127.0.0.1
 
 Eigentümer Port 53:
 → ausschließlich pihole-FTL
