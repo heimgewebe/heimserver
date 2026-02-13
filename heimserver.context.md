@@ -6,8 +6,9 @@ Kanonischer operativer System-, Netzwerk- und Architekturkontext
   - Repo privat halten
   - keine Logs, Snapshots, Schlüssel oder Exporte committen
 
-Stand: 2026-02-03
+Stand: 2026-02-12
 Host: heimserver
+Modus: produktiv, Clean-Reset validiert
 Primärer Nutzer: alex
 Dokumentklasse: OPERATIV · KANONISCH
 
@@ -32,7 +33,7 @@ Rolle
 
 2. Betriebssystem & Basissystem
 
-OS: Ubuntu 24.04 LTS
+OS: Ubuntu 24.04 LTS (nftables via iptables-nft Backend)
 Kernel: 6.8.x (generic)
 Init-System: systemd
 
@@ -45,6 +46,11 @@ Updates:
 
 Zeitsynchronisation:
 	•	systemd-timesyncd
+
+DNS-Hoheit (Host):
+	•	systemd-resolved: deaktiviert & gestoppt
+	•	/etc/resolv.conf: nameserver 127.0.0.1
+	•	Ziel: vollständige DNS-Kontrolle über Pi-hole
 
 ⸻
 
@@ -62,8 +68,9 @@ LAN
 WireGuard
 	•	wg0: 10.7.0.1/24
 
-WLAN
-	•	wlo1: vorhanden, aktuell DOWN
+IPv6
+	•	Nur link-local (fe80::)
+	•	Keine globale IPv6-Exposition
 
 Docker-Netze (nicht vertrauenswürdig)
 	•	docker0: 172.17.0.0/16 (derzeit DOWN)
@@ -106,15 +113,10 @@ iPad
 	•	192.168.178.0/24
 	•	PersistentKeepalive: 25
 
-Status (Snapshot-abhängig):
+Status:
 	•	Handshake aktiv
 	•	RX/TX vorhanden
 	•	Latenz unauffällig
-
-Unsicherheitsgrad Snapshot: ~0.25
-Ursachen:
-	•	Mobilfunk-Latenz
-	•	iOS-Sleep-Zyklen
 
 ⸻
 
@@ -125,6 +127,7 @@ Leitprinzipien
 	•	Zugriff reist (LAN + WireGuard)
 	•	Transport vor Dienst
 	•	Komfort folgt Sicherheit
+	•	DNS-Isolation: gut
 
 Zielbild
 
@@ -150,43 +153,30 @@ ohne die Angriffsfläche real zu vergrößern.
 7. Firewall – KANONISCHER IST-ZUSTAND
 
 Firewall-Stack
-	•	iptables (KANONISCH)
+	•	iptables-nft (KANONISCH)
 	•	netfilter-persistent (Persistenz)
+	•	Backend: nftables
 
-UFW:
-	•	bewusst entfernt
-	•	keine Doppelsteuerung
-	•	keine parallelen Regelwerke
+Policy:
+	•	filter: ACCEPT (Default)
+	•	Explizite Regeln für Inbound Traffic
 
-Grundsatz
-	•	INPUT restriktiv
-	•	OUTPUT erlaubt
-	•	FORWARD nur implizit, wo funktional notwendig
+Explizite Regeln (Auszug):
+	•	iifname "eno2" tcp/udp dport 53 accept
+	•	iifname "wg0" tcp/udp dport 53 accept
+	•	SSH (22): via Policy ACCEPT (LAN/WG Zugang)
 
-Kanonische Inbound-Policy (explizit)
-	•	SSH
-		•	22/tcp aus:
-		•	192.168.178.0/24 (LAN)
-		•	10.7.0.0/24 (WireGuard)
-	•	WireGuard
-		•	51820/udp von WAN
-	•	Reverse Proxy
-		•	443/tcp aus:
-		•	192.168.178.0/24 (LAN)
-		•	10.7.0.0/24 (WireGuard)
+NAT:
+	•	Masquerade: 10.7.0.0/24 → eno2
+	•	Docker-managed chains aktiv
 
-Explizit verboten
-	•	WAN-Zugriff auf Webdienste
-	•	Anywhere-SSH
-	•	Docker-Netze als Quelle für Host-Ports
+IPv6 Filter:
+	•	Policy ACCEPT (Kein restriktives IPv6-Regime)
 
 Persistenzstatus (belegt)
-	•	netfilter-persistent aktiv (systemd: started/finished)
-	•	/etc/iptables/rules.v4 und /etc/iptables/rules.v6 vorhanden
-
-Historie
-	•	2026-02-03: Migration von UFW → iptables + netfilter-persistent
-Begründung: Eindeutigkeit, Auditierbarkeit, keine Regel-Überlagerung
+	•	netfilter-persistent aktiv
+	•	iptables Regeln persistent gespeichert
+	•	nft Ruleset via iptables-nft verwaltet
 
 ⸻
 
@@ -195,36 +185,9 @@ Begründung: Eindeutigkeit, Auditierbarkeit, keine Regel-Überlagerung
 Status:
 	•	IP-Forwarding aktiv (net.ipv4.ip_forward = 1)
 	•	Aktuell keine expliziten FORWARD-Regeln notwendig
-		(verifiziert via ICMP-Ping).
-		Bei Änderungen an Docker-Netzen, NAT oder Default-Policies
-		ist dies neu zu prüfen.
-
-Verifikation (2026-02-03)
-	•	WG-Client erreicht:
-	•	FritzBox (192.168.178.1)
-	•	heimserver (192.168.178.46)
-	•	Test: ICMP (Ping) über WireGuard
-
-Entscheidung
-WG → LAN Routing funktioniert zuverlässig.
-Keine zusätzlichen FORWARD-Regeln.
-
-Begründung
-Zusätzliche Regeln würden Redundanz und Driftgefahr erhöhen
-ohne funktionalen Mehrwert.
 
 Hinweis (Kernel-Filter/Asymmetrie)
 	•	rp_filter ist auf 2 (loose) gesetzt (all/default)
-		Das reduziert “mysteriöse” Rückweg-Drops bei
-		Multi-Interface/Overlay-Setups.
-
-Hinweis
-Filterwirkung erfolgt über:
-	•	bestehende iptables-Policies
-	•	DOCKER-USER Chain
-
-Explizite FORWARD-Policies bleiben möglich,
-aktuell nicht erforderlich.
 
 ⸻
 
@@ -252,31 +215,6 @@ Regeln (KANONISCH):
 	•	10.7.0.0/24
 	•	DROP sonst für 80/443
 	•	RETURN für nicht relevante Pakete
-
-Validierung:
-	•	sudo iptables -S DOCKER-USER
-	•	Zugriff auf 80/443 von nicht erlaubten Quellen
-		scheitert zuverlässig
-
-Wichtig (typischer Fehler):
-DOCKER-USER wirkt nur, wenn Docker den Traffic tatsächlich durch
-FORWARD/DOCKER-Ketten führt. Das ist in Standard-Docker der Fall,
-aber bei Sonder-Setups (rootless / nft-backend / custom chains)
-	muss man das gelegentlich verifizieren.
-
-### Beweisführung (Audit-Snapshot)
-
-Belegpfad (Audit-Snapshot, Stand 2026-02-03):
-	•	/home/alex/server-facts/audit-snapshots/20260203-194812
-
-Belegte Objekte:
-	•	iptables/runtime
-	•	/etc/iptables/rules.v4
-	•	/etc/iptables/rules.v6
-	•	sysctl/rp_filter
-	•	listener
-	•	docker publish
-	•	wg status
 
 ⸻
 
@@ -310,7 +248,7 @@ Explizite Verbote (Caddy)
 
 12. Docker-Caddy: Publish-Matrix (IST)
 
-IST-Snapshot (2026-02-03):
+IST-Snapshot:
 	•	80/tcp  → 127.0.0.1
 	•	443/tcp → 127.0.0.1
 	•	kein 443/udp
@@ -319,15 +257,23 @@ IST-Snapshot (2026-02-03):
 Status:
 loopback-gekäfigt, kein Admin-Port, kein QUIC
 
-Guard (Ports):
-  - 80/tcp darf ausschließlich auf 127.0.0.1 published sein
-  - 443/tcp darf ausschließlich auf 127.0.0.1 published sein
-  - 80/443 dürfen niemals direkt auf 0.0.0.0 oder LAN/WG gebunden werden
-    (wenn das passiert: sofort Drift-Alarm, Regeln prüfen)
+⸻
+
+13. Aktive Listener (Host-Sicht)
+
+Port	Service	Scope
+22	sshd	0.0.0.0 + ::
+53	pihole-FTL	0.0.0.0 + ::
+5335	docker-proxy (unbound)	127.0.0.1
+80	docker-proxy	127.0.0.1
+443	docker-proxy	127.0.0.1
+
+Eigentümer Port 53:
+→ ausschließlich pihole-FTL
 
 ⸻
 
-13. Audit-Pflichtprüfungen (KANONISCH)
+14. Audit-Pflichtprüfungen (KANONISCH)
 
 Bei jeder Änderung an Docker, Compose, Firewall, Ports
 oder Reverse Proxy müssen folgende Checks ausgeführt werden:
@@ -341,11 +287,10 @@ Abweichungen vom dokumentierten IST gelten als Drift.
 
 Belegpfad (außerhalb des Repos):
 	•	/home/alex/server-facts/audit-snapshots/<timestamp>/
-		(Ausgaben der Checks werden dort abgelegt; Inhalt bleibt außerhalb des Repos.)
 
 ⸻
 
-14. Weltgewebe-Caddy (bestehende Site)
+15. Weltgewebe-Caddy (bestehende Site)
 
 Aktive Routen:
 	•	/api/*        → api:8080
@@ -357,7 +302,7 @@ Diese Site bleibt unverändert.
 
 ⸻
 
-15. Leitstand – Zielintegration
+16. Leitstand – Zielintegration
 
 Rolle:
 	•	permanenter Beobachtungsraum
@@ -369,30 +314,10 @@ https://leitstand.lan
 Status:
 	•	Compose-Service geplant
 	•	Zugriff ausschließlich über Caddy
-	•	Same-Origin mit ACS
-	•	Umsetzung bewusst nachgelagert (Transport & Sicherheit abgeschlossen)
-
-Kanonischer Zielzustand (Caddy-Site)
-
-leitstand.lan {
-  encode zstd gzip
-
-  reverse_proxy leitstand:3000
-
-  handle_path /acs/* {
-    reverse_proxy acs:8099
-  }
-
-  handle /health {
-    respond 200
-  }
-
-  tls internal
-}
 
 ⸻
 
-16. ACS – Zielintegration
+17. ACS – Zielintegration
 
 Rolle:
 	•	Operations-Interface
@@ -405,7 +330,7 @@ Status:
 
 ⸻
 
-17. Leitstand – Zugriffs- und Aktionspolicy
+18. Leitstand – Zugriffs- und Aktionspolicy
 
 Standardmodus:
 	•	READ-ONLY
@@ -415,12 +340,9 @@ Aktionen:
 	•	keine impliziten Übergänge
 	•	keine Fallback-Pfade vom Leitstand zu Write-Operationen
 
-Begründung:
-Ein Beobachtungsraum darf nicht unbemerkt zum Akteur werden.
-
 ⸻
 
-18. code-server (VS Code Web)
+19. code-server (VS Code Web)
 
 Bindung:
 	•	127.0.0.1:8080
@@ -433,15 +355,9 @@ Zugriff:
 Architekturentscheidung:
 code-server bleibt Host-Service und wird nicht in Compose integriert.
 
-systemd-User-Service:
-~/.config/systemd/user/code-server.service
-
-Zugriff vom iPad:
-WireGuard → SSH (Blink) → Browser http://127.0.0.1:8080
-
 ⸻
 
-19. Jules
+20. Jules
 
 Jules ist CLI/TUI-only.
 	•	kein Webserver
@@ -455,59 +371,53 @@ Typischer Workflow:
 
 ⸻
 
-20. Interne Namensauflösung (KANONISCH)
+21. Docker DNS-Stack (Unbound + Pi-hole)
 
-Quelle:
-	•	FritzBox DNS/DHCP
+Pfad: /opt/heimgewebe/dns/docker-compose.yml
 
-Namen:
-	•	heimserver → 192.168.178.46
-	•	leitstand.lan → 192.168.178.46
+Unbound (Rekursiver Resolver)
+	•	Image: mvance/unbound:latest
+	•	Container: dns-unbound
+	•	Binding: 127.0.0.1:5335 (TCP/UDP)
+	•	Rolle: Upstream für Pi-hole
+	•	Isolation: nicht extern erreichbar
 
-Status:
-teilweise belegt, teilweise Zielbild
+Pi-hole (Filter & Forwarder)
+	•	Image: pihole/pihole:latest
+	•	Container: dns-pihole
+	•	Network Mode: host
+	•	Listener: 0.0.0.0:53
+	•	Upstream: 127.0.0.1#5335
 
-IST (belegt):
-	•	Lokaler Hostname:
-		getent hosts heimserver liefert 127.0.1.1 heimserver
-		→ normaler /etc/hosts-Mechanismus (localhost/loopback)
-		→ kein DNS-Beleg.
-	•	LAN-Name (FritzBox/DNS):
-		heimserver -> 192.168.178.46 ist Zielbild
-		und muss separat belegt werden.
-
-IST (noch zu belegen):
-	•	leitstand.lan -> 192.168.178.46 ist als Ziel gesetzt,
-		aber nicht durch Snapshot belegt.
-
-SOLL:
-	•	FritzBox-DNS/DHCP liefert:
-		•	heimserver -> 192.168.178.46
-		•	leitstand.lan -> 192.168.178.46
-	•	WireGuard-Clients nutzen DNS = 192.168.178.1 (FritzBox)
-
-Validierung:
-	•	getent hosts leitstand.lan
-	•	dig leitstand.lan @192.168.178.1 (falls verfügbar)
-	•	ping leitstand.lan
-	•	dig heimserver @192.168.178.1 (DNS-Beleg)
-	•	getent ahostsv4 heimserver (Resolver-Chain prüfen)
-	•	resolvectl status (falls systemd-resolved aktiv)
-
-Drift-Verbot bleibt:
-	•	keine dauerhaften /etc/hosts Workarounds für leitstand.lan
-
-Explizite Verbote (DNS)
-	•	/etc/hosts ist keine dauerhafte Lösung
-	•	Manuelle DNS-Einträge auf Clients sind untersagt
-	•	Split-DNS ist zulässig, aber nicht erforderlich
+Rolle:
+DNS-Policy + Forwarder + Filter.
 
 ⸻
 
-21. Firewall-Strategie – Entscheidung
+22. Interne Namensauflösung (KANONISCH)
+
+Quelle:
+	•	Pi-hole (192.168.178.46)
+
+Status:
+	•	Vollständige DNS-Kontrolle
+	•	Wildcard-Support via *.heimgewebe.home.arpa
+
+Funktionstests (Valide A-Records):
+	•	DNS lokal: @127.0.0.1
+	•	DNS LAN: @192.168.178.46
+	•	DNS WireGuard: @10.7.0.1
+
+Drift-Verbot:
+	•	Keine Split-DNS-Konflikte
+	•	Keine mDNS-Leaks
+
+⸻
+
+23. Firewall-Strategie – Entscheidung
 
 Entscheidung:
-iptables bleibt kanonisch.
+iptables bleibt kanonisch (via nft backend).
 
 Begründung:
 	•	stabil
@@ -515,14 +425,9 @@ Begründung:
 	•	umgesetzt
 	•	auditierbar
 
-nftables:
-	•	bewusst nicht umgesetzt
-	•	mögliche spätere Migration
-	•	kein aktueller Handlungsbedarf
-
 ⸻
 
-22. Service-Orchestrierung – Kanonische Regel
+24. Service-Orchestrierung – Kanonische Regel
 
 systemd:
 	•	Transport
@@ -540,12 +445,13 @@ Mischformen:
 
 ⸻
 
-23. Kritische Persistenz (Hinweis)
+25. Kritische Persistenz (Hinweis)
 
 Kritisch:
 	•	WireGuard-Schlüssel
 	•	iptables-Regeln (Persistenz via netfilter-persistent)
 	•	Docker-Volumes (Caddy, Leitstand, ACS)
+	•	Docker Auto-Start
 
 Nicht kritisch:
 	•	Container-Images
@@ -554,7 +460,7 @@ Nicht kritisch:
 
 ⸻
 
-24. Drift-Regel (bindend)
+26. Drift-Regel (bindend)
 
 Jede Änderung an:
 	•	Firewall
@@ -566,50 +472,47 @@ Jede Änderung an:
 → Pflicht zur Aktualisierung dieser Datei.
 
 Drift-Trigger (bindend)
-Eine Neubewertung dieses Dokuments ist zwingend,
-wenn eines der folgenden Ereignisse eintritt:
+Eine Neubewertung dieses Dokuments ist zwingend, wenn:
 	•	Änderung an docker-compose.yml
 	•	Hinzufügen oder Entfernen eines published Ports
 	•	Änderung an iptables / netfilter-persistent
-	•	Wechsel des Docker-Backends (nft / rootless)
+	•	Wechsel des Docker-Backends
 	•	Aktivierung von HTTP/3 oder TLS-Optionen in Caddy
-	•	Änderung der DNS-Quelle für WireGuard-Clients
+	•	Änderung der DNS-Quelle
 
 Versionshoheit
-Dieses Dokument ersetzt alle früheren Versionen
-von heimserver.context*.
+Dieses Dokument ersetzt alle früheren Versionen.
 
 ⸻
 
-25. Verdichtete Essenz
+27. Verdichtete Essenz
 
 Der Dienst bleibt lokal.
 Der Zugriff reist.
 Der Proxy vermittelt.
 Die Wahrheit steht hier.
 
+Entscheidende Lehre (2026-02-12):
+Firewall-Härtung ohne Baseline-Definition erzeugt Self-Lockout-Risiko.
+Service → Netzwerk → Security → Persistenz.
+Nicht umgekehrt.
+
 ⸻
 
-26. Ungewissheitsursachenanalyse
+28. Ungewissheitsursachenanalyse
 
-Operative Analyse (Snapshot-basiert)
+Unsicherheitsgrad: 0.16
+Ursache:
+	•	Router-Konfiguration nicht einsehbar
+	•	Kein vollständiger Persistenz-Dump
 
-Unsicherheitsgrad: 0.10
-Interpolationsgrad: 0.06
+Interpolationsgrad: 0.11
+Annahme:
+	•	Keine WAN-Portfreigaben aktiv
+	•	Fritzbox verteilt 192.168.178.46 als DNS
 
-Restunsicherheiten (konkret):
-	•	Mobilfunk-Variabilität (WireGuard-Handshake und Latenz)
-	•	DNS-Realität: Snapshot zeigt lokale Zuordnung
-		heimserver -> 127.0.1.1;
-		FritzBox-DNS für heimserver/leitstand.lan ist als Soll definiert,
-		aber nicht vollständig belegt.
-	•	iptables-Regel-Sicht: ohne kompletten iptables-save
-		bleibt ein kleiner Anteil “nur aus Ausschnitten abgeleitet”
-
-Belege (Audit-Snapshot, Stand 2026-02-03):
-	•	/home/alex/server-facts/audit-snapshots/20260203-194812
-		(iptables/runtime, rules.v4/v6, sysctl/rp_filter,
-		listener, docker publish, wg status)
+Gesamtrisiko:
+mittel-niedrig (kein WAN-Portforwarding angenommen)
 
 ────────────────────────────────────────────────────────────
 ENDE DER KANONISCHEN DATEI
