@@ -3,6 +3,13 @@ set -euo pipefail
 
 # Preflight: minimale, robuste Checks zur Drift-Erkennung.
 # Ziel: keine Abhängigkeiten außer Standard-Tools.
+#
+# Architectural Decision:
+# Services (Caddy, Docker Proxy) MAY listen on 0.0.0.0.
+# Security is enforced via DOCKER-USER firewall rules, NOT by loopback binding.
+
+LAN_SUBNET="${LAN_SUBNET:-192.168.178.0/24}"
+WG_SUBNET="${WG_SUBNET:-10.7.0.0/24}"
 
 say() { printf "\n== %s ==\n" "$*"; }
 ok()  { printf "OK: %s\n" "$*"; }
@@ -61,33 +68,33 @@ if command -v iptables >/dev/null 2>&1; then
       if [ -z "$docker_user_rules" ]; then
           warn "DOCKER-USER chain empty or not found."
       else
-          # LAN (192.168.178.0/24) -> 80 & 443
-          if echo "$docker_user_rules" | grep -F -- "-s 192.168.178.0/24" | grep -F -- "--dport 80" | grep -q -- "-j ACCEPT"; then
-              ok "LAN -> 80 allowed"
+          # LAN -> 80 & 443
+          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -F -- "--dport 80" | grep -q -- "-j ACCEPT"; then
+              ok "LAN ($LAN_SUBNET) -> 80 allowed"
           else
-              warn "LAN -> 80 allow rule missing"
+              warn "LAN ($LAN_SUBNET) -> 80 allow rule missing"
           fi
-          if echo "$docker_user_rules" | grep -F -- "-s 192.168.178.0/24" | grep -F -- "--dport 443" | grep -q -- "-j ACCEPT"; then
-              ok "LAN -> 443 allowed"
+          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -F -- "--dport 443" | grep -q -- "-j ACCEPT"; then
+              ok "LAN ($LAN_SUBNET) -> 443 allowed"
           else
-              warn "LAN -> 443 allow rule missing"
-          fi
-
-          # WireGuard (10.7.0.0/24) -> 80 & 443
-          if echo "$docker_user_rules" | grep -F -- "-s 10.7.0.0/24" | grep -F -- "--dport 80" | grep -q -- "-j ACCEPT"; then
-              ok "WG -> 80 allowed"
-          else
-              warn "WG -> 80 allow rule missing"
-          fi
-          if echo "$docker_user_rules" | grep -F -- "-s 10.7.0.0/24" | grep -F -- "--dport 443" | grep -q -- "-j ACCEPT"; then
-              ok "WG -> 443 allowed"
-          else
-              warn "WG -> 443 allow rule missing"
+              warn "LAN ($LAN_SUBNET) -> 443 allow rule missing"
           fi
 
-          # Drop Rest Heuristic
+          # WireGuard -> 80 & 443
+          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -F -- "--dport 80" | grep -q -- "-j ACCEPT"; then
+              ok "WG ($WG_SUBNET) -> 80 allowed"
+          else
+              warn "WG ($WG_SUBNET) -> 80 allow rule missing"
+          fi
+          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -F -- "--dport 443" | grep -q -- "-j ACCEPT"; then
+              ok "WG ($WG_SUBNET) -> 443 allowed"
+          else
+              warn "WG ($WG_SUBNET) -> 443 allow rule missing"
+          fi
+
+          # Drop Rest Logic: specific drops for 80/443 OR generic drop/return at end
           if echo "$docker_user_rules" | grep -E -q -- "-j (DROP|RETURN|REJECT)"; then
-              ok "Drop/Return policy found (heuristic)"
+              ok "Drop/Return/Reject policy found (heuristic)"
           else
               warn "No explicit Drop/Return policy found (verify manually: sudo iptables -S DOCKER-USER)"
           fi

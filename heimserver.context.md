@@ -5,6 +5,10 @@ Stand: 2026-02-13
 Host: heimserver
 Dokumentklasse: ARCHITEKTUR · KANONISCH
 
+**Sicherheits-Policy (Repo-Status):**
+Dieses Dokument enthält sicherheitsrelevante Strukturen.
+Bei Veröffentlichung des Repositories müssen IPs, Subnetze und Keys unkenntlich gemacht werden (Redaction).
+
 ⸻
 
 0. Identität & Zweck
@@ -37,6 +41,10 @@ heimserver.operations.md	Handeln	Checks, Wiederherstellung, Backups
 1. Kein Public Exposing
    Dienste dürfen niemals direkt ins Internet exponiert werden (kein Port-Forwarding im Router).
    Einziger Ingress ist WireGuard oder der Reverse Proxy (intern).
+
+   *Architektur-Entscheidung:*
+   Dienste (Docker/Caddy) dürfen auf 0.0.0.0 lauschen.
+   Sicherheit wird NICHT durch Loopback-Binding, sondern durch Firewall-Regeln (DOCKER-USER Chain) erzwungen.
 
 2. Kein Host-Caddy
    Caddy läuft ausschließlich als Docker-Container. Systemd-Caddy ist verboten.
