@@ -11,7 +11,8 @@ Drift schnell erkennen, bevor er „real“ wird.
 
 2) Wenn WARN auftaucht
 - Ursache ermitteln
-- `heimserver.constitution.md` aktualisieren (wenn IST sich geändert hat)
+- Wenn sich die Realität (Ports/Container) geändert hat: `heimserver.runtime.md` aktualisieren.
+- Wenn sich Regeln/Architektur geändert haben: `heimserver.constitution.md` (oder naming/network) aktualisieren.
 - Falls Regression: zurückrollen oder fixen
 
 ## Minimaler Abschluss

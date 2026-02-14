@@ -5,17 +5,13 @@ Stand: 2026-02-13
 Host: heimserver
 Dokumentklasse: ARCHITEKTUR · KANONISCH
 
-**Sicherheits-Policy (Repo-Status):**
-Dieses Dokument enthält sicherheitsrelevante Strukturen.
-Bei Veröffentlichung des Repositories müssen IPs, Subnetze und Keys unkenntlich gemacht werden (Redaction).
-
-⸻
-
 0. Identität & Zweck
 
 Der Heimserver ist der Trust-Pivot des Heimgewebes.
 Er ist kein öffentlicher Server, sondern ein kontrollierter Binnenraum.
 Er vereint Identität, Routing und Namensauflösung in einer kohärenten Runtime.
+
+Hinweis: Bestimmte Deployments (z.B. Weltgewebe/Leitstand/API) laufen aktuell nur für die Entwicklungs- und Integrationsphase auf diesem Heimserver und können später migrieren; die Sicherheits- und Kohärenzprinzipien bleiben unverändert.
 
 Scope:
 Dieses Dokument definiert die unverhandelbaren Grundsätze (Verfassung).

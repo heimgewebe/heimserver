@@ -38,17 +38,12 @@ log_cmd "ss -lntup" "ss_lntup.txt"
 # 2b. Caddy Internal Status
 log_cmd "docker exec edge-caddy caddy version" "caddy_version.txt"
 log_cmd "docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile" "caddy_validate.txt"
-if docker exec edge-caddy command -v ss >/dev/null 2>&1 || true; then
-    # We try to run it. If 'command -v' failed (exit code 1), the '|| true' keeps us alive,
-    # but the 'if' condition might still be tricky with set -e.
-    # Better: check explicitly.
-    if docker exec edge-caddy command -v ss >/dev/null 2>&1; then
-        log_cmd "docker exec edge-caddy ss -lntup" "caddy_container_ss.txt"
-    else
-        echo "GAP: ss not available in caddy container" > "$SNAPSHOT_DIR/caddy_ss_missing.txt"
-    fi
+
+# Check if ss is available inside the container (without crashing script)
+if docker exec edge-caddy command -v ss >/dev/null 2>&1; then
+    log_cmd "docker exec edge-caddy ss -lntup" "caddy_container_ss.txt"
 else
-    echo "GAP: docker exec check failed" > "$SNAPSHOT_DIR/docker_exec_failed.txt"
+    echo "GAP: ss not available in caddy container (or container down)" > "$SNAPSHOT_DIR/caddy_ss_missing.txt"
 fi
 
 # 2c. Kernel / Sysctl Status

@@ -15,7 +15,7 @@ Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agen
 
 ## Repo-Policy (Privat vs. Public)
 
-**Status:** Privat
+**Status:** Dauerhaft privat.
 **Regel:** Reale IPs, Subnetze und Pfade sind im Repo erlaubt, um die operative Realität abzubilden.
 **Verbot:** Niemals Keys, Secrets, Zertifikate (Private Keys), Logs oder unredacted Snapshots committen.
 

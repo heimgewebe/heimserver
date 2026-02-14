@@ -13,8 +13,8 @@ WG_SUBNET="${WG_SUBNET:-10.7.0.0/24}"
 ALLOW_QUIC="${ALLOW_QUIC:-0}"
 
 say() { printf "\n== %s ==\n" "$*"; }
-ok()  { printf "OK: %s\n" "$*"; }
-warn(){ printf "WARN: %s\n" "$*" >&2; }
+ok()  { printf "PASS (heuristic): %s\n" "$*"; }
+warn(){ printf "WARN (manual verify): %s\n" "$*" >&2; }
 
 say "host identity"
 hostname || true
@@ -45,7 +45,11 @@ if command -v ss >/dev/null 2>&1; then
           warn "UDP 443 listener present (QUIC/HTTP3 active). Set ALLOW_QUIC=1 if intentional."
       fi
   else
-      ok "No UDP 443 listener (QUIC disabled)"
+      if [ "${ALLOW_QUIC}" = "1" ]; then
+          warn "QUIC allowed but no UDP 443 listener found."
+      else
+          ok "No UDP 443 listener (QUIC disabled)"
+      fi
   fi
 
   echo "Check: Caddy admin :2019 host-exposed?"
@@ -74,6 +78,11 @@ if command -v iptables >/dev/null 2>&1; then
       warn "Could not read DOCKER-USER (need sudo?)"
   else
       docker_user_rules="$(sudo iptables -S DOCKER-USER 2>/dev/null)"
+      # Always print DOCKER-USER rules for visibility
+      echo "--- DOCKER-USER Rules ---"
+      echo "$docker_user_rules"
+      echo "-------------------------"
+
       echo
       echo "Check: DOCKER-USER rules for 80/443 (Security Guard)?"
 
