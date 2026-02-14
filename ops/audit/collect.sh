@@ -149,56 +149,21 @@ else
 fi
 
 if have systemctl; then
-  # Check if firewalld unit exists using status >/dev/null 2>&1
-  # This returns 0 if active, 3 if inactive/failed, 4 if not found (usually)
-  # But specifically checking if it's "not found" vs "inactive" is tricky with just exit codes.
-  # However, `systemctl status firewalld` is generally robust.
-  # Actually, `systemctl list-unit-files` is fine, but user requested `status`.
-  # Let's rely on `status` exit code or output if needed, but simplest is:
-  if systemctl status firewalld >/dev/null 2>&1 || systemctl is-active --quiet firewalld || systemctl is-enabled --quiet firewalld 2>/dev/null; then
-      # If status is 0 (active) or 3 (inactive), it exists. If 4 (not found), it doesn't.
-      # But `status` returning non-zero doesn't mean it doesn't exist (it could be inactive).
-      # The trick: `systemctl list-unit-files firewalld.service` is explicitly checking for unit file existence.
-      # If the user insists on `status`, we must be careful.
-      # `systemctl status` returns 4 if unit not found.
-      if systemctl status firewalld 2>&1 | grep -q "Unit firewalld.service could not be found"; then
-           ok "firewalld not installed (service unit not found)."
-      else
-          # Exists
-          if systemctl is-active --quiet firewalld; then
-              gap "firewalld is active. Potential conflict with docker iptables."
-              run "firewalld status" "firewalld_status.txt" systemctl status firewalld
-          else
-              ok "firewalld installed but not active."
-              # capturing enabled state for record
-              run "firewalld enabled state" "firewalld_enabled.txt" systemctl is-enabled firewalld
-          fi
-      fi
+  # Simplified robust check using exit codes
+  # 4 = not found, 0 = active, 3 = inactive (usually)
+  set +e
+  systemctl status firewalld.service >/dev/null 2>&1
+  rc_fw=$?
+  set -e
+
+  if [ "$rc_fw" -eq 4 ]; then
+    ok "firewalld not installed (service unit not found)."
+  elif [ "$rc_fw" -eq 0 ]; then
+    gap "firewalld is active. Potential conflict with docker iptables."
+    run "firewalld status" "firewalld_status.txt" systemctl status firewalld
   else
-      # Fallback if status fails completely (e.g. systemd not running?)
-      # But here we assume systemctl works.
-      # If `systemctl status` returns non-zero and doesn't print "not found", it might be inactive.
-      # Let's stick to the previous reliable logic but use `status` output to detect "not found".
-      # Re-reading the prompt: "Ersetze list-unit-files ... durch systemctl status ... >/dev/null 2>&1".
-      # Wait, if I redirect to /dev/null, I can't grep the output.
-      # And exit code 3 (inactive) vs 4 (not found) is the distinction.
-      # So checking exit code is the way.
-
-      set +e
-      systemctl status firewalld >/dev/null 2>&1
-      rc_fw=$?
-      set -e
-
-      if [ "$rc_fw" -eq 4 ]; then
-          ok "firewalld not installed (service unit not found)."
-      elif [ "$rc_fw" -eq 0 ]; then
-          gap "firewalld is active. Potential conflict with docker iptables."
-          run "firewalld status" "firewalld_status.txt" systemctl status firewalld
-      else
-          # rc 3 usually means inactive
-          ok "firewalld installed but not active."
-          run "firewalld enabled state" "firewalld_enabled.txt" systemctl is-enabled firewalld
-      fi
+    ok "firewalld installed but not active."
+    run "firewalld enabled state" "firewalld_enabled.txt" systemctl is-enabled firewalld
   fi
 else
   gap "systemctl not available; cannot check firewalld."
