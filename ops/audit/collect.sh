@@ -64,7 +64,8 @@ fi
 if command -v wg >/dev/null; then
   say "Running wg show (sanitized)"
   echo "== sudo wg show ==" > "$SNAPSHOT_DIR/wg_show.txt"
-  sudo wg show | grep -v "private key" >> "$SNAPSHOT_DIR/wg_show.txt" 2>&1 || true
+  # Sanitization: remove private keys AND endpoints (IPs)
+  sudo wg show | grep -vE "private key|endpoint:" >> "$SNAPSHOT_DIR/wg_show.txt" 2>&1 || true
 else
   echo "GAP: wg not available" > "$SNAPSHOT_DIR/wg_missing.txt"
 fi
@@ -97,6 +98,7 @@ $(grep -r "GAP:" "$SNAPSHOT_DIR" || echo "None detected.")
 - This snapshot is git-ignored by default.
 - Review contents before sharing.
 - NO PRIVATE KEYS should be present.
+- 'wg_show.txt' is sanitized but may contain residual metadata.
 EOF
 
 echo "Audit complete. Snapshot saved to: $SNAPSHOT_DIR"

@@ -10,7 +10,7 @@ Dokumentklasse: ARCHITEKTUR · KANONISCH
 
 **Sicherheits-Policy (Repo-Status):**
 Dieses Dokument enthält sicherheitsrelevante Strukturen.
-Bei Veröffentlichung des Repositories müssen IPs, Subnetze und Keys unkenntlich gemacht werden (Redaction).
+Falls das Repo entgegen der Policy public wird (Security Incident), ist eine sofortige Redaction von IPs, Subnetzen und Keys zwingend erforderlich.
 
 ---
 

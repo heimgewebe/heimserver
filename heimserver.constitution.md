@@ -49,11 +49,15 @@ Die Wahrheit ist föderal organisiert:
 3. **Kein Caddy Admin Exposing**
    Der Admin-Port (2019) darf niemals lauschen (außer localhost innerhalb des Containers).
 
-4. **DNS-Souveränität**
+4. **QUIC-Policy**
+   HTTP/3 (QUIC/UDP 443) ist standardmäßig AUS.
+   Eine Aktivierung erfordert Dokumentation und `ALLOW_QUIC=1` im Preflight-Check.
+
+5. **DNS-Souveränität**
    Die Zone `home.arpa` wird niemals an externe Resolver (8.8.8.8 etc.) weitergeleitet.
    Pi-hole ist die einzige Quelle der Wahrheit für interne Namen.
 
-5. **Kein Splitbrain**
+6. **Kein Splitbrain**
    Ein Hostname hat im gesamten Heimgewebe (LAN + WireGuard) genau eine IP.
    Split-Horizon-DNS ist zu vermeiden.
 

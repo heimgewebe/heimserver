@@ -138,6 +138,9 @@ if command -v iptables >/dev/null 2>&1; then
               warn "No explicit Drop/Return policy found for 80/443 (verify manually: sudo iptables -S DOCKER-USER)"
           fi
       fi
+
+      echo "Authoritative review: sudo iptables -S DOCKER-USER"
+      echo "Authoritative review: sudo iptables -L DOCKER-USER -n -v"
   fi
 else
   warn "iptables not available"

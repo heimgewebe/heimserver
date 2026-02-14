@@ -3,6 +3,11 @@
 Status: Operativ kanonisch
 Scope: Laufzeit-Realität des Heimservers (nicht Architekturvision)
 
+**Legende Status-Tags:**
+- **Observed:** Automatisch durch Audit (z.B. `ops/audit/collect.sh`) beobachtet.
+- **Policy:** Durch Verfassung (`constitution.md`) vorgegeben.
+- **Assumed:** Annahme, muss noch technisch verifiziert werden.
+
 ---
 
 ## 0. Zweck
@@ -51,7 +56,7 @@ Erforderlich:
 
 Soll:
 
-`net.ipv4.ip_forward = 1 (Status: Verifiziert)`
+`net.ipv4.ip_forward = 1` (Status: Observed)
 
 Invariante:
 
@@ -90,7 +95,7 @@ Invariante:
 
 Kein asymmetrisches Routing.
 
-Audit (Status: Verifiziert):
+Audit (Status: Observed):
 	•	Reverse Path Filter: Aktiv
 	•	sysctl net.ipv4.conf.all.rp_filter (Status: OK)
 
@@ -228,8 +233,8 @@ Canonical Host:
 leitstand.heimgewebe.home.arpa
 
 Caddy Status:
-	•	Version: Detected (v2.8.4)
-	•	Config: Validated (caddy validate OK)
+	•	Version: Observed (v2.8.4)
+	•	Config: Observed (caddy validate OK)
 
 Caddyfile:
 
@@ -359,7 +364,7 @@ Drift-Indikator:
 | 53 | TCP/UDP | Pi-hole (Host-Net) | 0.0.0.0, :: | DNS Service |
 | 80 | TCP | Caddy | 0.0.0.0, :: | HTTP -> Redirect |
 | 443 | TCP | Caddy | 0.0.0.0, :: | HTTPS |
-| 443 | UDP | Caddy | 0.0.0.0, :: | QUIC/HTTP3 (Aktiviert & Erlaubt) |
+| 443 | UDP | Caddy | 0.0.0.0, :: | QUIC/HTTP3 (Aktiviert; Policy: requires ALLOW_QUIC=1) |
 | 51820 | UDP | WireGuard | 0.0.0.0, :: | VPN Ingress |
 | 22 | TCP | SSHD | 0.0.0.0, :: | Admin Access |
 
