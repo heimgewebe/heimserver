@@ -227,6 +227,8 @@ Konfigurationskritisch:
 
 Backup:
 
+Warnung: Backup enthält unverschlüsselte Secrets/Keys! Nur verschlüsselt speichern (z.B. age/gpg), niemals ins Repo committen.
+
 ```bash
 tar czf heimserver-config-$(date +%F).tar.gz \
 /opt/heimgewebe \

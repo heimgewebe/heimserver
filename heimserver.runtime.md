@@ -43,7 +43,7 @@ Heimserver ist Trust-Pivot des Heimnetzes.
 Audit prüfen:
 
 `hostnamectl`
-`ip -br a`
+`ip -br a` (Beleg: `ss_lntup.txt` / manuell)
 
 
 ---
@@ -56,7 +56,7 @@ Erforderlich:
 
 Soll:
 
-`net.ipv4.ip_forward = 1` (Status: Observed)
+`net.ipv4.ip_forward = 1` (Status: Observed; Beleg: `sysctl_ip_forward.txt`)
 
 Invariante:
 
@@ -97,7 +97,7 @@ Kein asymmetrisches Routing.
 
 Audit (Status: Observed):
 	•	Reverse Path Filter: Aktiv
-	•	sysctl net.ipv4.conf.all.rp_filter (Status: OK)
+	•	sysctl net.ipv4.conf.all.rp_filter (Status: OK; Beleg: `sysctl_rp_filter.txt`)
 
 
 ---
@@ -197,7 +197,7 @@ Drift-Indikator:
 
 cached heimserver.fritz.box is NXDOMAIN
 
-Audit prüfen:
+Audit (Status: Assumed - derzeit nicht im collect.sh):
 
 `docker exec dns-pihole grep -R fritz.box /etc/dnsmasq.d`
 
@@ -233,8 +233,8 @@ Canonical Host:
 leitstand.heimgewebe.home.arpa
 
 Caddy Status:
-	•	Version: Observed (v2.8.4)
-	•	Config: Observed (caddy validate OK)
+	•	Version: Observed (v2.8.4; Beleg: `caddy_version.txt`)
+	•	Config: Observed (caddy validate OK; Beleg: `caddy_validate.txt`)
 
 Caddyfile:
 
@@ -314,7 +314,7 @@ Erwartete Kernrollen:
 | deploy-leitstand-1 | UI / Leitstand | hoch |
 | weltgewebe-api | API Backend | hoch |
 
-Audit (Ist-Zustand 2026-02-13):
+Audit (Ist-Zustand 2026-02-13; Beleg: `docker_ps.txt`):
 
 | Container | Rolle | Status | Netzwerke |
 |---|---|---|---|
@@ -357,7 +357,7 @@ Drift-Indikator:
 
 ---
 
-### 5.3 Published Ports (Ist-Zustand 2026-02-13)
+### 5.3 Published Ports (Ist-Zustand 2026-02-13; Beleg: `ss_lntup.txt`)
 
 | Port | Proto | Dienst | Binding | Anmerkung |
 |---|---|---|---|---|
