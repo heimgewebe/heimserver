@@ -84,6 +84,10 @@ Root-Alias (optional)
 
 `heimgewebe.home.arpa`
 
+API (optional; sofern existent)
+
+`api.heimgewebe.home.arpa`
+
 ### 4.2 Weltgewebe
 
 Root-Alias (optional)

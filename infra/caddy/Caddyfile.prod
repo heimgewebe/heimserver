@@ -11,7 +11,19 @@ http://leitstand.heimgewebe.home.arpa {
 }
 
 https://leitstand.heimgewebe.home.arpa {
+  # Service-Name muss dem Compose-Service entsprechen.
   reverse_proxy deploy-leitstand-1:3000
+  tls internal
+}
+
+http://api.heimgewebe.home.arpa {
+  redir https://api.heimgewebe.home.arpa{uri} 308
+}
+
+https://api.heimgewebe.home.arpa {
+  # Service-Name muss dem Compose-Service entsprechen.
+  # FIXME: Semantischer Mismatch: 'weltgewebe-api' dient derzeit als Upstream.
+  reverse_proxy weltgewebe-api:8080
   tls internal
 }
 
@@ -22,6 +34,7 @@ http://api.weltgewebe.home.arpa {
 }
 
 https://api.weltgewebe.home.arpa {
+  # Service-Name muss dem Compose-Service entsprechen.
   reverse_proxy weltgewebe-api:8080
   tls internal
 }
