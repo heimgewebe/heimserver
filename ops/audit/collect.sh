@@ -115,21 +115,23 @@ if have iptables; then
   rules="$(sudo iptables -S DOCKER-USER 2>/dev/null || true)"
 
   # ACCEPT LAN -> tcp dport 80 or 443 (including multiport)
-  # Updated regex to be more robust
-  if echo "$rules" | grep -qE -- "-s ${LAN_SUBNET//\//\\/} .* -p tcp .* (-m multiport --dports (80,443|443,80)|--dport (80|443)) .* -j ACCEPT"; then
+  # Updated logic: Robust chained grep + port boundaries
+  # Matches: -s LAN ... -p tcp ... --dport 80/443 ... -j ACCEPT
+  # Order-agnostic, subnet literal, precise ports (no 8080)
+  if echo "$rules" | grep -F -- "-s $LAN_SUBNET" | grep -F -- "-p tcp" | grep -qE -- "(-m multiport --dports (80,443|443,80)([^0-9]|$)|--dport (80|443)([^0-9]|$)).*-j ACCEPT"; then
     ok "Found LAN allow rule for tcp 80/443 (heuristic)."
   else
     gap "LAN allow rule for tcp 80/443 not confidently found. Manual review required."
   fi
 
-  if echo "$rules" | grep -qE -- "-s ${WG_SUBNET//\//\\/} .* -p tcp .* (-m multiport --dports (80,443|443,80)|--dport (80|443)) .* -j ACCEPT"; then
+  if echo "$rules" | grep -F -- "-s $WG_SUBNET" | grep -F -- "-p tcp" | grep -qE -- "(-m multiport --dports (80,443|443,80)([^0-9]|$)|--dport (80|443)([^0-9]|$)).*-j ACCEPT"; then
     ok "Found WG allow rule for tcp 80/443 (heuristic)."
   else
     gap "WG allow rule for tcp 80/443 not confidently found. Manual review required."
   fi
 
   # DROP/REJECT for tcp 80/443 from others
-  if echo "$rules" | grep -qE -- "-p tcp .* (--dport (80|443)|-m multiport --dports (80,443|443,80)).* -j (DROP|REJECT)"; then
+  if echo "$rules" | grep -F -- "-p tcp" | grep -E -- "(-m multiport --dports (80,443|443,80)([^0-9]|$)|--dport (80|443)([^0-9]|$)).*-j (DROP|REJECT)"; then
     ok "Found explicit DROP/REJECT for tcp 80/443 (heuristic)."
   else
     gap "No explicit DROP/REJECT for tcp 80/443 found (heuristic). Ensure default path is safe."
@@ -262,11 +264,13 @@ if have iptables; then
   nat_rules="$(sudo iptables -t nat -S POSTROUTING 2>/dev/null || true)"
 
   # 1. Generic Check: Any MASQUERADE for WG Subnet?
-  if echo "$nat_rules" | grep -qE -- "-s ${WG_SUBNET//\//\\/} .* -j MASQUERADE"; then
+  # Order-agnostic check: subnet literal + MASQUERADE literal
+  if echo "$nat_rules" | grep -F -- "-s $WG_SUBNET" | grep -F -- "-j MASQUERADE" >/dev/null; then
       ok "Found MASQUERADE for WG subnet (generic)."
 
       # 2. Specific Check: Does it match the expected interface?
-      if echo "$nat_rules" | grep -qE -- "-s ${WG_SUBNET//\//\\/} .* -o ${EXPECTED_LAN_IF} .* -j MASQUERADE"; then
+      # Order-agnostic check: subnet + interface + MASQUERADE
+      if echo "$nat_rules" | grep -F -- "-s $WG_SUBNET" | grep -F -- "-o $EXPECTED_LAN_IF" | grep -F -- "-j MASQUERADE" >/dev/null; then
           note "MASQUERADE matches expected LAN interface ($EXPECTED_LAN_IF)."
       else
           note "MASQUERADE rule does NOT match expected LAN interface ($EXPECTED_LAN_IF). Verify manually."
