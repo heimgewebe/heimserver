@@ -69,6 +69,7 @@ Semantik:
 Keine Kreuzung.
 Heimgewebe-Dienste heißen `*.heimgewebe...`
 Weltgewebe-Dienste heißen `*.weltgewebe...`
+Ein Heimgewebe-FQDN darf niemals auf einen Weltgewebe-Upstream zeigen (und umgekehrt).
 
 ---
 
