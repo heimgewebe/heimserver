@@ -34,13 +34,13 @@ run() {
     echo "CMD: $*"
     echo "DATE: $(date -Is)"
     echo
+    # Capture command output and exit code
     if "$@" 2>&1; then
       :
     else
+      rc=$?
       echo
-      echo "(command failed)"
-      # Only mark as GAP if it's a critical failure or expected tool missing?
-      # For now, just log failure. Specific checks will raise GAPs.
+      echo "(command failed, RC=$rc)"
     fi
   } > "$SNAPSHOT_DIR/$file"
 }
@@ -85,7 +85,7 @@ else
 fi
 
 ###############################################################################
-# Q2: iptables-nft / nftables Konsistenz
+# Q2: Firewall backend consistency (iptables-nft vs nft)
 ###############################################################################
 say "Q2: Firewall backend consistency (iptables-nft vs nft)"
 if have iptables; then
@@ -147,12 +147,19 @@ else
 fi
 
 if have systemctl; then
-  # Check if firewalld is active
-  if systemctl is-active --quiet firewalld; then
-      gap "firewalld is active. Potential conflict with docker iptables."
-      run "firewalld status" "firewalld_status.txt" systemctl status firewalld
+  # Check if firewalld unit exists
+  if systemctl list-unit-files firewalld.service >/dev/null 2>&1; then
+      # firewalld exists
+      if systemctl is-active --quiet firewalld; then
+          gap "firewalld is active. Potential conflict with docker iptables."
+          run "firewalld status" "firewalld_status.txt" systemctl status firewalld
+      else
+          ok "firewalld installed but not active."
+          # capturing enabled state for record
+          run "firewalld enabled state" "firewalld_enabled.txt" systemctl is-enabled firewalld
+      fi
   else
-      ok "firewalld not active."
+      ok "firewalld not installed (service unit not found)."
   fi
 else
   gap "systemctl not available; cannot check firewalld."
@@ -220,10 +227,20 @@ fi
 
 if have iptables; then
   run "iptables nat POSTROUTING rules" "iptables_nat_postrouting.txt" sudo iptables -t nat -S POSTROUTING
-  if sudo iptables -t nat -S POSTROUTING 2>/dev/null | grep -qE -- "-s ${WG_SUBNET//\//\\/} .* -o ${EXPECTED_LAN_IF} .* -j MASQUERADE"; then
-    ok "Found MASQUERADE for WG subnet -> LAN IF (heuristic)."
+  nat_rules="$(sudo iptables -t nat -S POSTROUTING 2>/dev/null || true)"
+
+  # 1. Generic Check: Any MASQUERADE for WG Subnet?
+  if echo "$nat_rules" | grep -qE -- "-s ${WG_SUBNET//\//\\/} .* -j MASQUERADE"; then
+      ok "Found MASQUERADE for WG subnet (generic)."
+
+      # 2. Specific Check: Does it match the expected interface?
+      if echo "$nat_rules" | grep -qE -- "-s ${WG_SUBNET//\//\\/} .* -o ${EXPECTED_LAN_IF} .* -j MASQUERADE"; then
+          note "MASQUERADE matches expected LAN interface ($EXPECTED_LAN_IF)."
+      else
+          note "MASQUERADE rule does NOT match expected LAN interface ($EXPECTED_LAN_IF). Verify manually."
+      fi
   else
-    gap "No MASQUERADE rule for WG subnet found (or different interface). Verify NAT."
+      gap "No MASQUERADE rule for WG subnet found. Verify NAT."
   fi
 else
   gap "iptables missing; cannot verify NAT."
