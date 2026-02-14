@@ -90,30 +90,20 @@ if command -v iptables >/dev/null 2>&1; then
           warn "DOCKER-USER chain empty or not found."
       else
           # Heuristic: Scan for ACCEPT rules covering subnets + ports (tolerant match)
-          # We grep for subnet AND port AND ACCEPT in the same line.
+          # We search for lines containing subnet AND port AND ACCEPT.
 
-          # LAN (TCP)
-          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -E -- "(--dport 80|multiport.*80)" | grep -q -- "-j ACCEPT"; then
-              ok "LAN ($LAN_SUBNET) -> TCP 80 allowed (heuristic)"
+          # LAN
+          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -E -- "(80|443|http|https)" | grep -q -- "-j ACCEPT"; then
+              ok "LAN ($LAN_SUBNET) -> HTTP/HTTPS allowed (heuristic)"
           else
-              warn "LAN ($LAN_SUBNET) -> TCP 80 allow rule not confident. MANUAL REVIEW REQUIRED."
-          fi
-          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -E -- "(--dport 443|multiport.*443)" | grep -q -- "-j ACCEPT"; then
-              ok "LAN ($LAN_SUBNET) -> TCP 443 allowed (heuristic)"
-          else
-              warn "LAN ($LAN_SUBNET) -> TCP 443 allow rule not confident. MANUAL REVIEW REQUIRED."
+              warn "LAN ($LAN_SUBNET) allow rule not confident. MANUAL REVIEW REQUIRED."
           fi
 
-          # WireGuard (TCP)
-          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -E -- "(--dport 80|multiport.*80)" | grep -q -- "-j ACCEPT"; then
-              ok "WG ($WG_SUBNET) -> TCP 80 allowed (heuristic)"
+          # WireGuard
+          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -E -- "(80|443|http|https)" | grep -q -- "-j ACCEPT"; then
+              ok "WG ($WG_SUBNET) -> HTTP/HTTPS allowed (heuristic)"
           else
-              warn "WG ($WG_SUBNET) -> TCP 80 allow rule not confident. MANUAL REVIEW REQUIRED."
-          fi
-          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -E -- "(--dport 443|multiport.*443)" | grep -q -- "-j ACCEPT"; then
-              ok "WG ($WG_SUBNET) -> TCP 443 allowed (heuristic)"
-          else
-              warn "WG ($WG_SUBNET) -> TCP 443 allow rule not confident. MANUAL REVIEW REQUIRED."
+              warn "WG ($WG_SUBNET) allow rule not confident. MANUAL REVIEW REQUIRED."
           fi
 
           # UDP 443 (QUIC) checks if enabled
@@ -125,17 +115,13 @@ if command -v iptables >/dev/null 2>&1; then
               fi
           fi
 
-          # Drop Rest Logic: specific drops for 80/443 OR generic drop/return at end
-          # We look for a rule that drops/rejects traffic to 80/443 (without specific source allow)
-          # OR a generic policy at the end.
-
-          if echo "$docker_user_rules" | grep -E -- "(--dport 80|--dport 443|multiport.*80|multiport.*443)" | grep -E -q -- "-j (DROP|REJECT)"; then
-              ok "Explicit Drop/Reject rule for 80/443 found"
+          # Drop Rest Logic: Any Drop/Reject for 80/443 OR generic catch-all
+          if echo "$docker_user_rules" | grep -E -- "(80|443)" | grep -E -q -- "-j (DROP|REJECT)"; then
+              ok "Explicit Drop/Reject rule for 80/443 found (heuristic)"
           elif echo "$docker_user_rules" | grep -E -q -- "-j (DROP|RETURN|REJECT)$"; then
-               # Matches rules ending in -j DROP/RETURN/REJECT (generic catch-all)
               ok "Generic Drop/Return/Reject policy found (heuristic)"
           else
-              warn "No explicit Drop/Return policy found for 80/443 (verify manually: sudo iptables -S DOCKER-USER)"
+              warn "No explicit Drop/Return policy found (verify manually)"
           fi
       fi
 

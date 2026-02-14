@@ -17,7 +17,8 @@ log_cmd() {
   local file="$2"
   say "Running $cmd -> $file"
   echo "== $cmd ==" > "$SNAPSHOT_DIR/$file"
-  if eval "$cmd" >> "$SNAPSHOT_DIR/$file" 2>&1; then
+  # Use bash -c instead of eval for better safety
+  if bash -c -- "$cmd" >> "$SNAPSHOT_DIR/$file" 2>&1; then
     return 0
   else
     echo "(Command failed or not available)" >> "$SNAPSHOT_DIR/$file"

@@ -42,6 +42,7 @@ Die Wahrheit ist föderal organisiert:
    *Architektur-Entscheidung:*
    Dienste (Docker/Caddy) dürfen auf 0.0.0.0 lauschen.
    Sicherheit wird NICHT durch Loopback-Binding, sondern durch Firewall-Regeln (DOCKER-USER Chain) erzwungen.
+   Offene Listener sind zulässig, solange DOCKER-USER die Exposition begrenzt; runtime dokumentiert Listener, preflight/iptables dokumentieren die Erreichbarkeit.
 
 2. **Kein Host-Caddy**
    Caddy läuft ausschließlich als Docker-Container. Systemd-Caddy ist verboten.
