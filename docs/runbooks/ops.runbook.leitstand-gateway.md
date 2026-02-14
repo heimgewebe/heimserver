@@ -4,7 +4,8 @@ Scope: Caddy Edge Proxy Konfiguration für Leitstand (UI) und API.
 
 ## Architektur
 
-Ziel: **ein Gateway, zwei FQDNs (UI/API)**.
+Ziel: **ein Gateway, aktuell nur UI (Leitstand)**.
+API ist vorbereitet, aber noch nicht provisioniert.
 
 ## Konfiguration (Snippet)
 
@@ -20,18 +21,6 @@ https://leitstand.heimgewebe.home.arpa {
   # Service-Name muss dem Compose-Service entsprechen.
   # see infra/compose/compose.prod.yml (or equivalent)
   reverse_proxy leitstand:3000
-  tls internal
-}
-
-http://api.heimgewebe.home.arpa {
-  redir https://api.heimgewebe.home.arpa{uri} 308
-}
-
-https://api.heimgewebe.home.arpa {
-  # FIXME: Semantischer Mismatch: 'weltgewebe-api' dient derzeit als Upstream.
-  # Service-Name muss dem Compose-Service entsprechen.
-  # see infra/compose/compose.prod.yml (or equivalent)
-  reverse_proxy weltgewebe-api:8080
   tls internal
 }
 ```
