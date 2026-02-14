@@ -99,7 +99,7 @@ Root-Alias (optional)
 API (optional; sofern existent)
 
 `api.weltgewebe.home.arpa`
-(Aktueller Stand: DNS + Caddy provisioniert; Upstream deployment-spezifisch (Compose).)
+(Aktueller Stand: Optional/Template; DNS + Caddy deaktiviert bis Upstream vorhanden.)
 
 **Regel:**
 Keine Kurzformen.

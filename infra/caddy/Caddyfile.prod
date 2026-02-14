@@ -36,13 +36,5 @@ https://leitstand.heimgewebe.home.arpa {
 
 # --- Weltgewebe ---
 
-http://api.weltgewebe.home.arpa {
-  redir https://api.weltgewebe.home.arpa{uri} 308
-}
-
-https://api.weltgewebe.home.arpa {
-  # Service-Name muss dem Compose-Service entsprechen.
-  # see infra/compose/compose.prod.yml (or equivalent)
-  reverse_proxy weltgewebe-api:8080
-  tls internal
-}
+# Optional: Weltgewebe (enable only with matching Compose upstream)
+# import optional/weltgewebe.caddy
