@@ -1,4 +1,4 @@
-heimserver.naming.md
+# heimserver.naming.md
 
 Kanonische Namens- und Adressierungsarchitektur
 ⛔️ ARCHITEKTURDOKUMENT · NICHT ÖFFENTLICH
@@ -6,9 +6,9 @@ Kanonische Namens- und Adressierungsarchitektur
 Stand: 2026-02-13
 Scope: Heimserver + Heimgewebe
 
-⸻
+---
 
-1. Namensphilosophie
+## 1. Namensphilosophie
 
 These: Namen sind nur Labels.
 Antithese: Namen bestimmen Systemverhalten.
@@ -20,13 +20,13 @@ Das Problem war „inkohärente Namensräume“.
 
 Wenn DNS, TLS, Caddy und WireGuard unterschiedliche Realitäten kennen, entsteht Splitbrain.
 
-⸻
+---
 
-2. Root-Zone (KANONISCH)
+## 2. Root-Zone (KANONISCH)
 
 Primäre interne Root
 
-home.arpa
+`home.arpa`
 
 Begründung:
 	•	RFC 8375 reserviert für Heimnetze
@@ -36,42 +36,39 @@ Begründung:
 
 Verboten:
 
-.home
-.local
-.lan
-.internal
+| Zone | Grund |
+|---|---|
+| `.local` | mDNS-Konflikt |
+| `.home` | nicht reserviert |
+| `.lan` | unspezifiziert |
+| `.internal` | potentiell öffentlich kollidierend |
 
-.local → mDNS-Konflikt
-.home → nicht reserviert
-.lan → unspezifiziert
-.internal → potentiell öffentlich kollidierend
+---
 
-⸻
+## 3. Subzone
 
-3. Subzone
-
-heimgewebe.home.arpa
+`heimgewebe.home.arpa`
 
 Semantik:
 	•	Heimnetz
 	•	Heimgewebe als Systemverbund
 	•	kein Leak nach außen
 
-⸻
+---
 
-4. FQDN-Struktur
+## 4. FQDN-Struktur
 
 Leitstand
 
-leitstand.heimgewebe.home.arpa
+`leitstand.heimgewebe.home.arpa`
 
 API
 
-api.heimgewebe.home.arpa
+`api.heimgewebe.home.arpa`
 
 Root-Alias (optional)
 
-heimgewebe.home.arpa
+`heimgewebe.home.arpa`
 
 Keine Kurzformen.
 Keine alternativen Domains.
@@ -79,11 +76,11 @@ Keine parallelen Namensräume.
 
 Ein Host → ein kanonischer Name.
 
-⸻
+---
 
-5. TLS-Policy
+## 5. TLS-Policy
 
-Caddy tls internal.
+Caddy `tls internal`.
 
 Konsequenz:
 	•	Eigene lokale CA
@@ -94,14 +91,15 @@ Nicht erlaubt:
 	•	Mischbetrieb öffentlich + intern für dieselbe Zone
 	•	parallele Zertifikate mit anderem CN
 
-⸻
+---
 
-6. Caddy-Namensbindung
+## 6. Caddy-Namensbindung
 
 Jeder Hostblock entspricht exakt einem FQDN.
 
 Beispiel:
 
+```
 http://leitstand.heimgewebe.home.arpa {
   redir https://leitstand.heimgewebe.home.arpa{uri} 308
 }
@@ -110,33 +108,36 @@ https://leitstand.heimgewebe.home.arpa {
   reverse_proxy deploy-leitstand-1:3000
   tls internal
 }
+```
 
 Kein Catch-All für interne Hosts.
 
-⸻
+---
 
-7. DNS-Kanon
+## 7. DNS-Kanon
 
-Pi-hole /etc/dnsmasq.d/99-heimgewebe.conf:
+Pi-hole `/etc/dnsmasq.d/99-heimgewebe.conf`:
 
+```
 address=/leitstand.heimgewebe.home.arpa/192.168.178.46
 address=/api.heimgewebe.home.arpa/192.168.178.46
 address=/heimgewebe.home.arpa/192.168.178.46
+```
 
 Keine:
-	•	local=/home.arpa/
+	•	`local=/home.arpa/`
 	•	host-record + address Mischung
-	•	custom.list Duplikate
+	•	`custom.list` Duplikate
 
 Nur EIN Mechanismus.
 
-⸻
+---
 
-8. Client-Sicht
+## 8. Client-Sicht
 
 Alle Clients sehen:
 
-leitstand.heimgewebe.home.arpa → 192.168.178.46
+`leitstand.heimgewebe.home.arpa` → `192.168.178.46`
 
 Egal ob:
 	•	LAN
@@ -146,20 +147,21 @@ Egal ob:
 
 DNS-Quelle ist immer Pi-hole.
 
-⸻
+---
 
-9. Verbotene Drift-Muster
+## 9. Verbotene Drift-Muster
 
-Drift	Effekt
-paralleles leitstand.home	falsches Zertifikat
-mehrere FQDNs auf denselben Host	TLS-Konflikt
-Router-DNS ≠ Pi-hole	Splitbrain
-Private Relay aktiv	DNS-Umgehung
+| Drift | Effekt |
+|---|---|
+| paralleles `leitstand.home` | falsches Zertifikat |
+| mehrere FQDNs auf denselben Host | TLS-Konflikt |
+| Router-DNS ≠ Pi-hole | Splitbrain |
+| Private Relay aktiv | DNS-Umgehung |
 
 
-⸻
+---
 
-10. Semantische Invarianten
+## 10. Semantische Invarianten
 	1.	Ein Dienst = ein kanonischer FQDN
 	2.	Ein FQDN = eine DNS-Antwort
 	3.	Eine DNS-Antwort = eine IP
@@ -167,25 +169,25 @@ Private Relay aktiv	DNS-Umgehung
 
 Kein Multi-Truth.
 
-⸻
+---
 
-11. Zukunftsregeln
+## 11. Zukunftsregeln
 
 Wenn neue Dienste entstehen:
 
-<dienst>.heimgewebe.home.arpa
+`<dienst>.heimgewebe.home.arpa`
 
 Beispiele:
 
-chronik.heimgewebe.home.arpa
-hauski.heimgewebe.home.arpa
-observatorium.heimgewebe.home.arpa
+`chronik.heimgewebe.home.arpa`
+`hauski.heimgewebe.home.arpa`
+`observatorium.heimgewebe.home.arpa`
 
 Keine Sub-Sub-Domains ohne Not.
 
-⸻
+---
 
-12. Essenz
+## 12. Essenz
 
 Namensräume sind Machtstrukturen.
 
@@ -195,9 +197,9 @@ verliert Wahrheit.
 Ein System mit einem Namen
 ist kohärent.
 
-⸻
+---
 
-Risikoanalyse
+## Risikoanalyse
 
 Hoch:
 	•	parallele Domains
@@ -211,9 +213,9 @@ Mittel:
 Gering:
 	•	einzelne Record-Anpassung
 
-⸻
+---
 
-Unsicherheitsgrad
+## Unsicherheitsgrad
 
 0.10
 

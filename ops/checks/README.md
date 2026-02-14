@@ -2,7 +2,7 @@
 
 Prinzip:
 - Jeder Check ist ein Belegpfad für Aussagen in `heimserver.constitution.md`.
-- Output gehört in `server-facts/audit-snapshots/<timestamp>/` (außerhalb Git).
+- Output gehört in `ops/audit/snapshots/<timestamp>/` (gitignored).
 
 ## Check-Matrix (Kanon → Beleg)
 

@@ -1,11 +1,11 @@
-heimserver.runtime.md
+# heimserver.runtime.md
 
 Status: Operativ kanonisch
 Scope: Laufzeit-Realität des Heimservers (nicht Architekturvision)
 
-⸻
+---
 
-0. Zweck
+## 0. Zweck
 
 Dieses Dokument beschreibt den tatsächlichen Laufzeitzustand des Heimservers.
 
@@ -21,11 +21,11 @@ Was läuft wirklich.
 Was muss invariant sein.
 Wie Drift erkannt wird.
 
-⸻
+---
 
-1. Identitätsschicht
+## 1. Identitätsschicht
 
-1.1 Host-Identität
+### 1.1 Host-Identität
 	•	Hostname: heimserver
 	•	LAN-IP: 192.168.178.46
 	•	WireGuard-IP: 10.7.0.1
@@ -37,48 +37,49 @@ Heimserver ist Trust-Pivot des Heimnetzes.
 
 Audit prüfen:
 
-hostnamectl
-ip -br a
+`hostnamectl`
+`ip -br a`
 
 
-⸻
+---
 
-1.2 Kernel-Funktionen
+### 1.2 Kernel-Funktionen
 
 Erforderlich:
 
-sysctl net.ipv4.ip_forward
+`sysctl net.ipv4.ip_forward`
 
 Soll:
 
-net.ipv4.ip_forward = 1 (Status: Verifiziert)
+`net.ipv4.ip_forward = 1 (Status: Verifiziert)`
 
 Invariante:
 
 Ohne ip_forward ist WG-LAN-Access unmöglich.
 
-⸻
+---
 
-2. Netz-Schicht
+## 2. Netz-Schicht
 
-2.1 Interfaces
+### 2.1 Interfaces
 
 Erwartet:
 
-Interface	Zweck
-eno2	LAN
-wg0	VPN
-docker0 / br-*	Container
+| Interface | Zweck |
+|---|---|
+| eno2 | LAN |
+| wg0 | VPN |
+| docker0 / br-* | Container |
 
 Prüfen:
 
-ip -br a
-ip route
+`ip -br a`
+`ip route`
 
 
-⸻
+---
 
-2.2 Routing-Invariante
+### 2.2 Routing-Invariante
 
 Erwartet:
 	•	Default → Fritzbox (192.168.178.1)
@@ -94,21 +95,21 @@ Audit (Status: Verifiziert):
 	•	sysctl net.ipv4.conf.all.rp_filter (Status: OK)
 
 
-⸻
+---
 
-2.3 WireGuard
+### 2.3 WireGuard
 
 Status:
 
-sudo wg show
+`sudo wg show`
 
 Peer muss enthalten:
 
-allowed ips: 10.7.0.2/32
+`allowed ips: 10.7.0.2/32`
 
 Nicht:
 
-0.0.0.0/0
+`0.0.0.0/0`
 
 Invariante:
 
@@ -119,17 +120,17 @@ Drift-Indikator:
 	•	aber 0 Traffic
 → AllowedIPs oder Routing falsch
 
-⸻
+---
 
-2.4 NAT-Regel
+### 2.4 NAT-Regel
 
 Erwartet:
 
-sudo iptables -t nat -S
+`sudo iptables -t nat -S`
 
 Muss enthalten:
 
--A POSTROUTING -s 10.7.0.0/24 -o eno2 -j MASQUERADE
+`-A POSTROUTING -s 10.7.0.0/24 -o eno2 -j MASQUERADE`
 
 Invariante:
 
@@ -138,50 +139,50 @@ NAT nur für WireGuard-Netz.
 Audit-Lücke:
 	•	nftables vs iptables-nft Konsistenz prüfen.
 
-⸻
+---
 
-3. DNS-Schicht
+## 3. DNS-Schicht
 
-3.1 Pi-hole
+### 3.1 Pi-hole
 
 Container: dns-pihole
 
 Prüfen:
 
-docker ps
+`docker ps`
 
 Invariante:
 
 Pi-hole ist alleiniger DNS im Heimnetz.
 
-⸻
+---
 
-3.2 home.arpa Zone
+### 3.2 home.arpa Zone
 
 Canonical Zone:
 
-*.heimgewebe.home.arpa
+`*.heimgewebe.home.arpa`
 
 Auflösung via:
 
-address=/leitstand.heimgewebe.home.arpa/192.168.178.46
+`address=/leitstand.heimgewebe.home.arpa/192.168.178.46`
 
 Prüfen:
 
-dig leitstand.heimgewebe.home.arpa @127.0.0.1
+`dig leitstand.heimgewebe.home.arpa @127.0.0.1`
 
 Invariante:
 
 home.arpa niemals extern forwarden.
 
-⸻
+---
 
-3.3 fritz.box Conditional Forwarding
+### 3.3 fritz.box Conditional Forwarding
 
 Konfig:
 
-server=/fritz.box/192.168.178.1
-rev-server=192.168.178.0/24,192.168.178.1
+`server=/fritz.box/192.168.178.1`
+`rev-server=192.168.178.0/24,192.168.178.1`
 
 Invariante:
 
@@ -193,12 +194,12 @@ cached heimserver.fritz.box is NXDOMAIN
 
 Audit prüfen:
 
-docker exec dns-pihole grep -R fritz.box /etc/dnsmasq.d
+`docker exec dns-pihole grep -R fritz.box /etc/dnsmasq.d`
 
 
-⸻
+---
 
-3.4 DNS-Splitbrain-Vermeidung
+### 3.4 DNS-Splitbrain-Vermeidung
 
 Empfohlen:
 
@@ -212,15 +213,15 @@ Invariante:
 
 Kein Client-Sonderzustand.
 
-⸻
+---
 
-4. Proxy-Schicht (Caddy)
+## 4. Proxy-Schicht (Caddy)
 
 Container: edge-caddy
 
-⸻
+---
 
-4.1 Site-Block Invariante
+### 4.1 Site-Block Invariante
 
 Canonical Host:
 
@@ -232,6 +233,7 @@ Caddy Status:
 
 Caddyfile:
 
+```
 http://leitstand.heimgewebe.home.arpa {
   redir https://leitstand.heimgewebe.home.arpa{uri} 308
 }
@@ -240,6 +242,7 @@ https://leitstand.heimgewebe.home.arpa {
   reverse_proxy deploy-leitstand-1:3000
   tls internal
 }
+```
 
 Invariante:
 
@@ -247,24 +250,24 @@ Kein alter Host wie leitstand.home aktiv.
 
 Audit prüfen:
 
-curl -i http://192.168.178.46 -H "Host: leitstand.heimgewebe.home.arpa"
+`curl -i http://192.168.178.46 -H "Host: leitstand.heimgewebe.home.arpa"`
 
 Erwartet:
 
 308 Redirect
 
 
-⸻
+---
 
-4.2 TLS
+### 4.2 TLS
 
 Verwendet:
 
-tls internal
+`tls internal`
 
 Root CA exportiert nach:
 
-/opt/heimgewebe/edge/certs/caddy-local-root.crt
+`/opt/heimgewebe/edge/certs/caddy-local-root.crt`
 
 Invariante:
 
@@ -275,9 +278,9 @@ Drift-Indikator:
 no peer certificate available
 
 
-⸻
+---
 
-4.3 Container-Netz
+### 4.3 Container-Netz
 
 edge-caddy muss in:
 	•	edge
@@ -289,38 +292,40 @@ Reverse Proxy darf Upstream per Container-DNS auflösen.
 
 Audit prüfen:
 
-docker inspect edge-caddy | jq
+`docker inspect edge-caddy | jq`
 
-⸻
+---
 
-5. Container-Schicht
+## 5. Container-Schicht
 
-5.1 Aktive Kerncontainer
+### 5.1 Aktive Kerncontainer
 
 Erwartete Kernrollen:
 
-Container	Rolle	Kritikalität
-dns-pihole	DNS / Resolver	kritisch
-edge-caddy	Reverse Proxy / TLS	kritisch
-deploy-leitstand-1	UI / Leitstand	hoch
-weltgewebe-api	API Backend	hoch
+| Container | Rolle | Kritikalität |
+|---|---|---|
+| dns-pihole | DNS / Resolver | kritisch |
+| edge-caddy | Reverse Proxy / TLS | kritisch |
+| deploy-leitstand-1 | UI / Leitstand | hoch |
+| weltgewebe-api | API Backend | hoch |
 
 Audit (Ist-Zustand 2026-02-13):
 
-Container            Rolle            Status         Netzwerke
-dns-pihole           DNS              healthy        host (implizit 53/tcp+udp, 80/tcp)
-edge-caddy           Proxy            Up             edge, heimnet
-deploy-leitstand-1   Leitstand        Up             deploy_default, heimnet
-dns-unbound          Resolver         healthy        dns_default
-weltgewebe-api       API              Up             -
+| Container | Rolle | Status | Netzwerke |
+|---|---|---|---|
+| dns-pihole | DNS | healthy | host (implizit 53/tcp+udp, 80/tcp) |
+| edge-caddy | Proxy | Up | edge, heimnet |
+| deploy-leitstand-1 | Leitstand | Up | deploy_default, heimnet |
+| dns-unbound | Resolver | healthy | dns_default |
+| weltgewebe-api | API | Up | - |
 
 Invariante:
 
 Kein Container läuft ohne klar definierte Rolle.
 
-⸻
+---
 
-5.2 Netzwerke
+### 5.2 Netzwerke
 
 Erwartete Docker-Netze (Audit-Ergebnis):
 	•	edge
@@ -334,8 +339,8 @@ Erwartete Docker-Netze (Audit-Ergebnis):
 
 Audit:
 
-docker network ls
-docker network inspect heimnet
+`docker network ls`
+`docker network inspect heimnet`
 
 Invariante:
 
@@ -345,29 +350,33 @@ Drift-Indikator:
 	•	reverse_proxy Dial schlägt fehl
 	•	502 Bad Gateway
 
-⸻
+---
 
-5.3 Published Ports (Ist-Zustand 2026-02-13)
+### 5.3 Published Ports (Ist-Zustand 2026-02-13)
 
-Port        Proto   Dienst              Binding       Anmerkung
-53          TCP/UDP Pi-hole (Host-Net)  0.0.0.0, ::   DNS Service
-80          TCP     Caddy               0.0.0.0, ::   HTTP -> Redirect
-443         TCP     Caddy               0.0.0.0, ::   HTTPS
-443         UDP     Caddy               0.0.0.0, ::   QUIC/HTTP3 (Aktiviert & Erlaubt)
-51820       UDP     WireGuard           0.0.0.0, ::   VPN Ingress
-22          TCP     SSHD                0.0.0.0, ::   Admin Access
+| Port | Proto | Dienst | Binding | Anmerkung |
+|---|---|---|---|---|
+| 53 | TCP/UDP | Pi-hole (Host-Net) | 0.0.0.0, :: | DNS Service |
+| 80 | TCP | Caddy | 0.0.0.0, :: | HTTP -> Redirect |
+| 443 | TCP | Caddy | 0.0.0.0, :: | HTTPS |
+| 443 | UDP | Caddy | 0.0.0.0, :: | QUIC/HTTP3 (Aktiviert & Erlaubt) |
+| 51820 | UDP | WireGuard | 0.0.0.0, :: | VPN Ingress |
+| 22 | TCP | SSHD | 0.0.0.0, :: | Admin Access |
 
 Local Listeners (127.0.0.1 Only):
-3000        TCP     deploy-leitstand-1  127.0.0.1
-5335        TCP/UDP dns-unbound         127.0.0.1     Pi-hole Upstream
-8080        TCP     code-server         127.0.0.1     SSH-Tunnel Access
+
+| Port | Proto | Dienst | Binding | Anmerkung |
+|---|---|---|---|---|
+| 3000 | TCP | deploy-leitstand-1 | 127.0.0.1 | |
+| 5335 | TCP/UDP | dns-unbound | 127.0.0.1 | Pi-hole Upstream |
+| 8080 | TCP | code-server | 127.0.0.1 | SSH-Tunnel Access |
 
 Caddy Admin:
 Port 2019 ist NICHT published (nur container-intern erreichbar).
 
 Audit:
 
-ss -lntup
+`ss -lntup`
 
 Invariante:
 
@@ -376,11 +385,11 @@ Keine unnötigen offenen Ports.
 Audit-Lücke:
 	•	Port-Exposure-Review fehlt dokumentiert.
 
-⸻
+---
 
-6. Persistenz-Zonen
+## 6. Persistenz-Zonen
 
-6.1 Caddy
+### 6.1 Caddy
 
 Volumes:
 	•	edge_caddy_data
@@ -388,7 +397,7 @@ Volumes:
 
 Pfad Host:
 
-/opt/heimgewebe/edge/
+`/opt/heimgewebe/edge/`
 
 Invariante:
 
@@ -396,33 +405,33 @@ Caddyfile wird als bind-mount read-only gemountet.
 
 Audit:
 
-docker inspect edge-caddy | jq '.Mounts'
+`docker inspect edge-caddy | jq '.Mounts'`
 
 
-⸻
+---
 
-6.2 Pi-hole
+### 6.2 Pi-hole
 
 Wichtige Pfade:
-	•	/etc/pihole
-	•	/etc/dnsmasq.d
+	•	`/etc/pihole`
+	•	`/etc/dnsmasq.d`
 
 Invariante:
 
-etc_dnsmasq_d = true
+`etc_dnsmasq_d = true`
 
 Audit:
 
-grep etc_dnsmasq_d /opt/heimgewebe/dns/pihole/etc-pihole/pihole.toml
+`grep etc_dnsmasq_d /opt/heimgewebe/dns/pihole/etc-pihole/pihole.toml`
 
 
-⸻
+---
 
-6.3 WireGuard
+### 6.3 WireGuard
 
 Konfig:
 
-/etc/wireguard/wg0.conf
+`/etc/wireguard/wg0.conf`
 
 Invariante:
 
@@ -432,20 +441,21 @@ PrivateKey niemals versioniert
 Audit-Lücke:
 	•	wg0.conf Redacted Snapshot fehlt dokumentiert.
 
-⸻
+---
 
-7. Systemd-Schicht
+## 7. Systemd-Schicht
 
 Erwartete Units:
 
-Unit	Status
-wg-quick@wg0	active
-docker	active
+| Unit | Status |
+|---|---|
+| wg-quick@wg0 | active |
+| docker | active |
 
 Audit:
 
-systemctl status wg-quick@wg0
-systemctl status docker
+`systemctl status wg-quick@wg0`
+`systemctl status docker`
 
 Invariante:
 
@@ -454,72 +464,75 @@ WireGuard startet vor Caddy (implizit via Routing).
 Audit-Lücke:
 	•	Unit-Abhängigkeiten nicht dokumentiert.
 
-⸻
+---
 
-8. Drift-Matrix
+## 8. Drift-Matrix
 
-Symptom	Ursache
-NXDOMAIN fritz.box	Forwarding fehlt
-404 von Caddy	Host-Mismatch
-no peer certificate	TLS Block fehlt
-WG Handshake OK, kein Traffic	NAT fehlt
-DNS geht, HTTP nicht	Routing
+| Symptom | Ursache |
+|---|---|
+| NXDOMAIN fritz.box | Forwarding fehlt |
+| 404 von Caddy | Host-Mismatch |
+| no peer certificate | TLS Block fehlt |
+| WG Handshake OK, kein Traffic | NAT fehlt |
+| DNS geht, HTTP nicht | Routing |
 
 Invariante:
 
 Jede Schicht testbar isoliert.
 
-⸻
+---
 
-9. Crash-Recovery-Protokoll
+## 9. Crash-Recovery-Protokoll
 
-9.1 Caddy Crashloop
+### 9.1 Caddy Crashloop
 
 Symptom:
 
-unrecognized directive
+`unrecognized directive`
 
 Vorgehen:
 
+```bash
 docker logs edge-caddy
 caddy validate --config /etc/caddy/Caddyfile
 docker compose up -d --force-recreate
+```
 
 Invariante:
 
 Caddyfile immer syntaktisch validieren vor Restart.
 
-⸻
+---
 
-9.2 DNS Totalausfall
+### 9.2 DNS Totalausfall
 
 Test:
 
-dig google.com @127.0.0.1
+`dig google.com @127.0.0.1`
 
 Wenn tot:
 
-docker restart dns-pihole
+`docker restart dns-pihole`
 
 
-⸻
+---
 
-9.3 VPN kein Zugriff auf LAN
+### 9.3 VPN kein Zugriff auf LAN
 
 Check:
 
-sudo wg show
-sudo iptables -t nat -S
+`sudo wg show`
+`sudo iptables -t nat -S`
 
 Fehlt:
 
-MASQUERADE
+`MASQUERADE`
 
 → hinzufügen.
 
-⸻
+---
 
-10. Sicherheits-Invarianten
+## 10. Sicherheits-Invarianten
 	1.	Kein öffentliches Exposing von Pi-hole UI
 	2.	Kein Full-Tunnel ohne Absicht
 	3.	Kein externer DNS Forward für home.arpa
@@ -539,17 +552,19 @@ Audit-Offene Punkte
 
 Empfohlen zusätzlich loggen:
 
+```bash
 sudo ufw status
 sudo sysctl -a | grep ipv6
 docker info
+```
 
 Optional:
-	•	nft list ruleset
-	•	ip6tables -S
+	•	`nft list ruleset`
+	•	`ip6tables -S`
 
-⸻
+---
 
-12. Runtime-Definition
+## 12. Runtime-Definition
 
 Heimserver Runtime ist kohärent, wenn:
 	•	DNS → Pi-hole
@@ -560,9 +575,9 @@ Heimserver Runtime ist kohärent, wenn:
 
 Alles andere ist Drift.
 
-⸻
+---
 
-Essenz
+## Essenz
 
 Heimserver Runtime ist stabil, wenn:
 	•	WG korrekt NATed
@@ -580,7 +595,7 @@ Er ist ein:
 
 Wenn eine dieser Achsen bricht, bricht Kohärenz.
 
-⸻
+---
 
 Unsicherheitsgrad: 0.12
 Ursache: IPv6 und Firewall-Policy nicht vollständig erfasst.

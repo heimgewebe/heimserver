@@ -1,4 +1,4 @@
-heimserver.operations.md
+# heimserver.operations.md
 
 Betriebs- und Eingriffsprotokoll
 ⛔️ OPERATIVES DOKUMENT · KANONISCH
@@ -6,9 +6,9 @@ Betriebs- und Eingriffsprotokoll
 Stand: 2026-02-13
 Scope: Heimserver · Heimgewebe · WireGuard · Pi-hole · Caddy
 
-⸻
+---
 
-0. Betriebsphilosophie
+## 0. Betriebsphilosophie
 
 These: Betrieb ist Wartung.
 Antithese: Betrieb ist Zustandskontrolle.
@@ -18,113 +18,115 @@ Destabilisierung:
 Nicht „läuft es?“ ist die Frage.
 Sondern: „Läuft es kohärent mit der Architektur?“
 
-⸻
+---
 
-1. Minimaler Gesundheitscheck
+## 1. Minimaler Gesundheitscheck
 
 Container
 
-docker ps
+`docker ps`
 
 Erwartung:
-	•	edge-caddy → Up
-	•	dns-pihole → Up (healthy)
-	•	deploy-leitstand-1 → Up
-	•	weltgewebe-api → Up
+	•	`edge-caddy` → Up
+	•	`dns-pihole` → Up (healthy)
+	•	`deploy-leitstand-1` → Up
+	•	`weltgewebe-api` → Up
 
 Kein Restarting.
 Kein Exited.
 
-⸻
+---
 
 DNS
 
-dig +short leitstand.heimgewebe.home.arpa @127.0.0.1
+`dig +short leitstand.heimgewebe.home.arpa @127.0.0.1`
 
 Erwartung:
 
-192.168.178.46
+`192.168.178.46`
 
 
-⸻
+---
 
 HTTP
 
-curl -I http://leitstand.heimgewebe.home.arpa
+`curl -I http://leitstand.heimgewebe.home.arpa`
 
 Erwartung:
 
-308 Permanent Redirect
+`308 Permanent Redirect`
 
 
-⸻
+---
 
 HTTPS (Server-intern)
 
-curl -k -I https://leitstand.heimgewebe.home.arpa
+`curl -k -I https://leitstand.heimgewebe.home.arpa`
 
 Erwartung:
 
-200 OK
+`200 OK`
 
 
-⸻
+---
 
 WireGuard
 
-sudo wg show
+`sudo wg show`
 
 Erwartung:
 	•	latest handshake < 60 Sekunden
 	•	Transfer steigend bei Nutzung
 
-⸻
+---
 
-2. Standard-Wiederherstellung
+## 2. Standard-Wiederherstellung
 
-2.1 Caddy Crashloop
+### 2.1 Caddy Crashloop
 
 Symptom:
 
-Restarting (1)
+`Restarting (1)`
 
 Vorgehen:
 
+```bash
 docker logs edge-caddy
 caddy validate --config /etc/caddy/Caddyfile
+```
 
 Häufigster Fehler:
 Syntax im Caddyfile.
 
 Nach Fix:
 
-docker compose up -d --force-recreate caddy
+`docker compose up -d --force-recreate caddy`
 
 
-⸻
+---
 
-2.2 DNS antwortet nicht
+### 2.2 DNS antwortet nicht
 
 Check:
 
-sudo docker exec dns-pihole pihole status
+`sudo docker exec dns-pihole pihole status`
 
 Wenn FTL läuft:
 
-sudo docker exec dns-pihole pihole reloaddns
+`sudo docker exec dns-pihole pihole reloaddns`
 
 Wenn etc_dnsmasq_d deaktiviert:
 
-grep etc_dnsmasq_d /etc/pihole/pihole.toml
+`grep etc_dnsmasq_d /etc/pihole/pihole.toml`
 
 Muss:
 
-etc_dnsmasq_d = true
+`etc_dnsmasq_d = true`
 
 
-⸻
+---
 
-2.3 iPad kann Seite nicht öffnen
+### 2.3 iPad kann Seite nicht öffnen
 
 Checkfolge:
 	1.	WireGuard aktiv?
@@ -132,71 +134,71 @@ Checkfolge:
 	3.	AllowedIPs korrekt?
 	4.	tcpdump auf wg0 prüfen:
 
-sudo tcpdump -ni wg0 port 53 or port 80 or port 443
+`sudo tcpdump -ni wg0 port 53 or port 80 or port 443`
 
 Wenn DNS an 192.168.178.1 geht → WG DNS falsch.
 
-⸻
+---
 
-3. WireGuard Wartung
+## 3. WireGuard Wartung
 
 Peer prüfen
 
-sudo wg show
+`sudo wg show`
 
 AllowedIPs für iPad:
 
-10.7.0.2/32
+`10.7.0.2/32`
 
 Nicht:
 
-192.168.178.0/24
-0.0.0.0/0
+`192.168.178.0/24`
+`0.0.0.0/0`
 
 Routing erfolgt serverseitig via NAT.
 
-⸻
+---
 
 NAT prüfen
 
-sudo iptables -t nat -L POSTROUTING -n -v
+`sudo iptables -t nat -L POSTROUTING -n -v`
 
 Erwartung:
 
-MASQUERADE  10.7.0.0/24  → eno2
+`MASQUERADE  10.7.0.0/24  → eno2`
 
 
-⸻
+---
 
 IP-Forward prüfen
 
-sysctl net.ipv4.ip_forward
+`sysctl net.ipv4.ip_forward`
 
 Muss:
 
-= 1
+`= 1`
 
 
-⸻
+---
 
-4. Zertifikatswartung
+## 4. Zertifikatswartung
 
 Root-CA liegt in:
 
-/opt/heimgewebe/edge/certs/caddy-local-root.crt
+`/opt/heimgewebe/edge/certs/caddy-local-root.crt`
 
 Bei Clientproblemen:
 	•	CA neu exportieren
 	•	auf Client installieren
 	•	iOS → Zertifikatsvertrauen aktivieren
 
-⸻
+---
 
-5. DNS-Drift-Test
+## 5. DNS-Drift-Test
 
 Einmal im Monat:
 
-grep -R home.arpa /opt/heimgewebe
+`grep -R home.arpa /opt/heimgewebe`
 
 Es darf nur vorkommen:
 	•	Pi-hole dnsmasq.d
@@ -205,39 +207,41 @@ Es darf nur vorkommen:
 
 Keine Schatten-Domains.
 
-⸻
+---
 
-6. Backup-Strategie
+## 6. Backup-Strategie
 
 Konfigurationskritisch:
-	•	/opt/heimgewebe/edge/Caddyfile
-	•	/opt/heimgewebe/dns/pihole/
-	•	/etc/wireguard/wg0.conf
+	•	`/opt/heimgewebe/edge/Caddyfile`
+	•	`/opt/heimgewebe/dns/pihole/`
+	•	`/etc/wireguard/wg0.conf`
 
 Backup:
 
+```bash
 tar czf heimserver-config-$(date +%F).tar.gz \
 /opt/heimgewebe \
 /etc/wireguard
+```
 
 
-⸻
+---
 
-7. Monitoring-Minimum
+## 7. Monitoring-Minimum
 
 Kein externes Monitoring.
 
 Aber:
-	•	docker ps
-	•	wg show
-	•	dig
-	•	curl
+	•	`docker ps`
+	•	`wg show`
+	•	`dig`
+	•	`curl`
 
 Reicht für Heimmaßstab.
 
-⸻
+---
 
-8. Notfall-Reset
+## 8. Notfall-Reset
 
 Wenn alles bricht:
 	1.	Stoppe Caddy
@@ -248,9 +252,9 @@ Wenn alles bricht:
 
 Reihenfolge ist wichtig.
 
-⸻
+---
 
-9. Systemische Risiken
+## 9. Systemische Risiken
 
 Hoch:
 	•	parallele DNS-Resolver
@@ -264,9 +268,9 @@ Mittel:
 Niedrig:
 	•	TLS interner CA
 
-⸻
+---
 
-10. Essenz
+## 10. Essenz
 
 Heimserver ist kein Server.
 Er ist ein kohärenter Zustand.
@@ -274,9 +278,9 @@ Er ist ein kohärenter Zustand.
 Betrieb heißt:
 Diesen Zustand gegen Drift verteidigen.
 
-⸻
+---
 
-Unsicherheitsgrad
+## Unsicherheitsgrad
 
 0.12
 
@@ -294,7 +298,7 @@ Annahmen:
 	•	Kein zweiter Resolver aktiv
 	•	Keine VLAN-Segmentierung aktiv
 
-⸻
+---
 
 Humor (trocken):
 

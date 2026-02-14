@@ -18,6 +18,7 @@ Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agen
 **Status:** Dauerhaft privat.
 **Regel:** Reale IPs, Subnetze und Pfade sind im Repo erlaubt, um die operative Realität abzubilden.
 **Verbot:** Niemals Keys, Secrets, Zertifikate (Private Keys), Logs oder unredacted Snapshots committen.
+**Guardrail:** Repo darf niemals public geschaltet werden; wenn doch, ist das ein Security Incident.
 
 ## Grundsatz: Secrets-Shadow-Pfad (außerhalb von Git)
 

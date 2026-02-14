@@ -1,4 +1,4 @@
-heimserver.network.md
+# heimserver.network.md
 
 Kanonische Netz- und Transportarchitektur
 ⛔️ ENTHÄLT SICHERHEITSRELEVANTE STRUKTUR
@@ -8,9 +8,13 @@ Stand: 2026-02-13
 Host: heimserver
 Dokumentklasse: ARCHITEKTUR · KANONISCH
 
-⸻
+**Sicherheits-Policy (Repo-Status):**
+Dieses Dokument enthält sicherheitsrelevante Strukturen.
+Bei Veröffentlichung des Repositories müssen IPs, Subnetze und Keys unkenntlich gemacht werden (Redaction).
 
-1. Netzphilosophie
+---
+
+## 1. Netzphilosophie
 
 These: Ein Heimserver ist nur so stabil wie sein Routing.
 Antithese: Routing ist Nebensache, Dienste sind entscheidend.
@@ -20,29 +24,29 @@ Destabilisierung:
 Das Problem war nie „DNS kaputt“.
 Das Problem war „Splitbrain durch falsche AllowedIPs“.
 
-⸻
+---
 
-2. Netzsegmente (Ist-Zustand)
+## 2. Netzsegmente (Ist-Zustand)
 
-2.1 LAN
+### 2.1 LAN
 
-Subnetz: 192.168.178.0/24
-Gateway: 192.168.178.1 (Fritzbox)
-Server-IP: 192.168.178.46
+Subnetz: `192.168.178.0/24`
+Gateway: `192.168.178.1` (Fritzbox)
+Server-IP: `192.168.178.46`
 
 Rolle:
 	•	Primärtransport für Heimgeräte
 	•	DNS-Ziel für Clients
 	•	Reverse-Proxy-Entry
 
-⸻
+---
 
-2.2 WireGuard (Remote-Zugang)
+### 2.2 WireGuard (Remote-Zugang)
 
-Interface: wg0
-Server-IP: 10.7.0.1/24
-Peer (iPad): 10.7.0.2/32
-Port: 51820/udp
+Interface: `wg0`
+Server-IP: `10.7.0.1/24`
+Peer (iPad): `10.7.0.2/32`
+Port: `51820/udp`
 
 Routingziel:
 	•	LAN
@@ -51,18 +55,19 @@ Routingziel:
 Wichtige Invariante:
 AllowedIPs auf Serverseite darf nur Peer-IP enthalten:
 
-AllowedIPs = 10.7.0.2/32
+`AllowedIPs = 10.7.0.2/32`
 
 NICHT:
 
-AllowedIPs = 192.168.178.0/24
+`AllowedIPs = 192.168.178.0/24`
 
 Das erzeugt asymmetrisches Routing.
 
-⸻
+---
 
-3. Routing-Topologie
+## 3. Routing-Topologie
 
+```
 iPad (10.7.0.2)
    ↓
 wg0 (10.7.0.1)
@@ -70,55 +75,56 @@ wg0 (10.7.0.1)
 heimserver
    ↓
 LAN (192.168.178.0/24)
+```
 
 Server:
-net.ipv4.ip_forward = 1
+`net.ipv4.ip_forward = 1`
 
 NAT:
 
-iptables -t nat -A POSTROUTING -s 10.7.0.0/24 -o eno2 -j MASQUERADE
+`iptables -t nat -A POSTROUTING -s 10.7.0.0/24 -o eno2 -j MASQUERADE`
 
 
-⸻
+---
 
-4. DNS-Architektur
+## 4. DNS-Architektur
 
-4.1 Pi-hole
+### 4.1 Pi-hole
 
 Läuft auf:
-192.168.178.46:53
+`192.168.178.46:53`
 
 Container-Modus:
 NetworkMode: host
 
 Wichtig:
-etc_dnsmasq_d = true in pihole.toml
+`etc_dnsmasq_d = true` in `pihole.toml`
 
-⸻
+---
 
-4.2 Interne Zone
+### 4.2 Interne Zone
 
 Root:
-home.arpa
+`home.arpa`
 
 Subzone:
-heimgewebe.home.arpa
+`heimgewebe.home.arpa`
 
 Records:
 
-leitstand.heimgewebe.home.arpa
-api.heimgewebe.home.arpa
-heimgewebe.home.arpa
+`leitstand.heimgewebe.home.arpa`
+`api.heimgewebe.home.arpa`
+`heimgewebe.home.arpa`
 
-Kein .home
-Kein .local
-Kein .lan
+Kein `.home`
+Kein `.local`
+Kein `.lan`
 
-Nur .home.arpa.
+Nur `.home.arpa`.
 
-⸻
+---
 
-5. Fritzbox-Integration (empfohlen)
+## 5. Fritzbox-Integration (empfohlen)
 
 These: Client-DNS manuell setzen
 Antithese: Router-DNS setzen
@@ -126,7 +132,7 @@ Synthese: Router-DNS ist stabiler
 
 Empfehlung:
 Fritzbox → Heimnetz → Netzwerk → Netzwerkeinstellungen
-Lokaler DNS-Server = 192.168.178.46
+Lokaler DNS-Server = `192.168.178.46`
 
 Dann:
 Clients auf „Automatisch“
@@ -135,106 +141,94 @@ Kein Split-DNS
 Kein Client-Drift
 Keine iOS-Sonderfälle
 
-⸻
+---
 
-6. Split-Tunnel-Policy (iPad)
+## 6. Split-Tunnel-Policy (iPad)
 
 AllowedIPs im iPad:
 
-10.7.0.0/24
-192.168.178.0/24
+`10.7.0.0/24`
+`192.168.178.0/24`
 
 Optional:
 
-0.0.0.0/0
+`0.0.0.0/0`
 
 DNS im WG-Profil:
 
-192.168.178.46
+`192.168.178.46`
 
 Private Relay:
-aus
+**aus**
 
 Sonst umgeht Apple das lokale DNS.
 
-⸻
+---
 
-7. Docker-Netze
+## 7. Docker-Netze
 
 Docker-Bridge-Netze:
-	•	172.18.0.0/16
-	•	172.19.0.0/16
+	•	`172.18.0.0/16`
+	•	`172.19.0.0/16`
 	•	weitere interne Netze
 
 Vertrauensstufe:
 intern, aber nicht gleich LAN
 
 Caddy hängt in:
-	•	edge
-	•	heimnet
+	•	`edge`
+	•	`heimnet`
 
-⸻
+---
 
-8. Test-Matrix (KANONISCH)
+## 8. Test-Matrix (KANONISCH)
 
 DNS
 
-dig +short leitstand.heimgewebe.home.arpa @192.168.178.46
+`dig +short leitstand.heimgewebe.home.arpa @192.168.178.46`
 
 Erwartung:
-192.168.178.46
+`192.168.178.46`
 
-⸻
+---
 
 Host-Match
 
-curl -I http://192.168.178.46 -H 'Host: leitstand.heimgewebe.home.arpa'
+`curl -I http://192.168.178.46 -H 'Host: leitstand.heimgewebe.home.arpa'`
 
 Erwartung:
-308 Redirect
+`308 Redirect`
 
-⸻
+---
 
 HTTPS
 
-curl -k https://leitstand.heimgewebe.home.arpa
+`curl -k https://leitstand.heimgewebe.home.arpa`
 
 Erwartung:
-200
+`200`
 
-⸻
+---
 
 WireGuard Verkehr prüfen
 
-tcpdump -i wg0 port 53 or port 80 or port 443
+`tcpdump -i wg0 port 53 or port 80 or port 443`
 
 Wenn DNS auf 192.168.178.1 geht → Split-Tunnel falsch.
 
-⸻
+---
 
-9. Typische Fehlannahmen (korrigiert)
+## 9. Typische Fehlannahmen (korrigiert)
 
-Fehlannahme 1:
-DNS-Problem.
+| Fehlannahme | Realität |
+|---|---|
+| DNS-Problem. | Routing-Problem. |
+| Caddy kaputt. | Falscher Host im Container. |
+| Pi-hole reagiert nicht. | `etc_dnsmasq_d = false`. |
 
-Realität:
-Routing-Problem.
+---
 
-Fehlannahme 2:
-Caddy kaputt.
-
-Realität:
-Falscher Host im Container.
-
-Fehlannahme 3:
-Pi-hole reagiert nicht.
-
-Realität:
-etc_dnsmasq_d = false.
-
-⸻
-
-10. Drift-Indikatoren
+## 10. Drift-Indikatoren
 
 Neubewertung zwingend bei:
 	•	WG-Peer Änderung
@@ -243,9 +237,9 @@ Neubewertung zwingend bei:
 	•	Docker Netzwerk-Neudefinition
 	•	Pi-hole Update
 
-⸻
+---
 
-11. Verdichtete Essenz
+## 11. Verdichtete Essenz
 
 Routing ist Wahrheit.
 DNS ist nur Semantik.
@@ -254,9 +248,9 @@ Wenn Pakete falsch laufen, helfen keine Logs.
 Heimgewebe scheitert nicht an Software.
 Es scheitert an falsch gesetzten Bits.
 
-⸻
+---
 
-Risikoanalyse
+## Risikoanalyse
 
 Hoch:
 	•	falsche AllowedIPs
@@ -270,9 +264,9 @@ Mittel:
 Gering:
 	•	DNS-Record-Fehler
 
-⸻
+---
 
-Unsicherheitsanalyse
+## Unsicherheitsanalyse
 
 Unsicherheitsgrad: 0.12
 

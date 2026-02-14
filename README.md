@@ -13,7 +13,7 @@ Keine sensiblen Dateien getrackt?
 
 Repo-Policy:
 - Repo bleibt privat.
-- Audit-Snapshots bleiben außerhalb des Repos (siehe heimserver.constitution.md).
+- Audit-Snapshots liegen im Repo-Baum unter `ops/audit/snapshots/`, sind aber git-ignored (nicht getrackt).
 
 ## Quickstart
 
