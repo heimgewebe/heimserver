@@ -90,20 +90,21 @@ if command -v iptables >/dev/null 2>&1; then
           warn "DOCKER-USER chain empty or not found."
       else
           # Heuristic: Scan for ACCEPT rules covering subnets + ports (tolerant match)
-          # We search for lines containing subnet AND port AND ACCEPT.
+          # We search for lines containing subnet AND tcp AND port AND ACCEPT.
 
           # LAN
-          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -E -- "(80|443|http|https)" | grep -q -- "-j ACCEPT"; then
-              ok "LAN ($LAN_SUBNET) -> HTTP/HTTPS allowed (heuristic)"
+          # Look for: -s LAN ... -p tcp ... --dport 80/443 or multiport ... -j ACCEPT
+          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -qE -- "-p tcp .*(--dport (80|443)|multiport.*(80|443)).*-j ACCEPT"; then
+              ok "LAN ($LAN_SUBNET) -> TCP 80/443 allowed (heuristic)"
           else
-              warn "LAN ($LAN_SUBNET) allow rule not confident. MANUAL REVIEW REQUIRED."
+              warn "LAN ($LAN_SUBNET) allow rule for TCP 80/443 not confident. MANUAL REVIEW REQUIRED."
           fi
 
           # WireGuard
-          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -E -- "(80|443|http|https)" | grep -q -- "-j ACCEPT"; then
-              ok "WG ($WG_SUBNET) -> HTTP/HTTPS allowed (heuristic)"
+          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -qE -- "-p tcp .*(--dport (80|443)|multiport.*(80|443)).*-j ACCEPT"; then
+              ok "WG ($WG_SUBNET) -> TCP 80/443 allowed (heuristic)"
           else
-              warn "WG ($WG_SUBNET) allow rule not confident. MANUAL REVIEW REQUIRED."
+              warn "WG ($WG_SUBNET) allow rule for TCP 80/443 not confident. MANUAL REVIEW REQUIRED."
           fi
 
           # UDP 443 (QUIC) checks if enabled
@@ -116,12 +117,14 @@ if command -v iptables >/dev/null 2>&1; then
           fi
 
           # Drop Rest Logic: Any Drop/Reject for 80/443 OR generic catch-all
-          if echo "$docker_user_rules" | grep -E -- "(80|443)" | grep -E -q -- "-j (DROP|REJECT)"; then
-              ok "Explicit Drop/Reject rule for 80/443 found (heuristic)"
+          if echo "$docker_user_rules" | grep -qE -- "-p tcp .*(--dport (80|443)|multiport.*(80|443)).*-j (DROP|REJECT)"; then
+              ok "Explicit Drop/Reject rule for TCP 80/443 found (heuristic)"
           elif echo "$docker_user_rules" | grep -E -q -- "-j (DROP|RETURN|REJECT)$"; then
-              ok "Generic Drop/Return/Reject policy found (heuristic)"
+              # RETURN is risky if parent chain doesn't drop, but often used in chains.
+              # Ideally we want a clear DROP.
+              warn "Generic Drop/Return/Reject policy found (weak heuristic). Verify DOCKER-USER behavior."
           else
-              warn "No explicit Drop/Return policy found (verify manually)"
+              warn "No explicit Drop/Return policy found for TCP 80/443 (verify manually)"
           fi
       fi
 
