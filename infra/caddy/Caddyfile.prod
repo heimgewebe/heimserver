@@ -17,6 +17,7 @@ https://leitstand.heimgewebe.home.arpa {
 }
 
 # Optional: api.heimgewebe.home.arpa (nur wenn eigener Heimgewebe-Upstream existiert)
+# NOTE: bewusst deaktiviert bis Heimgewebe-API (eigener Upstream) existiert.
 # https://api.heimgewebe.home.arpa {
 #   reverse_proxy <HEIMGEWEBE_API_UPSTREAM>:8080
 #   tls internal
