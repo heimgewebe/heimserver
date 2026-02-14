@@ -11,7 +11,7 @@ Drift schnell erkennen, bevor er „real“ wird.
 
 2) Wenn WARN auftaucht
 - Ursache ermitteln
-- `heimserver.context.md` aktualisieren (wenn IST sich geändert hat)
+- `heimserver.constitution.md` aktualisieren (wenn IST sich geändert hat)
 - Falls Regression: zurückrollen oder fixen
 
 ## Minimaler Abschluss

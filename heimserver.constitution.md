@@ -1,4 +1,4 @@
-heimserver.context.md
+heimserver.constitution.md
 
 Version 4.0 · Konsolidierte Verfassung
 Stand: 2026-02-13
@@ -28,7 +28,7 @@ Details befinden sich in den spezifischen Kanon-Dokumenten.
 Die Wahrheit ist föderal organisiert:
 
 Dokument	Zuständigkeit	Inhalt
-heimserver.context.md (dieses)	Verfassung	Zweck, Verbote, Drift-Trigger
+heimserver.constitution.md (dieses)	Verfassung	Zweck, Verbote, Drift-Trigger
 heimserver.runtime.md	Realität	Aktuelle Ports, IPs, Container
 heimserver.network.md	Transport	Routing, NAT, WireGuard, Firewall
 heimserver.naming.md	Semantik	DNS-Zonen, TLS, Hostnames
@@ -74,7 +74,7 @@ DNS Zonen / TLS Zertifikate	naming.md
 Backup-Strategie / Notfall	operations.md
 
 Pflege-Regel:
-Erst die Architektur klären (context/network/naming), dann die Runtime ändern (runtime), dann die Realität prüfen (operations).
+Erst die Architektur klären (constitution/network/naming), dann die Runtime ändern (runtime), dann die Realität prüfen (operations).
 
 ⸻
 

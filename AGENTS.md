@@ -5,7 +5,7 @@ Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agen
 ## Kanon (was ist „wahr“?)
 
 - **Kanonische Runtime (IST-Zustand):** `heimserver.runtime.md`
-- **Kanonischer Kontext (Architektur):** `heimserver.context.md`
+- **Kanonischer Kontext (Architektur):** `heimserver.constitution.md`
 - **Kanonische Netz-Architektur:** `heimserver.network.md`
 - **Kanonische Namens-Architektur:** `heimserver.naming.md`
 - **Operative Checks (Wahrheitsquelle):** `ops/checks/preflight.sh`
@@ -49,7 +49,7 @@ Repo enthält nur:
    - DOCKER-USER: allow LAN/WG, drop rest für 80/443
 
 3) **Wenn Änderungen nötig**
-   - Dokument: `heimserver.runtime.md` (bei Drift) oder `heimserver.context.md` (bei Architektur) aktualisieren
+   - Dokument: `heimserver.runtime.md` (bei Drift) oder `heimserver.constitution.md` (bei Architektur) aktualisieren
    - Runbook referenzieren (oder anlegen)
 
 ## Hard Rules

@@ -8,7 +8,7 @@
 
 ## Was gehört hier rein?
 
-- Kontext: `heimserver.context.md`
+- Kontext: `heimserver.constitution.md`
 - Checks: `ops/checks/*`
 - Runbooks: `runbooks/*`
 - Templates (ohne Secrets): `security/templates/*`
