@@ -149,27 +149,30 @@ else
 fi
 
 if have systemctl; then
-  # Simplified robust check using exit codes
-  # 4 = not found, 0 = active, 3 = inactive (usually)
-  rc_fw=0
-  set +e
-  systemctl status firewalld.service >/dev/null 2>&1
-  rc_fw=$?
-  set -e
+  # Use subshell to isolate rc_fw variable
+  (
+    # Simplified robust check using exit codes
+    # 4 = not found, 0 = active, 3 = inactive (usually)
+    rc_fw=0
+    set +e
+    systemctl status firewalld.service >/dev/null 2>&1
+    rc_fw=$?
+    set -e
 
-  if [ "$rc_fw" -eq 4 ]; then
-    ok "firewalld not installed (service unit not found)."
-  elif [ "$rc_fw" -eq 0 ]; then
-    gap "firewalld is active. Potential conflict with docker iptables."
-    run "firewalld status" "firewalld_status.txt" systemctl status firewalld
-  elif [ "$rc_fw" -eq 3 ]; then
-    ok "firewalld installed but not active."
-    run "firewalld enabled state" "firewalld_enabled.txt" systemctl is-enabled firewalld
-  else
-    # Fallback for unexpected return codes
-    note "firewalld status returned unexpected RC=$rc_fw; logging status output"
-    run "firewalld status (raw)" "firewalld_status_raw.txt" systemctl status firewalld.service
-  fi
+    if [ "$rc_fw" -eq 4 ]; then
+      ok "firewalld not installed (service unit not found)."
+    elif [ "$rc_fw" -eq 0 ]; then
+      gap "firewalld is active. Potential conflict with docker iptables."
+      run "firewalld status" "firewalld_status.txt" systemctl status firewalld
+    elif [ "$rc_fw" -eq 3 ]; then
+      ok "firewalld installed but not active."
+      run "firewalld enabled state" "firewalld_enabled.txt" systemctl is-enabled firewalld
+    else
+      # Fallback for unexpected return codes
+      note "firewalld status returned unexpected RC=$rc_fw; logging status output"
+      run "firewalld status (raw)" "firewalld_status_raw.txt" systemctl status firewalld.service
+    fi
+  )
 else
   gap "systemctl not available; cannot check firewalld."
 fi
@@ -199,39 +202,42 @@ else
 fi
 
 if have docker; then
-  run "docker ps ports view" "docker_ps_ports.txt" \
-    docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+  # Use subshell to isolate rc/running variables
+  (
+    run "docker ps ports view" "docker_ps_ports.txt" \
+      docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 
-  run "docker network ls" "docker_networks.txt" docker network ls
+    run "docker network ls" "docker_networks.txt" docker network ls
 
-  # Internal Caddy Checks
-  say "Internal Caddy Checks"
+    # Internal Caddy Checks
+    say "Internal Caddy Checks"
 
-  # Verify edge-caddy is running before exec
-  rc=0
-  set +e
-  docker inspect -f '{{.State.Running}}' edge-caddy >/dev/null 2>&1
-  rc=$?
-  set -e
+    # Verify edge-caddy is running before exec
+    rc=0
+    set +e
+    docker inspect -f '{{.State.Running}}' edge-caddy >/dev/null 2>&1
+    rc=$?
+    set -e
 
-  if [ "$rc" -ne 0 ]; then
-      note "edge-caddy container not found; skipping internal checks."
-  else
-      running=$(docker inspect -f '{{.State.Running}}' edge-caddy)
-      if [ "$running" != "true" ]; then
-          note "edge-caddy not running; skipping internal checks."
-      else
-          run "caddy version" "caddy_version.txt" docker exec edge-caddy caddy version
-          run "caddy validate" "caddy_validate.txt" docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile
+    if [ "$rc" -ne 0 ]; then
+        note "edge-caddy container not found; skipping internal checks."
+    else
+        running=$(docker inspect -f '{{.State.Running}}' edge-caddy)
+        if [ "$running" != "true" ]; then
+            note "edge-caddy not running; skipping internal checks."
+        else
+            run "caddy version" "caddy_version.txt" docker exec edge-caddy caddy version
+            run "caddy validate" "caddy_validate.txt" docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile
 
-          # Check if ss is available inside the container
-          if docker exec edge-caddy command -v ss >/dev/null 2>&1; then
-            run "caddy container listeners" "caddy_container_ss.txt" docker exec edge-caddy ss -lntup
-          else
-            gap "ss not available in caddy container (or container down)"
-          fi
-      fi
-  fi
+            # Check if ss is available inside the container
+            if docker exec edge-caddy command -v ss >/dev/null 2>&1; then
+              run "caddy container listeners" "caddy_container_ss.txt" docker exec edge-caddy ss -lntup
+            else
+              gap "ss not available in caddy container (or container down)"
+            fi
+        fi
+    fi
+  )
 else
   gap "docker missing; cannot check container port publish."
 fi
