@@ -22,6 +22,18 @@ https://leitstand.heimgewebe.home.arpa {
   reverse_proxy leitstand:3000
   tls internal
 }
+
+http://api.heimgewebe.home.arpa {
+  redir https://api.heimgewebe.home.arpa{uri} 308
+}
+
+https://api.heimgewebe.home.arpa {
+  # FIXME: Semantischer Mismatch: 'weltgewebe-api' dient derzeit als Upstream.
+  # Service-Name muss dem Compose-Service entsprechen.
+  # see infra/compose/compose.prod.yml (or equivalent)
+  reverse_proxy weltgewebe-api:8080
+  tls internal
+}
 ```
 
 ## Root Redirect

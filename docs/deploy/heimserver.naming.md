@@ -88,7 +88,7 @@ Root-Alias (optional)
 API (optional; sofern existent)
 
 `api.heimgewebe.home.arpa`
-(Derzeit nicht provisioniert. Aktivierung nur nach Einführung eines eigenen Heimgewebe-Upstreams via Compose.)
+(Aktueller Stand: Provisioniert; nutzt interimsmäßig `weltgewebe-api` als Upstream.)
 
 ### 4.2 Weltgewebe
 
