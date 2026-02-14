@@ -364,7 +364,6 @@ Drift-Indikator:
 | 53 | TCP/UDP | Pi-hole (Host-Net) | 0.0.0.0, :: | DNS Service |
 | 80 | TCP | Caddy | 0.0.0.0, :: | HTTP -> Redirect |
 | 443 | TCP | Caddy | 0.0.0.0, :: | HTTPS |
-| 443 | UDP | Caddy | 0.0.0.0, :: | QUIC/HTTP3 (Aktiviert; Policy: requires ALLOW_QUIC=1) |
 | 51820 | UDP | WireGuard | 0.0.0.0, :: | VPN Ingress |
 | 22 | TCP | SSHD | 0.0.0.0, :: | Admin Access |
 
@@ -378,6 +377,10 @@ Local Listeners (127.0.0.1 Only):
 
 Caddy Admin:
 Port 2019 ist NICHT published (nur container-intern erreichbar).
+
+HTTP/3 (QUIC):
+- Status: Observed = deaktiviert (kein UDP 443 publish).
+- Policy: Default AUS; Aktivierung nur bewusst (siehe constitution + preflight `ALLOW_QUIC=1`).
 
 Audit:
 

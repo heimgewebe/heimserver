@@ -140,6 +140,15 @@ Wenn DNS an 192.168.178.1 geht → WG DNS falsch.
 
 ---
 
+### 2.x QUIC/HTTP3 bewusst aktivieren (Ausnahmefall)
+
+Default ist QUIC AUS. Aktivierung nur wenn ausdrücklich gewollt:
+- Caddy global: `servers { protocols h1 h2 }` entfernen/anpassen (h3 zulassen)
+- Compose: UDP 443 publish hinzufügen
+- Preflight: `ALLOW_QUIC=1` setzen und dokumentieren (constitution/network)
+
+---
+
 ## 3. WireGuard Wartung
 
 Peer prüfen
