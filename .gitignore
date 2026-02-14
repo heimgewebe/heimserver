@@ -10,6 +10,7 @@
 **/*.tar
 **/*.tar.gz
 **/*.zip
+**/audit-snapshots/
 **/docker-compose.override.yml
 .env
 Caddyfile

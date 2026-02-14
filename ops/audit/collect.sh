@@ -96,7 +96,8 @@ $(grep -r "GAP:" "$SNAPSHOT_DIR" || echo "None detected.")
 
 ## Notes
 - This snapshot is git-ignored by default.
-- Review contents before sharing.
+- Review contents before sharing (Redaction required!).
+- Snapshot contains REAL IPs/Subnets.
 - NO PRIVATE KEYS should be present.
 - 'wg_show.txt' is sanitized but may contain residual metadata.
 EOF
