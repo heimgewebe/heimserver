@@ -1,8 +1,8 @@
 # ops/checks — Belegbare Operativ-Checks
 
 Prinzip:
-- Jeder Check ist ein Belegpfad für Aussagen in `heimserver.context.md`.
-- Output gehört in `server-facts/audit-snapshots/<timestamp>/` (außerhalb Git).
+- Jeder Check ist ein Belegpfad für Aussagen in `heimserver.runtime.md` und den Architektur-Docs.
+- Output gehört in `ops/audit/snapshots/<timestamp>/` (gitignored).
 
 ## Check-Matrix (Kanon → Beleg)
 

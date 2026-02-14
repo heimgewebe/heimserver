@@ -1,6 +1,6 @@
 # heimserver
 
-Kanonischer Kontext liegt in [`heimserver.context.md`](heimserver.context.md).
+Kanonischer Kontext liegt in [`heimserver.constitution.md`](heimserver.constitution.md).
 
 Primärer Einstieg für Agents: [`AGENTS.md`](AGENTS.md).
 
@@ -13,7 +13,7 @@ Keine sensiblen Dateien getrackt?
 
 Repo-Policy:
 - Repo bleibt privat.
-- Audit-Snapshots bleiben außerhalb des Repos (siehe heimserver.context.md).
+- Audit-Snapshots liegen im Repo-Baum unter `ops/audit/snapshots/`, sind aber git-ignored (nicht getrackt).
 
 ## Quickstart
 
