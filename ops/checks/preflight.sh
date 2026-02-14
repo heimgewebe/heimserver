@@ -95,14 +95,15 @@ if command -v iptables >/dev/null 2>&1; then
 
           # LAN
           # Look for: -s LAN ... -p tcp ... --dport 80/443 or multiport ... -j ACCEPT
-          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -qE -- "-p tcp .*(--dport (80|443)([^0-9]|$)|multiport.*(80,443|443,80)([^0-9]|$)).*-j ACCEPT"; then
+          # Tightened multiport match: -m multiport --dports (80,443|443,80) with boundaries
+          if echo "$docker_user_rules" | grep -F -- "-s $LAN_SUBNET" | grep -qE -- "-p tcp .*(--dport (80|443)([^0-9]|$)|-m multiport --dports (80,443|443,80)([^0-9]|$)).*-j ACCEPT"; then
               ok "LAN ($LAN_SUBNET) -> TCP 80/443 allowed (heuristic)"
           else
               warn "LAN ($LAN_SUBNET) allow rule for TCP 80/443 not confident. MANUAL REVIEW REQUIRED."
           fi
 
           # WireGuard
-          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -qE -- "-p tcp .*(--dport (80|443)([^0-9]|$)|multiport.*(80,443|443,80)([^0-9]|$)).*-j ACCEPT"; then
+          if echo "$docker_user_rules" | grep -F -- "-s $WG_SUBNET" | grep -qE -- "-p tcp .*(--dport (80|443)([^0-9]|$)|-m multiport --dports (80,443|443,80)([^0-9]|$)).*-j ACCEPT"; then
               ok "WG ($WG_SUBNET) -> TCP 80/443 allowed (heuristic)"
           else
               warn "WG ($WG_SUBNET) allow rule for TCP 80/443 not confident. MANUAL REVIEW REQUIRED."
@@ -110,7 +111,8 @@ if command -v iptables >/dev/null 2>&1; then
 
           # UDP 443 (QUIC) checks if enabled
           if [ "${ALLOW_QUIC}" = "1" ]; then
-              if echo "$docker_user_rules" | grep -i "udp" | grep -E -- "(--dport 443([^0-9]|$)|multiport.*443([^0-9]|$))" | grep -q -- "-j ACCEPT"; then
+              # Tightened UDP match: require --dport prefix
+              if echo "$docker_user_rules" | grep -i "udp" | grep -E -- "(--dport 443([^0-9]|$)|-m multiport --dports 443([^0-9]|$))" | grep -q -- "-j ACCEPT"; then
                    ok "UDP 443 allow rule found (heuristic)"
               else
                    warn "UDP 443 allow rule missing/unverified (Check DOCKER-USER)"
@@ -118,7 +120,7 @@ if command -v iptables >/dev/null 2>&1; then
           fi
 
           # Drop Rest Logic: Any Drop/Reject for 80/443 OR generic catch-all
-          if echo "$docker_user_rules" | grep -qE -- "-p tcp .*(--dport (80|443)([^0-9]|$)|multiport.*(80,443|443,80)([^0-9]|$)).*-j (DROP|REJECT)"; then
+          if echo "$docker_user_rules" | grep -qE -- "-p tcp .*(--dport (80|443)([^0-9]|$)|-m multiport --dports (80,443|443,80)([^0-9]|$)).*-j (DROP|REJECT)"; then
               ok "Explicit Drop/Reject rule for TCP 80/443 found (heuristic)"
           elif echo "$docker_user_rules" | grep -E -q -- "-j (DROP|RETURN|REJECT)$"; then
               # RETURN is risky if parent chain doesn't drop, but often used in chains.

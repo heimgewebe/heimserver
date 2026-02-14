@@ -131,7 +131,8 @@ if have iptables; then
   fi
 
   # DROP/REJECT for tcp 80/443 from others
-  if echo "$rules" | grep -F -- "-p tcp" | grep -E -- "(-m multiport --dports (80,443|443,80)([^0-9]|$)|--dport (80|443)([^0-9]|$)).*-j (DROP|REJECT)"; then
+  # Using grep -qE to avoid printing matched lines
+  if echo "$rules" | grep -F -- "-p tcp" | grep -qE -- "(-m multiport --dports (80,443|443,80)([^0-9]|$)|--dport (80|443)([^0-9]|$)).*-j (DROP|REJECT)"; then
     ok "Found explicit DROP/REJECT for tcp 80/443 (heuristic)."
   else
     gap "No explicit DROP/REJECT for tcp 80/443 found (heuristic). Ensure default path is safe."
