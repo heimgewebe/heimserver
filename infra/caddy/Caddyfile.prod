@@ -1,0 +1,38 @@
+{
+  servers {
+    protocols h1 h2
+  }
+}
+
+# --- Heimgewebe ---
+
+http://leitstand.heimgewebe.home.arpa {
+  redir https://leitstand.heimgewebe.home.arpa{uri} 308
+}
+
+https://leitstand.heimgewebe.home.arpa {
+  reverse_proxy deploy-leitstand-1:3000
+  tls internal
+}
+
+http://api.heimgewebe.home.arpa {
+  redir https://api.heimgewebe.home.arpa{uri} 308
+}
+
+https://api.heimgewebe.home.arpa {
+  # FIXME: Check correct compose service name. Currently 'weltgewebe-api' is running but name is semantically mismatching.
+  # If 'weltgewebe-api' is indeed the Heimgewebe API, use: reverse_proxy weltgewebe-api:8080
+  reverse_proxy FIXME_CHECK_COMPOSE_SERVICE_NAME:8080
+  tls internal
+}
+
+# --- Weltgewebe ---
+
+http://api.weltgewebe.home.arpa {
+  redir https://api.weltgewebe.home.arpa{uri} 308
+}
+
+https://api.weltgewebe.home.arpa {
+  reverse_proxy weltgewebe-api:8080
+  tls internal
+}

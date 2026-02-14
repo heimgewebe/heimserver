@@ -4,7 +4,7 @@ Kanonische Namens- und Adressierungsarchitektur
 ⛔️ ARCHITEKTURDOKUMENT · NICHT ÖFFENTLICH
 
 Stand: 2026-02-13
-Scope: Heimserver + Heimgewebe
+Scope: Heimserver + Heimgewebe + Weltgewebe
 
 ---
 
@@ -45,18 +45,36 @@ Verboten:
 
 ---
 
-## 3. Subzone
+## 3. Subzonen (Strikte Trennung)
+
+### 3.1 Heimgewebe
 
 `heimgewebe.home.arpa`
 
 Semantik:
 	•	Heimnetz
 	•	Heimgewebe als Systemverbund
-	•	kein Leak nach außen
+	•	Leitstand, Haussteuerung, Observatorium
+
+### 3.2 Weltgewebe
+
+`weltgewebe.home.arpa`
+
+Semantik:
+	•	Externe Welt-Simulation / Weltgewebe-Services
+	•	API-Backends für Weltgewebe
+	•	Getrennter Kontext vom Heimnetz
+
+**Policy:**
+Keine Kreuzung.
+Heimgewebe-Dienste heißen `*.heimgewebe...`
+Weltgewebe-Dienste heißen `*.weltgewebe...`
 
 ---
 
 ## 4. FQDN-Struktur
+
+### 4.1 Heimgewebe
 
 Leitstand
 
@@ -70,6 +88,17 @@ Root-Alias (optional)
 
 `heimgewebe.home.arpa`
 
+### 4.2 Weltgewebe
+
+Root-Alias (optional)
+
+`weltgewebe.home.arpa`
+
+API
+
+`api.weltgewebe.home.arpa` (sofern existent)
+
+**Regel:**
 Keine Kurzformen.
 Keine alternativen Domains.
 Keine parallelen Namensräume.
@@ -97,7 +126,7 @@ Nicht erlaubt:
 
 Jeder Hostblock entspricht exakt einem FQDN.
 
-Beispiel:
+Beispiel Heimgewebe:
 
 ```
 http://leitstand.heimgewebe.home.arpa {
@@ -110,7 +139,17 @@ https://leitstand.heimgewebe.home.arpa {
 }
 ```
 
+Beispiel Weltgewebe:
+
+```
+https://api.weltgewebe.home.arpa {
+  reverse_proxy weltgewebe-api:8080
+  tls internal
+}
+```
+
 Kein Catch-All für interne Hosts.
+Kein „Shared Host“ für beide Zonen.
 
 ---
 
@@ -122,6 +161,13 @@ Pi-hole `/etc/dnsmasq.d/99-heimgewebe.conf`:
 address=/leitstand.heimgewebe.home.arpa/192.168.178.46
 address=/api.heimgewebe.home.arpa/192.168.178.46
 address=/heimgewebe.home.arpa/192.168.178.46
+```
+
+Pi-hole `/etc/dnsmasq.d/99-weltgewebe.conf`:
+
+```
+address=/weltgewebe.home.arpa/192.168.178.46
+address=/api.weltgewebe.home.arpa/192.168.178.46
 ```
 
 Keine:
@@ -138,6 +184,7 @@ Nur EIN Mechanismus.
 Alle Clients sehen:
 
 `leitstand.heimgewebe.home.arpa` → `192.168.178.46`
+`api.weltgewebe.home.arpa` → `192.168.178.46`
 
 Egal ob:
 	•	LAN
@@ -157,6 +204,7 @@ DNS-Quelle ist immer Pi-hole.
 | mehrere FQDNs auf denselben Host | TLS-Konflikt |
 | Router-DNS ≠ Pi-hole | Splitbrain |
 | Private Relay aktiv | DNS-Umgehung |
+| Heimgewebe-Host auf Weltgewebe-Upstream | Semantischer Bruch |
 
 
 ---
@@ -175,13 +223,12 @@ Kein Multi-Truth.
 
 Wenn neue Dienste entstehen:
 
-`<dienst>.heimgewebe.home.arpa`
+`<dienst>.heimgewebe.home.arpa` oder `<dienst>.weltgewebe.home.arpa`
 
 Beispiele:
 
 `chronik.heimgewebe.home.arpa`
-`hauski.heimgewebe.home.arpa`
-`observatorium.heimgewebe.home.arpa`
+`simulator.weltgewebe.home.arpa`
 
 Keine Sub-Sub-Domains ohne Not.
 
