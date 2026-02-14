@@ -45,25 +45,25 @@ Verboten:
 
 ---
 
-## 3. Subzonen (Strikte Trennung)
+## 3. Subzonen (Strikte Trennung, keine Ebenenvermischung)
 
 ### 3.1 Heimgewebe
 
 `heimgewebe.home.arpa`
 
 Semantik:
-	•	Heimnetz
-	•	Heimgewebe als Systemverbund
-	•	Leitstand, Haussteuerung, Observatorium
+	•	Heimgewebe = Organismus aus mehreren Repositories
+	•	Identitätsraum für interne Organ-Dienste
+	•	Keine Netz- oder Zweckbeschreibung im Naming
 
 ### 3.2 Weltgewebe
 
 `weltgewebe.home.arpa`
 
 Semantik:
-	•	Externe Welt-Simulation / Weltgewebe-Services
-	•	API-Backends für Weltgewebe
-	•	Getrennter Kontext vom Heimnetz
+	•	Weltgewebe = kartenbasiertes Common-Interface
+	•	Eigenständiger Identitätsraum
+	•	Keine implizite Kopplung an Heimgewebe
 
 **Policy:**
 Keine Kreuzung.
@@ -80,10 +80,6 @@ Leitstand
 
 `leitstand.heimgewebe.home.arpa`
 
-API
-
-`api.heimgewebe.home.arpa`
-
 Root-Alias (optional)
 
 `heimgewebe.home.arpa`
@@ -94,9 +90,9 @@ Root-Alias (optional)
 
 `weltgewebe.home.arpa`
 
-API
+API (optional; sofern existent)
 
-`api.weltgewebe.home.arpa` (sofern existent)
+`api.weltgewebe.home.arpa`
 
 **Regel:**
 Keine Kurzformen.
@@ -159,7 +155,6 @@ Pi-hole `/etc/dnsmasq.d/99-heimgewebe.conf`:
 
 ```
 address=/leitstand.heimgewebe.home.arpa/192.168.178.46
-address=/api.heimgewebe.home.arpa/192.168.178.46
 address=/heimgewebe.home.arpa/192.168.178.46
 ```
 
