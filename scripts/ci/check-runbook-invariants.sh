@@ -24,9 +24,9 @@ fi
 # 3. Check for unmarked placeholders in active pihole configs
 # If any .conf file exists in infra/pihole/ (not .example), it must not contain placeholders.
 if ls infra/pihole/*.conf >/dev/null 2>&1; then
-   if grep -l "<.*>" infra/pihole/*.conf 2>/dev/null; then
-     fail "Found .conf file in infra/pihole/ containing placeholders. Rename to .example!"
-   fi
+  if grep -l "<.*>" infra/pihole/*.conf 2>/dev/null; then
+    fail "Found .conf file in infra/pihole/ containing placeholders. Rename to .example!"
+  fi
 fi
 
 # 4. Check Canonical Naming Doc existence
