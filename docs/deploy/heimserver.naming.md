@@ -162,22 +162,22 @@ Pi-hole `/etc/dnsmasq.d/99-heimgewebe.conf`:
 
 ```
 address=/leitstand.heimgewebe.home.arpa/192.168.178.46
-address=/heimgewebe.home.arpa/192.168.178.46
+host-record=heimgewebe.home.arpa,192.168.178.46
 ```
 
 Pi-hole `/etc/dnsmasq.d/99-weltgewebe.conf`:
 
 ```
-address=/weltgewebe.home.arpa/192.168.178.46
+host-record=weltgewebe.home.arpa,192.168.178.46
 address=/api.weltgewebe.home.arpa/192.168.178.46
 ```
 
 Keine:
 	•	`local=/home.arpa/`
-	•	host-record + address Mischung
+	•	`address=/root/...` (Wildcard-Gefahr für Subdomains)
 	•	`custom.list` Duplikate
 
-Nur EIN Mechanismus.
+Nur EIN Mechanismus pro Ebene (host-record für Root, address für Subdomains).
 
 ---
 
