@@ -16,6 +16,13 @@ say() { printf "\n== %s ==\n" "$*"; }
 ok()  { printf "PASS (heuristic): %s\n" "$*"; }
 warn(){ printf "WARN (manual verify): %s\n" "$*" >&2; }
 
+say "invariants (static analysis)"
+if [ -f "scripts/ci/check-runbook-invariants.sh" ]; then
+  bash scripts/ci/check-runbook-invariants.sh || exit 1
+else
+  warn "Invariant script not found (scripts/ci/check-runbook-invariants.sh)"
+fi
+
 say "host identity"
 hostname || true
 uname -a || true

@@ -22,7 +22,7 @@ http://leitstand.heimgewebe.home.arpa {
 https://leitstand.heimgewebe.home.arpa {
   encode zstd gzip
   # Service-Name muss dem Compose-Service entsprechen.
-  # see infra/compose/compose.prod.yml (or equivalent)
+  # see infra/compose/compose.prod.yml
   reverse_proxy leitstand:3000
   tls internal
 }
