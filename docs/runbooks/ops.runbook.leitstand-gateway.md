@@ -13,11 +13,11 @@ Weltgewebe ist optional (erfordert Upstream + explizite Aktivierung).
 Die DNS-Einträge werden über Pi-hole Templates bereitgestellt.
 
 **Schritte:**
-1. Kopiere `infra/pihole/99-heimgewebe.conf.example` nach `infra/pihole/99-heimgewebe.conf` (lokal für Deployment) oder direkt in das Volume.
+1. Kopiere `infra/pihole/99-heimgewebe.conf.example` in die Pi-hole Konfiguration (z.B. `/etc/dnsmasq.d/` im Volume).
 2. Ersetze `<GATEWAY_IP>` durch die IP des Heimservers (z.B. `192.168.178.46`).
 
 Für Weltgewebe (Optional):
-1. Kopiere `infra/pihole/optional/99-weltgewebe.conf.example`.
+1. Kopiere `infra/pihole/optional/99-weltgewebe.conf.example` in die Pi-hole Konfiguration.
 2. Ersetze `<GATEWAY_IP>`.
 
 ## Caddy Konfiguration

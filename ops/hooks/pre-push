@@ -13,6 +13,7 @@ bad_patterns=(
   '\.env$'
   '\.key$'
   '\.pem$'
+  # 'wireguard' removed to allow docs/templates. Sensitive keys are blocked via .key/wg0.conf.
   'wg0\.conf$'
   'rules\.v4$'
   'rules\.v6$'

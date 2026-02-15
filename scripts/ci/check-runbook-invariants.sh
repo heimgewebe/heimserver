@@ -17,14 +17,14 @@ fi
 # 2. Check absence of unmarked placeholders in Caddyfile (Drift Prevention)
 # We expect Caddyfile.prod to be clean or commented out placeholders.
 # We search for <.*> but exclude commented lines.
-if grep -E "<.*>" infra/caddy/Caddyfile.prod | grep -vE "^\s*#"; then
+if grep -E "<.*>" infra/caddy/Caddyfile.prod | grep -vE "^\s*#" >/dev/null; then
   fail "Active placeholder <...> found in infra/caddy/Caddyfile.prod"
 fi
 
 # 3. Check for unmarked placeholders in active pihole configs
 # If any .conf file exists in infra/pihole/ (not .example), it must not contain placeholders.
 if ls infra/pihole/*.conf >/dev/null 2>&1; then
-  if grep -l "<.*>" infra/pihole/*.conf 2>/dev/null; then
+  if grep -l "<.*>" infra/pihole/*.conf >/dev/null 2>&1; then
     fail "Found .conf file in infra/pihole/ containing placeholders. Rename to .example!"
   fi
 fi
