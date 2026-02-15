@@ -17,7 +17,7 @@ fi
 # 2. Check absence of unmarked placeholders in Caddyfile (Drift Prevention)
 # We expect Caddyfile.prod to be clean or commented out placeholders.
 # We search for <.*> but exclude commented lines.
-if grep -E "<.*>" infra/caddy/Caddyfile.prod | grep -vE "^\s*#" >/dev/null; then
+if grep -E "<.*>" infra/caddy/Caddyfile.prod | grep -vE "^[[:space:]]*#" >/dev/null; then
   fail "Active placeholder <...> found in infra/caddy/Caddyfile.prod"
 fi
 
@@ -37,6 +37,9 @@ fi
 # 5. Check Runbook Reference to Example Files
 if ! grep -F "99-heimgewebe.conf.example" docs/runbooks/ops.runbook.leitstand-gateway.md >/dev/null; then
   fail "Runbook docs/runbooks/ops.runbook.leitstand-gateway.md does not reference 99-heimgewebe.conf.example"
+fi
+if ! grep -F "99-weltgewebe.conf.example" docs/runbooks/ops.runbook.leitstand-gateway.md >/dev/null; then
+  fail "Runbook docs/runbooks/ops.runbook.leitstand-gateway.md does not reference 99-weltgewebe.conf.example"
 fi
 
 log "All invariants passed."
