@@ -181,7 +181,7 @@ Caddy hängt in:
 
 ### 7.1 Port-Ownership & Host-Netz (Invariante)
 
-Siehe: [`docs/networking/gateway-port-ownership.md`](docs/networking/gateway-port-ownership.md)
+Siehe: [`networking/gateway-port-ownership.md`](networking/gateway-port-ownership.md)
 
 *   Ports 80/443: Exklusiv Edge-Gateway (Caddy) [TCP, UDP optional].
 *   Port 53: `dns-pihole` (Host-Mode).

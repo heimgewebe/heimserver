@@ -30,16 +30,16 @@ if ls infra/pihole/*.conf >/dev/null 2>&1; then
 fi
 
 # 4. Check Canonical Naming Doc existence
-if [ ! -f "docs/deploy/heimserver.naming.md" ]; then
-  fail "Missing docs/deploy/heimserver.naming.md"
+if [ ! -f "architecture/naming.md" ]; then
+  fail "Missing architecture/naming.md"
 fi
 
 # 5. Check Runbook Reference to Example Files
-if ! grep -F "99-heimgewebe.conf.example" docs/runbooks/ops.runbook.leitstand-gateway.md >/dev/null; then
-  fail "Runbook docs/runbooks/ops.runbook.leitstand-gateway.md does not reference 99-heimgewebe.conf.example"
+if ! grep -F "99-heimgewebe.conf.example" runbooks/ops.runbook.leitstand-gateway.md >/dev/null; then
+  fail "Runbook runbooks/ops.runbook.leitstand-gateway.md does not reference 99-heimgewebe.conf.example"
 fi
-if ! grep -F "99-weltgewebe.conf.example" docs/runbooks/ops.runbook.leitstand-gateway.md >/dev/null; then
-  fail "Runbook docs/runbooks/ops.runbook.leitstand-gateway.md does not reference 99-weltgewebe.conf.example"
+if ! grep -F "99-weltgewebe.conf.example" runbooks/ops.runbook.leitstand-gateway.md >/dev/null; then
+  fail "Runbook runbooks/ops.runbook.leitstand-gateway.md does not reference 99-weltgewebe.conf.example"
 fi
 
 log "All invariants passed."
