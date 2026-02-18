@@ -50,13 +50,15 @@ Erwarteter Output (Beispiel):
 LISTEN 0      4096         0.0.0.0:80        0.0.0.0:*    users:(("docker-proxy",pid=...))
 LISTEN 0      4096         0.0.0.0:443       0.0.0.0:*    users:(("docker-proxy",pid=...))
 LISTEN 0      32     192.168.178.46:53       0.0.0.0:*    users:(("pihole-FTL",pid=...))
-LISTEN 0      5           0.0.0.0:8081      0.0.0.0:*    users:(("pihole-FTL",pid=...) ("lighttpd",pid=...))
+LISTEN 0      5           0.0.0.0:8081      0.0.0.0:*    users:(("pihole-FTL",pid=...))
 ```
 
-*   `docker-proxy` auf 80/443 -> OK (Caddy via Bridge)
-*   `lighttpd` / `pihole-FTL` auf 53/8081 -> OK (Pi-hole Host-Mode)
+*   `docker-proxy` auf 80/443 -> OK (Ports werden vom Edge-Container publisht)
+*   `pihole-FTL` auf 53/8081 -> OK (Pi-hole Host-Mode)
 
-Falls `lighttpd` auf 80 auftaucht -> **ALARM / DRIFT**.
+*Hinweis:* Je nach Pi-hole-Version kann der Prozessname abweichen (z.B. `lighttpd` bei Legacy-Setups).
+
+Falls `lighttpd` oder `pihole-FTL` auf 80 auftaucht -> **ALARM / DRIFT**.
 
 ## 5. Wiederherstellung (Recovery)
 
@@ -72,16 +74,17 @@ Falls Pi-hole Port 80 blockiert:
     sudo ss -lntup | grep :80
     ```
     (Sollte leer sein oder `docker-proxy` (Caddy) zeigen)
-3.  **Config korrigieren (Environment):**
-    In `docker-compose.yml` (oder Override):
-    ```yaml
-    environment:
-      - WEB_PORT=8081
-    ```
-    Und in `etc-pihole/setupVars.conf` prüfen.
-4.  **Neustart:**
+3.  **Config korrigieren (FTL v6):**
     ```bash
+    # Setze Webserver Port via FTL Config (Beispiel)
     docker start dns-pihole
+    docker exec -it dns-pihole sh -lc 'pihole-FTL --config webserver.port "8081o,[::]:8081o"'
+    docker restart dns-pihole
+    ```
+    *Hinweis:* Falls Pi-hole nicht via FTL konfiguriert wird (Legacy/lighttpd), müssen Environment-Variablen (z.B. `WEB_PORT`) je nach Deployment angepasst werden.
+4.  **Kontrolle:**
+    ```bash
+    curl -I http://localhost:8081/admin/
     ```
 
 ## 6. Routing-Implikationen
