@@ -572,6 +572,22 @@ Optional:
 
 ---
 
+## 11. Hardware Snapshot – 2026-02-18
+
+**RAM Upgrade**
+
+*   **Installed RAM:** 2x 16GB DDR4-3200 SO-DIMM
+*   **Total:** 32GB
+*   **Configured Speed:** 3200 MT/s
+*   **Voltage:** 1.2V
+
+**Verification:**
+
+*   `free -h`: 32GB Total
+*   `dmidecode`: 2x 16GB, 3200 MT/s, 1.2V
+
+---
+
 ## 12. Runtime-Definition
 
 Heimserver Runtime ist kohärent, wenn:
