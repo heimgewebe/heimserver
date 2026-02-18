@@ -4,4 +4,5 @@
 
 *   **RAM Upgrade:**
     *   Installed 2x 16GB DDR4-3200 SO-DIMM (Total: 32GB).
-    *   Verified via `free -h` and `dmidecode` (3200 MT/s, 1.2V).
+    *   `free -h` shows `Mem: 30Gi total` (expected for 32GB installed)
+    *   `dmidecode` confirms 2x16GB @ 3200 MT/s, 1.2V

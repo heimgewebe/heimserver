@@ -583,7 +583,7 @@ Optional:
 
 **Verification:**
 
-*   `free -h`: 32GB Total
+*   `free -h`: `Mem: 30Gi total` (GiB vs GB + reserved)
 *   `dmidecode`: 2x 16GB, 3200 MT/s, 1.2V
 
 ---
