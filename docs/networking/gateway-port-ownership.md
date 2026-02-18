@@ -2,7 +2,7 @@
 
 **Dokumentklasse:** ARCHITEKTUR · INVARIANTE
 **Stand:** 2026-02-13
-**Scope:** Host-Namespace Ports 80, 443, 53
+**Scope:** Host-Namespace Ports 80, 443, 53, 8081
 
 ---
 
@@ -17,17 +17,17 @@ Es existiert genau ein öffentlich exponierendes Gateway im System.
 
 | Port | Service | Typ | Modus | Anmerkung |
 | :--- | :--- | :--- | :--- | :--- |
-| **80** | `edge-gateway` (Caddy) | TCP | Host (Docker-Proxy) | HTTP Redirect |
-| **443** | `edge-gateway` (Caddy) | TCP/UDP | Host (Docker-Proxy) | TLS Termination |
-| **53** | `pihole` | TCP/UDP | **Host-Network** | DNS Resolver |
-| **8081** | `pihole` | TCP | **Host-Network** | Webinterface (verschoben) |
+| **80** | `edge-caddy` (Caddy) | TCP | Host (Docker-Proxy) | HTTP Redirect |
+| **443** | `edge-caddy` (Caddy) | TCP | Host (Docker-Proxy) | TLS Termination (UDP/443 nur bei aktivem QUIC/HTTP3) |
+| **53** | `dns-pihole` | TCP/UDP | **Host-Network** | DNS Resolver |
+| **8081** | `dns-pihole` | TCP | **Host-Network** | Webinterface (verschoben) |
 
 **Wichtig:**
 Services im `network_mode: host` (wie Pi-hole) teilen sich den Netzwerk-Namespace mit dem Host. Jede Port-Bindung kollidiert direkt mit anderen Host-Diensten.
 
 ## 3. Host-Mode Risiken
 
-Der Container `pihole` läuft im `host`-Mode, um korrekte Client-IPs für DNS-Queries zu sehen.
+Der Container `dns-pihole` läuft im `host`-Mode, um korrekte Client-IPs für DNS-Queries zu sehen.
 Das bedeutet aber:
 *   Der Container "sieht" alle Host-Interfaces.
 *   Standardmäßig bindet Pi-hole Webinterface auf 80.
@@ -41,8 +41,8 @@ Jeder Service im Host-Mode muss explizit auf kollisionsfreie Ports konfiguriert 
 Prüfen, wer die Ports belegt:
 
 ```bash
-# Zeigt Listener mit Prozessnamen
-sudo ss -lntp | grep -E ":(80|443|53|8081)"
+# Zeigt Listener mit Prozessnamen (inkl. UDP)
+sudo ss -lntup | grep -E ":(80|443|53|8081)"
 ```
 
 Erwarteter Output (Beispiel):
@@ -50,7 +50,7 @@ Erwarteter Output (Beispiel):
 LISTEN 0      4096         0.0.0.0:80        0.0.0.0:*    users:(("docker-proxy",pid=...))
 LISTEN 0      4096         0.0.0.0:443       0.0.0.0:*    users:(("docker-proxy",pid=...))
 LISTEN 0      32     192.168.178.46:53       0.0.0.0:*    users:(("pihole-FTL",pid=...))
-LISTEN 0      5           0.0.0.0:8081      0.0.0.0:*    users:(("lighttpd",pid=...))
+LISTEN 0      5           0.0.0.0:8081      0.0.0.0:*    users:(("pihole-FTL",pid=...) ("lighttpd",pid=...))
 ```
 
 *   `docker-proxy` auf 80/443 -> OK (Caddy via Bridge)
@@ -62,15 +62,16 @@ Falls `lighttpd` auf 80 auftaucht -> **ALARM / DRIFT**.
 
 Falls Pi-hole Port 80 blockiert:
 
-1.  **Stop Pi-hole:**
+1.  **Identifizieren & Stop:**
     ```bash
-    docker stop pihole
+    docker ps --format 'table {{.Names}}\t{{.Ports}}' | grep -i pihole
+    docker stop dns-pihole
     ```
 2.  **Prüfen:**
     ```bash
-    sudo ss -lntp | grep :80
+    sudo ss -lntup | grep :80
     ```
-    (Sollte leer sein oder Caddy zeigen)
+    (Sollte leer sein oder `docker-proxy` (Caddy) zeigen)
 3.  **Config korrigieren (Environment):**
     In `docker-compose.yml` (oder Override):
     ```yaml
@@ -80,7 +81,7 @@ Falls Pi-hole Port 80 blockiert:
     Und in `etc-pihole/setupVars.conf` prüfen.
 4.  **Neustart:**
     ```bash
-    docker start pihole
+    docker start dns-pihole
     ```
 
 ## 6. Routing-Implikationen
