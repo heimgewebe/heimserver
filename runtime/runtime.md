@@ -1,4 +1,4 @@
-# heimserver.runtime.md
+# runtime.md
 
 Status: Operativ kanonisch
 Scope: Laufzeit-Realität des Heimservers (nicht Architekturvision)

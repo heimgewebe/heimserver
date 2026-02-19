@@ -1,4 +1,4 @@
-# heimserver.network.md
+# network.md
 
 Kanonische Netz- und Transportarchitektur
 ⛔️ ENTHÄLT SICHERHEITSRELEVANTE STRUKTUR

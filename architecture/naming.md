@@ -1,4 +1,4 @@
-# heimserver.naming.md
+# naming.md
 
 Kanonische Namens- und Adressierungsarchitektur
 ⛔️ ARCHITEKTURDOKUMENT · NICHT ÖFFENTLICH

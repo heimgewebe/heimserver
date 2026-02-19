@@ -1,4 +1,4 @@
-# heimserver.constitution.md
+# constitution.md
 
 Version 4.0 · Konsolidierte Verfassung
 Stand: 2026-02-13
@@ -25,7 +25,7 @@ Die Wahrheit ist föderal organisiert:
 
 | Dokument | Zuständigkeit | Inhalt |
 |---|---|---|
-| `constitution.md` (dieses) | Verfassung | Zweck, Verbote, Drift-Trigger |
+| [`constitution.md`](constitution.md) (dieses) | Verfassung | Zweck, Verbote, Drift-Trigger |
 | [`runtime.md`](../runtime/runtime.md) | Realität | Aktuelle Ports, IPs, Container |
 | [`network.md`](network.md) | Transport | Routing, NAT, WireGuard, Firewall |
 | [`naming.md`](naming.md) | Semantik | DNS-Zonen, TLS, Hostnames |

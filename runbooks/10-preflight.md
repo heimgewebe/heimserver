@@ -12,7 +12,7 @@ Drift schnell erkennen, bevor er „real“ wird.
 2) Wenn WARN auftaucht
 - Ursache ermitteln
 - Wenn sich die Realität (Ports/Container) geändert hat: [`runtime.md`](../runtime/runtime.md) aktualisieren.
-- Wenn sich Regeln/Architektur geändert haben: [`constitution.md`](../architecture/constitution.md) (oder naming/network in `../architecture/`) aktualisieren.
+- Wenn sich Regeln/Architektur geändert haben: [`constitution.md`](../architecture/constitution.md), [`naming.md`](../architecture/naming.md) oder [`network.md`](../architecture/network.md) aktualisieren.
 - Falls Regression: zurückrollen oder fixen
 
 ## Minimaler Abschluss
