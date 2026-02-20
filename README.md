@@ -1,14 +1,31 @@
 # heimserver
 
-Kanonischer Kontext liegt in [`heimserver.constitution.md`](heimserver.constitution.md).
+Kanonischer Kontext liegt in [`architecture/constitution.md`](architecture/constitution.md).
 
 Primärer Einstieg für Agents: [`AGENTS.md`](AGENTS.md).
+
+## Struktur & Hierarchie
+
+Das Repo folgt einer strikten Trennung zwischen Norm (Soll), Realität (Ist) und Handlung (Tun):
+
+1.  **[`architecture/`](architecture/)** (Die Verfassung)
+    *   Normative Regeln, Netzplanung, Naming-Konventionen.
+    *   Hier steht, *wie es sein muss*.
+2.  **[`runtime/`](runtime/)** (Die Realität)
+    *   Der beobachtete Ist-Zustand des Systems (Ports, Container, Routen).
+    *   Hier steht, *was aktuell läuft*.
+3.  **[`operations/`](operations/)** (Die Handlung)
+    *   Protokolle, Checks und operative Eingriffe.
+    *   Hier steht, *was getan wird*.
+
+Zusätzlich:
+*   `runbooks/`: Konkrete Handlungsanweisungen (Step-by-Step).
+*   `ops/`: Skripte und Checks zur Automatisierung.
 
 ## Safety Checks (vor jedem Push)
 
 Keine sensiblen Dateien getrackt?
 
-    git ls-files | rg -n "(audit|server-facts|rules\\.v4|rules\\.v6|\\.env|wireguard|\\.key|\\.pem)" || echo "OK"
     git ls-files | grep -E "(audit|server-facts|rules\\.v4|rules\\.v6|\\.env|wireguard|\\.key|\\.pem)" || echo "OK"
 
 Repo-Policy:

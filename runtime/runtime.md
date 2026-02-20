@@ -1,11 +1,11 @@
-# heimserver.runtime.md
+# runtime.md
 
 Status: Operativ kanonisch
 Scope: Laufzeit-Realität des Heimservers (nicht Architekturvision)
 
 **Legende Status-Tags:**
 - **Observed:** Automatisch durch Audit (z.B. `ops/audit/collect.sh`) beobachtet.
-- **Policy:** Durch Verfassung (`constitution.md`) vorgegeben.
+- **Policy:** Durch Verfassung ([`constitution.md`](../architecture/constitution.md)) vorgegeben.
 - **Assumed:** Annahme, muss noch technisch verifiziert werden.
 
 ---

@@ -1,4 +1,4 @@
-# heimserver.constitution.md
+# constitution.md
 
 Version 4.0 · Konsolidierte Verfassung
 Stand: 2026-02-13
@@ -25,11 +25,11 @@ Die Wahrheit ist föderal organisiert:
 
 | Dokument | Zuständigkeit | Inhalt |
 |---|---|---|
-| `heimserver.constitution.md` (dieses) | Verfassung | Zweck, Verbote, Drift-Trigger |
-| `heimserver.runtime.md` | Realität | Aktuelle Ports, IPs, Container |
-| `heimserver.network.md` | Transport | Routing, NAT, WireGuard, Firewall |
-| `heimserver.naming.md` | Semantik | DNS-Zonen, TLS, Hostnames |
-| `heimserver.operations.md` | Handeln | Checks, Wiederherstellung, Backups |
+| [`constitution.md`](constitution.md) (dieses) | Verfassung | Zweck, Verbote, Drift-Trigger |
+| [`runtime.md`](../runtime/runtime.md) | Realität | Aktuelle Ports, IPs, Container |
+| [`network.md`](network.md) | Transport | Routing, NAT, WireGuard, Firewall |
+| [`naming.md`](naming.md) | Semantik | DNS-Zonen, TLS, Hostnames |
+| [`operations.md`](../operations/operations.md) | Handeln | Checks, Wiederherstellung, Backups |
 
 ---
 
@@ -70,11 +70,11 @@ Jede Änderung an folgenden Komponenten erfordert eine Aktualisierung der Kanon-
 
 | Komponente | Dokument |
 |---|---|
-| Docker Container / Compose | `runtime.md` |
-| Firewall / iptables / NAT | `network.md` |
-| WireGuard Peers / Routes | `network.md` |
-| DNS Zonen / TLS Zertifikate | `naming.md` |
-| Backup-Strategie / Notfall | `operations.md` |
+| Docker Container / Compose | [`runtime.md`](../runtime/runtime.md) |
+| Firewall / iptables / NAT | [`network.md`](network.md) |
+| WireGuard Peers / Routes | [`network.md`](network.md) |
+| DNS Zonen / TLS Zertifikate | [`naming.md`](naming.md) |
+| Backup-Strategie / Notfall | [`operations.md`](../operations/operations.md) |
 
 **Pflege-Regel:**
 Erst die Architektur klären (constitution/network/naming), dann die Runtime ändern (runtime), dann die Realität prüfen (operations).
