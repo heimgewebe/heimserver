@@ -71,7 +71,11 @@ fi
 
 say "docker publish (if docker is present)"
 if command -v docker >/dev/null 2>&1; then
-  docker ps --format 'table {{.Names}}\t{{.Ports}}' || true
+  if docker info >/dev/null 2>&1; then
+    docker ps --format 'table {{.Names}}\t{{.Ports}}' || true
+  else
+    warn "docker binary present but daemon unreachable (permissions/stopped?)"
+  fi
 else
   warn "docker not available"
 fi
@@ -164,12 +168,14 @@ say "edge runtime checks"
 EDGE_DIR="/opt/heimgewebe/edge"
 if [ -d "$EDGE_DIR" ]; then
     # 1. Check Docker Compose Config
-    if command -v docker >/dev/null 2>&1; then
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
         if docker compose -f "$EDGE_DIR/docker-compose.yml" config >/dev/null 2>&1; then
              ok "Edge Docker Compose config valid"
         else
              warn "Edge Docker Compose config INVALID (check $EDGE_DIR/docker-compose.yml)"
         fi
+    else
+        echo "Skip: Docker checks (daemon unreachable)"
     fi
 
     # 2. Check 9081 Loopback (Host Binding) - Edge Debug
@@ -214,7 +220,7 @@ else
 fi
 
 # Check for legacy compose drift (global check, not tied to edge dir)
-if command -v docker >/dev/null 2>&1; then
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     if docker ps --filter label=com.docker.compose.project=compose --format '{{.Names}}' | grep -q .; then
         warn "Legacy compose project detected (project=compose). Potential deployment drift."
     fi

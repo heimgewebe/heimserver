@@ -59,6 +59,7 @@ http://api.weltgewebe.home.arpa {
 https://api.weltgewebe.home.arpa {
     tls internal
     # Upstream: Ensure this matches the Docker service name in the shared network.
-    # Current runtime observation: weltgewebe-api-1 (Audit 2026-02-25)
-    reverse_proxy weltgewebe-api-1:8080
+    # Template expects stable service alias 'weltgewebe-api'.
+    # If runtime only has 'weltgewebe-api-1', fix in Weltgewebe compose via network alias.
+    reverse_proxy weltgewebe-api:8080
 }

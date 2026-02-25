@@ -24,7 +24,7 @@ Ensure required networks exist (create if missing):
 docker network inspect edge || docker network create edge
 docker network inspect heimnet || docker network create heimnet
 # weltgewebe_default is REQUIRED for API connectivity (edge-caddy sits in it to reach weltgewebe-api)
-docker network inspect weltgewebe_default || echo "CRITICAL: weltgewebe_default missing! Edge compose will fail."
+docker network inspect weltgewebe_default >/dev/null 2>&1 || { echo "CRITICAL: weltgewebe_default missing! Edge compose will fail."; exit 1; }
 ```
 
 ### 3. Synchronize Templates
