@@ -242,7 +242,7 @@ Edge Caddy:
 `127.0.0.1:9081` (Host) → `:9081` (Container)
 Zweck: Healthcheck, Metrics (secured/disabled)
 Invariante: NIEMALS öffentlich exposen.
-*Hinweis: 8081 ist bewusst nicht Edge-Debug, da dieser Port in der Runtime bereits von weltgewebe-api (IPv4) und pihole-FTL (IPv6) belegt ist (Audit 2026-02-25).*
+*Hinweis: 8081 ist durch weltgewebe-api (IPv4) und pihole-FTL (IPv6) belegt (Observed: Audit 2026-02-25).*
 
 ---
 
