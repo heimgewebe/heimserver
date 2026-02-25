@@ -99,7 +99,7 @@ Root-Alias (optional)
 API (optional; sofern existent)
 
 `api.weltgewebe.home.arpa`
-(Aktueller Stand: Aktiv; Upstream lokal via Docker-Netz.)
+(Observed: Aktiv; Upstream lokal via Docker-Netz.)
 
 **Regel:**
 Keine Kurzformen.

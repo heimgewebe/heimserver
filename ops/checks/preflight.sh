@@ -175,7 +175,7 @@ if [ -d "$EDGE_DIR" ]; then
              warn "Edge Docker Compose config INVALID (check $EDGE_DIR/docker-compose.yml)"
         fi
     else
-        echo "Skip: Docker checks (daemon unreachable)"
+        warn "Skip: Docker checks (daemon unreachable)"
     fi
 
     # 2. Check 9081 Loopback (Host Binding) - Edge Debug
@@ -219,12 +219,6 @@ else
     echo "Info: Edge directory $EDGE_DIR not found (skipping Edge specific checks)"
 fi
 
-# Check for legacy compose drift (global check, not tied to edge dir)
-if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-    if docker ps --filter label=com.docker.compose.project=compose --format '{{.Names}}' | grep -q .; then
-        warn "Legacy compose project detected (project=compose). Potential deployment drift."
-    fi
-fi
 
 echo
 echo "Done. If any WARN lines appeared, treat as drift until explained."
