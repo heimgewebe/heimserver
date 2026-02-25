@@ -172,25 +172,30 @@ if [ -d "$EDGE_DIR" ]; then
         fi
     fi
 
-    # 2. Check 8081 Loopback (Host Binding)
-    # Important: Caddy inside container listens on :8081, but host binding MUST be 127.0.0.1:8081
+    # 2. Check 9081 Loopback (Host Binding) - Edge Debug
+    # Important: Caddy inside container listens on :9081, but host binding MUST be 127.0.0.1:9081
     if command -v ss >/dev/null 2>&1; then
-        if ss -lntup | grep -E '127\.0\.0\.1:8081' >/dev/null 2>&1; then
-            ok "Port 8081 bound to loopback (Host)"
-        elif ss -lntup | grep -E ':8081' >/dev/null 2>&1; then
-             warn "Port 8081 exposed on non-loopback interface on HOST!"
+        if ss -lntup | grep -E '127\.0\.0\.1:9081' >/dev/null 2>&1; then
+            ok "Port 9081 (Edge Debug) bound to loopback (Host)"
+        elif ss -lntup | grep -E ':9081' >/dev/null 2>&1; then
+             warn "Port 9081 exposed on non-loopback interface on HOST!"
         else
-             warn "Port 8081 not listening on host (Edge Caddy down?)"
+             warn "Port 9081 not listening on host (Edge Caddy down?)"
+        fi
+
+        # Informational drift check for legacy 8081 usage
+        if ss -lntup | grep -E ':8081' >/dev/null 2>&1; then
+            warn "Port 8081 in use (legacy API/Pi-hole context). Expected: not Edge health."
         fi
     fi
 
     # 3. Check Cloudflare Headers (Drift)
     if command -v curl >/dev/null 2>&1; then
         # Check local endpoint via loopback health check
-        if curl -fsS http://127.0.0.1:8081/health/ready >/dev/null 2>&1; then
-             ok "Edge Health Check (8081) OK"
+        if curl -fsS http://127.0.0.1:9081/health/ready >/dev/null 2>&1; then
+             ok "Edge Health Check (9081) OK"
         else
-             warn "Edge Health Check (8081) failed or unreachable"
+             warn "Edge Health Check (9081) failed or unreachable"
         fi
 
         # Check for Cloudflare headers (if domain resolves and CA is present)
@@ -206,6 +211,13 @@ if [ -d "$EDGE_DIR" ]; then
     fi
 else
     echo "Info: Edge directory $EDGE_DIR not found (skipping Edge specific checks)"
+fi
+
+# Check for legacy compose drift (global check, not tied to edge dir)
+if command -v docker >/dev/null 2>&1; then
+    if docker ps --filter label=com.docker.compose.project=compose --format '{{.Names}}' | grep -q .; then
+        warn "Legacy compose project detected (project=compose). Potential deployment drift."
+    fi
 fi
 
 echo

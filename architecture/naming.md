@@ -239,9 +239,10 @@ Keine Sub-Sub-Domains ohne Not.
 ## 12. Betriebs- und Debug-Schnittstellen (Global)
 
 Edge Caddy:
-`127.0.0.1:8081` (Host) → `:8081` (Container)
+`127.0.0.1:9081` (Host) → `:9081` (Container)
 Zweck: Healthcheck, Metrics (secured/disabled)
 Invariante: NIEMALS öffentlich exposen.
+*Hinweis: 8081 ist bewusst nicht Edge-Debug, da dieser Port in der Runtime bereits von weltgewebe-api (IPv4) und pihole-FTL (IPv6) belegt ist (Audit 2026-02-25).*
 
 ---
 

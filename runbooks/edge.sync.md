@@ -79,7 +79,7 @@ docker compose exec edge-caddy cat /data/caddy/pki/authorities/local/root.crt > 
 
 2.  **Health Check (Local):**
     ```bash
-    curl -f http://127.0.0.1:8081/health/ready
+    curl -f http://127.0.0.1:9081/health/ready
     # Expect: OK
     ```
 

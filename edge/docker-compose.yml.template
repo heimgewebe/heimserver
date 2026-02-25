@@ -7,8 +7,9 @@ services:
       - "80:80"
       - "443:443"
       # Health/Debug: Host loopback binding isolates this.
-      # Container listens on :8081, mapped to 127.0.0.1:8081 on host.
-      - "127.0.0.1:8081:8081"
+      # Container listens on :9081, mapped to 127.0.0.1:9081 on host.
+      # 8081 is occupied by weltgewebe-api/pihole-FTL (IPv6) in current runtime.
+      - "127.0.0.1:9081:9081"
     networks:
       - edge
       - heimnet

@@ -6,9 +6,9 @@
     }
 }
 
-# --- Internal Health & Debug (Loopback Only via 8081) ---
-# Container: listens on :8081. Host: bound to 127.0.0.1:8081.
-:8081 {
+# --- Internal Health & Debug (Loopback Only via 9081) ---
+# Container: listens on :9081. Host: bound to 127.0.0.1:9081.
+:9081 {
     # Health check
     handle /health/ready {
         respond "OK" 200
