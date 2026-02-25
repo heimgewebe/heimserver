@@ -99,7 +99,10 @@ Root-Alias (optional)
 API (optional; sofern existent)
 
 `api.weltgewebe.home.arpa`
-(Aktueller Stand: Optional/Template; DNS + Caddy deaktiviert bis Upstream vorhanden.)
+(Aktueller Stand: Aktiv; Upstream lokal via Docker-Netz.)
+
+**Debug-Port:**
+`127.0.0.1:8081` (Health/Metrics; Loopback only).
 
 **Regel:**
 Keine Kurzformen.

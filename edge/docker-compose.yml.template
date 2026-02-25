@@ -1,0 +1,29 @@
+services:
+  edge-caddy:
+    image: caddy:2.8.4
+    container_name: edge-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:8081:8081" # Health/Debug loopback only
+    networks:
+      - edge
+      - heimnet
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/data/caddy/pki/authorities/local # CA persistence
+      - edge_caddy_data:/data
+      - edge_caddy_config:/config
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  edge:
+    external: true
+  heimnet:
+    external: true
+
+volumes:
+  edge_caddy_data:
+  edge_caddy_config:

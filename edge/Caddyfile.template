@@ -1,0 +1,62 @@
+{
+    admin off
+    # Global options
+    servers {
+        trusted_proxies static private_ranges
+    }
+}
+
+# --- Internal Health & Debug (Loopback Only via 8081) ---
+http://127.0.0.1:8081 {
+    handle /health/ready {
+        respond "OK" 200
+    }
+    handle /metrics {
+        metrics
+    }
+}
+
+# --- Heimgewebe (Infrastructure) ---
+
+http://leitstand.heimgewebe.home.arpa {
+    redir https://leitstand.heimgewebe.home.arpa{uri} 308
+}
+
+https://leitstand.heimgewebe.home.arpa {
+    tls internal
+    reverse_proxy deploy-leitstand-1:3000
+}
+
+
+# --- Weltgewebe (Interface) ---
+
+http://weltgewebe.home.arpa {
+    redir https://weltgewebe.home.arpa{uri} 308
+}
+
+https://weltgewebe.home.arpa {
+    tls internal
+
+    # UI (Static/SPA placeholder or upstream)
+    # prompt: "UI lokal served" implies either a static root or a container.
+    # Enable ONE of the following:
+
+    # Option A: Static File Server (if mapped via volume)
+    # root * /usr/share/caddy
+    # file_server
+
+    # Option B: Upstream Container
+    # reverse_proxy weltgewebe-ui:80
+
+    # Default: Simple Text Response (MVP)
+    respond "Weltgewebe UI Local (Template Default)" 200
+}
+
+http://api.weltgewebe.home.arpa {
+    redir https://api.weltgewebe.home.arpa{uri} 308
+}
+
+https://api.weltgewebe.home.arpa {
+    tls internal
+    reverse_proxy weltgewebe-api:8080
+}

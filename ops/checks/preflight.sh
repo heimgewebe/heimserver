@@ -160,5 +160,51 @@ fi
 say "dns quick check"
 getent hosts heimserver || true
 
+say "edge runtime checks"
+EDGE_DIR="/opt/heimgewebe/edge"
+if [ -d "$EDGE_DIR" ]; then
+    # 1. Check Docker Compose Config
+    if command -v docker >/dev/null 2>&1; then
+        if docker compose -f "$EDGE_DIR/docker-compose.yml" config >/dev/null 2>&1; then
+             ok "Edge Docker Compose config valid"
+        else
+             warn "Edge Docker Compose config INVALID (check $EDGE_DIR/docker-compose.yml)"
+        fi
+    fi
+
+    # 2. Check 8081 Loopback
+    if command -v ss >/dev/null 2>&1; then
+        if ss -lntup | grep -qE '127\.0\.0\.1:8081'; then
+            ok "Port 8081 bound to loopback"
+        elif ss -lntup | grep -qE ':8081'; then
+             warn "Port 8081 exposed on non-loopback interface!"
+        else
+             warn "Port 8081 not listening (Edge Caddy down?)"
+        fi
+    fi
+
+    # 3. Check Cloudflare Headers (Drift)
+    if command -v curl >/dev/null 2>&1; then
+        # Check local endpoint via loopback health check
+        if curl -fsS http://127.0.0.1:8081/health/ready >/dev/null 2>&1; then
+             ok "Edge Health Check (8081) OK"
+        else
+             warn "Edge Health Check (8081) failed or unreachable"
+        fi
+
+        # Check for Cloudflare headers (if domain resolves and CA is present)
+        # Using grep instead of rg (ripgrep) for standard compliance
+        if [ -f "$EDGE_DIR/certs/caddy-local-root.crt" ] && getent hosts weltgewebe.home.arpa >/dev/null 2>&1; then
+             if curl --cacert "$EDGE_DIR/certs/caddy-local-root.crt" -Is https://weltgewebe.home.arpa/ | grep -iE "server: cloudflare|cf-ray" >/dev/null 2>&1; then
+                  warn "Cloudflare headers detected on weltgewebe.home.arpa! (Drift: Tunnel active?)"
+             else
+                  ok "No Cloudflare headers on weltgewebe.home.arpa"
+             fi
+        fi
+    fi
+else
+    echo "Info: Edge directory $EDGE_DIR not found (skipping Edge specific checks)"
+fi
+
 echo
 echo "Done. If any WARN lines appeared, treat as drift until explained."
