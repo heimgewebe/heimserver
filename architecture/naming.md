@@ -101,9 +101,6 @@ API (optional; sofern existent)
 `api.weltgewebe.home.arpa`
 (Aktueller Stand: Aktiv; Upstream lokal via Docker-Netz.)
 
-**Debug-Port:**
-`127.0.0.1:8081` (Health/Metrics; Loopback only).
-
 **Regel:**
 Keine Kurzformen.
 Keine alternativen Domains.
@@ -239,7 +236,16 @@ Keine Sub-Sub-Domains ohne Not.
 
 ---
 
-## 12. Essenz
+## 12. Betriebs- und Debug-Schnittstellen (Global)
+
+Edge Caddy:
+`127.0.0.1:8081` (Host) → `:8081` (Container)
+Zweck: Healthcheck, Metrics (secured/disabled)
+Invariante: NIEMALS öffentlich exposen.
+
+---
+
+## 13. Essenz
 
 Namensräume sind Machtstrukturen.
 

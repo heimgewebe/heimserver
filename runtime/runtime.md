@@ -229,10 +229,9 @@ Container: edge-caddy
 ### 4.1 Site-Block Invariante
 
 Canonical Hosts:
-
-leitstand.heimgewebe.home.arpa
-weltgewebe.home.arpa
-api.weltgewebe.home.arpa
+- `leitstand.heimgewebe.home.arpa`
+- `weltgewebe.home.arpa`
+- `api.weltgewebe.home.arpa`
 
 Caddy Status:
 	•	Version: Observed (v2.8.4; Beleg: `caddy_version.txt`)

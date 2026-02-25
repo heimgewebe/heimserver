@@ -14,10 +14,19 @@ Configuration is managed via templates in this repository to prevent drift, but 
 Ensure the directory structure exists on the host:
 ```bash
 sudo mkdir -p /opt/heimgewebe/edge/certs
+sudo mkdir -p /opt/heimgewebe/edge/html
 sudo chown -R root:root /opt/heimgewebe/edge
 ```
 
-### 2. Synchronize Templates
+### 2. Verify External Networks
+Ensure required networks exist (create if missing):
+```bash
+docker network inspect edge || docker network create edge
+docker network inspect heimnet || docker network create heimnet
+docker network inspect weltgewebe_default || echo "Warning: weltgewebe_default missing (API connectivity affected?)"
+```
+
+### 3. Synchronize Templates
 Copy the templates to the host and remove the `.template` extension.
 **Warning:** Do not overwrite existing certificates or data volumes.
 
@@ -25,16 +34,23 @@ Copy the templates to the host and remove the `.template` extension.
 # Copy Docker Compose
 cp edge/docker-compose.yml.template /opt/heimgewebe/edge/docker-compose.yml
 
-# Copy Caddyfile (Review changes first!)
+# Copy Caddyfile (Check Drift!)
 # If a Caddyfile already exists, diff it first.
-diff edge/Caddyfile.template /opt/heimgewebe/edge/Caddyfile || echo "Drift detected"
-cp edge/Caddyfile.template /opt/heimgewebe/edge/Caddyfile
+if diff edge/Caddyfile.template /opt/heimgewebe/edge/Caddyfile >/dev/null; then
+    echo "No Caddyfile drift."
+else
+    echo "DRIFT DETECTED in Caddyfile!"
+    diff edge/Caddyfile.template /opt/heimgewebe/edge/Caddyfile
+    echo "Review diff. If intentional host-changes, backport to template."
+    echo "To force overwrite: cp edge/Caddyfile.template /opt/heimgewebe/edge/Caddyfile"
+    # exit 1 # Uncomment in CI/Strict mode
+fi
 ```
 
-### 3. Customize Runtime (If needed)
+### 4. Customize Runtime (If needed)
 If the specific deployment requires modifications (e.g. specific volume mappings or environment variables), create a `docker-compose.override.yml` on the host. **Do not commit overrides to the repo.**
 
-### 4. Apply Configuration
+### 5. Apply Configuration
 Reload Caddy to apply changes without downtime.
 
 ```bash
@@ -43,6 +59,15 @@ docker compose up -d
 # Or just reload config if container is running:
 docker compose exec edge-caddy caddy reload --config /etc/caddy/Caddyfile
 ```
+
+### 6. Export Root CA (Post-Deployment)
+The internal Root CA is generated inside the `edge_caddy_data` volume. To trust it on clients, export it to the host:
+
+```bash
+# Copy root.crt from volume via container execution
+docker compose exec edge-caddy cat /data/caddy/pki/authorities/local/root.crt > /opt/heimgewebe/edge/certs/caddy-local-root.crt
+```
+*Note: Path inside container depends on Caddy version/config. If `cat` fails, inspect `/data`.*
 
 ## Verification
 

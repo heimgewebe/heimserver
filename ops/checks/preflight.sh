@@ -172,14 +172,15 @@ if [ -d "$EDGE_DIR" ]; then
         fi
     fi
 
-    # 2. Check 8081 Loopback
+    # 2. Check 8081 Loopback (Host Binding)
+    # Important: Caddy inside container listens on :8081, but host binding MUST be 127.0.0.1:8081
     if command -v ss >/dev/null 2>&1; then
-        if ss -lntup | grep -qE '127\.0\.0\.1:8081'; then
-            ok "Port 8081 bound to loopback"
-        elif ss -lntup | grep -qE ':8081'; then
-             warn "Port 8081 exposed on non-loopback interface!"
+        if ss -lntup | grep -E '127\.0\.0\.1:8081' >/dev/null 2>&1; then
+            ok "Port 8081 bound to loopback (Host)"
+        elif ss -lntup | grep -E ':8081' >/dev/null 2>&1; then
+             warn "Port 8081 exposed on non-loopback interface on HOST!"
         else
-             warn "Port 8081 not listening (Edge Caddy down?)"
+             warn "Port 8081 not listening on host (Edge Caddy down?)"
         fi
     fi
 
@@ -193,9 +194,10 @@ if [ -d "$EDGE_DIR" ]; then
         fi
 
         # Check for Cloudflare headers (if domain resolves and CA is present)
-        # Using grep instead of rg (ripgrep) for standard compliance
+        # Using grep instead of rg (ripgrep) for standard compliance.
+        # Anchor to start of header line to avoid false positives.
         if [ -f "$EDGE_DIR/certs/caddy-local-root.crt" ] && getent hosts weltgewebe.home.arpa >/dev/null 2>&1; then
-             if curl --cacert "$EDGE_DIR/certs/caddy-local-root.crt" -Is https://weltgewebe.home.arpa/ | grep -iE "server: cloudflare|cf-ray" >/dev/null 2>&1; then
+             if curl --cacert "$EDGE_DIR/certs/caddy-local-root.crt" -Is https://weltgewebe.home.arpa/ | grep -iE '^(server:[[:space:]]*cloudflare|cf-ray:)' >/dev/null 2>&1; then
                   warn "Cloudflare headers detected on weltgewebe.home.arpa! (Drift: Tunnel active?)"
              else
                   ok "No Cloudflare headers on weltgewebe.home.arpa"
