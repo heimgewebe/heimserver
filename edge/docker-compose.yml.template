@@ -1,0 +1,38 @@
+services:
+  edge-caddy:
+    image: caddy:2.8.4
+    container_name: edge-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      # Health/Debug: Host loopback binding isolates this.
+      # Container listens on :9081, mapped to 127.0.0.1:9081 on host.
+      # 8081 is occupied by weltgewebe-api/pihole-FTL (IPv6) in current runtime.
+      - "127.0.0.1:9081:9081"
+    networks:
+      - edge
+      - heimnet
+      # weltgewebe_default might be needed for direct API access if not routed via edge network
+      # In current runtime, it seems Edge sits in weltgewebe_default too.
+      - weltgewebe_default
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # CA persistence via named volume (best practice)
+      # Root CA export is a manual step (see runbooks/edge.sync.md)
+      - edge_caddy_data:/data
+      - edge_caddy_config:/config
+      # Static site content (if applicable)
+      - ./html:/srv/weltgewebe-web:ro
+
+networks:
+  edge:
+    external: true
+  heimnet:
+    external: true
+  weltgewebe_default:
+    external: true
+
+volumes:
+  edge_caddy_data:
+  edge_caddy_config:

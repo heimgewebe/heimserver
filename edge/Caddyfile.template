@@ -1,0 +1,66 @@
+{
+    admin off
+    # Global options
+    servers {
+        trusted_proxies static private_ranges
+    }
+}
+
+# --- Internal Health & Debug (Loopback Only via 9081) ---
+# Container: listens on :9081. Host: bound to 127.0.0.1:9081.
+:9081 {
+    # Health check
+    handle /health/ready {
+        respond "OK" 200
+    }
+
+    # Metrics (Disabled by default - Security Policy)
+    # Enable only if strictly needed and secured (e.g. BasicAuth).
+    # handle /metrics {
+    #     metrics
+    # }
+}
+
+# --- Heimgewebe (Infrastructure) ---
+
+http://leitstand.heimgewebe.home.arpa {
+    redir https://leitstand.heimgewebe.home.arpa{uri} 308
+}
+
+https://leitstand.heimgewebe.home.arpa {
+    tls internal
+    reverse_proxy deploy-leitstand-1:3000
+}
+
+
+# --- Weltgewebe (Interface) ---
+
+http://weltgewebe.home.arpa {
+    redir https://weltgewebe.home.arpa{uri} 308
+}
+
+https://weltgewebe.home.arpa {
+    tls internal
+
+    # Option A: Static UI (Default)
+    # Serve static files from mounted volume if present.
+    root * /srv/weltgewebe-web
+    try_files {path} {path}/ /index.html
+    file_server
+
+    # Option B: Upstream Container (Comment out Option A)
+    # reverse_proxy weltgewebe-ui:80
+}
+
+http://api.weltgewebe.home.arpa {
+    redir https://api.weltgewebe.home.arpa{uri} 308
+}
+
+https://api.weltgewebe.home.arpa {
+    tls internal
+    # Upstream: Ensure this matches the Docker service name in the shared network.
+    # Template uses 'weltgewebe-api' as the canonical service ID.
+    # Note: This network alias MUST be enforced by the Weltgewebe deployment (docker-compose.yml).
+    # If runtime only has 'weltgewebe-api-1', fix in Weltgewebe compose; do not hardcode unstable container names here.
+    reverse_proxy weltgewebe-api:8080
+}

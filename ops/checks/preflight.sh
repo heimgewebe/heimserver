@@ -71,7 +71,11 @@ fi
 
 say "docker publish (if docker is present)"
 if command -v docker >/dev/null 2>&1; then
-  docker ps --format 'table {{.Names}}\t{{.Ports}}' || true
+  if docker info >/dev/null 2>&1; then
+    docker ps --format 'table {{.Names}}\t{{.Ports}}' || true
+  else
+    warn "docker binary present but daemon unreachable (permissions/stopped?)"
+  fi
 else
   warn "docker not available"
 fi
@@ -159,6 +163,62 @@ fi
 
 say "dns quick check"
 getent hosts heimserver || true
+
+say "edge runtime checks"
+EDGE_DIR="/opt/heimgewebe/edge"
+if [ -d "$EDGE_DIR" ]; then
+    # 1. Check Docker Compose Config
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+        if docker compose -f "$EDGE_DIR/docker-compose.yml" config >/dev/null 2>&1; then
+             ok "Edge Docker Compose config valid"
+        else
+             warn "Edge Docker Compose config INVALID (check $EDGE_DIR/docker-compose.yml)"
+        fi
+    else
+        warn "Skip: Docker checks (daemon unreachable)"
+    fi
+
+    # 2. Check 9081 Loopback (Host Binding) - Edge Debug
+    # Important: Caddy inside container listens on :9081, but host binding MUST be 127.0.0.1:9081
+    if command -v ss >/dev/null 2>&1; then
+        if ss -lntup | grep -E '127\.0\.0\.1:9081' >/dev/null 2>&1; then
+            ok "Port 9081 (Edge Debug) bound to loopback (Host)"
+        elif ss -lntup | grep -E ':9081' >/dev/null 2>&1; then
+             warn "Port 9081 exposed on non-loopback interface on HOST!"
+        else
+             warn "Port 9081 not listening on host (Edge Caddy down?)"
+        fi
+
+        # Informational drift check for legacy 8081 usage
+        if ss -lntup | grep -E ':8081' >/dev/null 2>&1; then
+            warn "Port 8081 in use (legacy API/Pi-hole context). Expected: not Edge health."
+        fi
+    fi
+
+    # 3. Check Cloudflare Headers (Drift)
+    if command -v curl >/dev/null 2>&1; then
+        # Check local endpoint via loopback health check
+        if curl -fsS http://127.0.0.1:9081/health/ready >/dev/null 2>&1; then
+             ok "Edge Health Check (9081) OK"
+        else
+             warn "Edge Health Check (9081) failed or unreachable"
+        fi
+
+        # Check for Cloudflare headers (if domain resolves and CA is present)
+        # Using grep instead of rg (ripgrep) for standard compliance.
+        # Anchor to start of header line to avoid false positives.
+        if [ -f "$EDGE_DIR/certs/caddy-local-root.crt" ] && getent hosts weltgewebe.home.arpa >/dev/null 2>&1; then
+             if curl --cacert "$EDGE_DIR/certs/caddy-local-root.crt" -Is https://weltgewebe.home.arpa/ | grep -iE '^(server:[[:space:]]*cloudflare|cf-ray:)' >/dev/null 2>&1; then
+                  warn "Cloudflare headers detected on weltgewebe.home.arpa! (Drift: Tunnel active?)"
+             else
+                  ok "No Cloudflare headers on weltgewebe.home.arpa"
+             fi
+        fi
+    fi
+else
+    echo "Info: Edge directory $EDGE_DIR not found (skipping Edge specific checks)"
+fi
+
 
 echo
 echo "Done. If any WARN lines appeared, treat as drift until explained."

@@ -99,7 +99,9 @@ Root-Alias (optional)
 API (optional; sofern existent)
 
 `api.weltgewebe.home.arpa`
-(Aktueller Stand: Optional/Template; DNS + Caddy deaktiviert bis Upstream vorhanden.)
+(Observed: Aktiv; Upstream lokal via Docker-Netz.)
+
+*Hinweis: „Aktiv“ ist keine Invariante des Namens, sondern abhängig vom Deployment-Status (Upstream-Existenz).*
 
 **Regel:**
 Keine Kurzformen.
@@ -236,7 +238,17 @@ Keine Sub-Sub-Domains ohne Not.
 
 ---
 
-## 12. Essenz
+## 12. Betriebs- und Debug-Schnittstellen (Global)
+
+Edge Caddy:
+`127.0.0.1:9081` (Host) → `:9081` (Container)
+Zweck: Healthcheck, Metrics (secured/disabled)
+Invariante: NIEMALS öffentlich exposen.
+*Hinweis: 8081 ist durch weltgewebe-api (IPv4) und pihole-FTL (IPv6) belegt (Observed: Audit 2026-02-25).*
+
+---
+
+## 13. Essenz
 
 Namensräume sind Machtstrukturen.
 

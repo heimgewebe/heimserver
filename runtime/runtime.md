@@ -228,9 +228,10 @@ Container: edge-caddy
 
 ### 4.1 Site-Block Invariante
 
-Canonical Host:
-
-leitstand.heimgewebe.home.arpa
+Canonical Hosts:
+- `leitstand.heimgewebe.home.arpa`
+- `weltgewebe.home.arpa`
+- `api.weltgewebe.home.arpa`
 
 Caddy Status:
 	•	Version: Observed (v2.8.4; Beleg: `caddy_version.txt`)
@@ -374,6 +375,9 @@ Local Listeners (127.0.0.1 Only):
 | 3000 | TCP | deploy-leitstand-1 | 127.0.0.1 | |
 | 5335 | TCP/UDP | dns-unbound | 127.0.0.1 | Pi-hole Upstream |
 | 8080 | TCP | code-server | 127.0.0.1 | SSH-Tunnel Access |
+| 9081 | TCP | edge-caddy | 127.0.0.1 | Health/Metrics |
+
+*Hinweis: 8081 ist aktuell durch weltgewebe-api (IPv4 loopback) sowie pihole-FTL (IPv6) belegt und daher nicht Edge-Debug.*
 
 Caddy Admin:
 Port 2019 ist NICHT published (nur container-intern erreichbar).
@@ -483,6 +487,7 @@ Audit-Lücke:
 | no peer certificate | TLS Block fehlt |
 | WG Handshake OK, kein Traffic | NAT fehlt |
 | DNS geht, HTTP nicht | Routing |
+| Server: cloudflare Header | Drift (Tunnel aktiv statt lokal) |
 
 Invariante:
 

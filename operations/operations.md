@@ -92,7 +92,10 @@ Vorgehen:
 
 ```bash
 docker logs edge-caddy
-caddy validate --config /etc/caddy/Caddyfile
+# Validierung (Host-Pfad):
+docker compose -f /opt/heimgewebe/edge/docker-compose.yml exec edge-caddy caddy validate --config /etc/caddy/Caddyfile
+# Oder wenn Container tot:
+docker run --rm -v /opt/heimgewebe/edge/Caddyfile:/etc/caddy/Caddyfile caddy:2.8.4 caddy validate --config /etc/caddy/Caddyfile
 ```
 
 Häufigster Fehler:
