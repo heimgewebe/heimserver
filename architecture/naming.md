@@ -101,6 +101,8 @@ API (optional; sofern existent)
 `api.weltgewebe.home.arpa`
 (Observed: Aktiv; Upstream lokal via Docker-Netz.)
 
+*Hinweis: „Aktiv“ ist keine Invariante des Namens, sondern abhängig vom Deployment-Status (Upstream-Existenz).*
+
 **Regel:**
 Keine Kurzformen.
 Keine alternativen Domains.

@@ -91,6 +91,12 @@ docker compose exec edge-caddy cat /data/caddy/pki/authorities/local/root.crt > 
     # Check for valid TLS certificate (Internal CA)
     ```
 
+4.  **Upstream Connectivity (Diagnostic):**
+    ```bash
+    # Verify that 'weltgewebe-api' resolves. If this fails, API routing will break.
+    docker compose exec edge-caddy getent hosts weltgewebe-api || echo "WARNING: Upstream 'weltgewebe-api' not resolvable! Fix in Weltgewebe compose."
+    ```
+
 ## Rollback
 If the new configuration fails:
 1.  Revert `Caddyfile` to the previous version (if backed up).
