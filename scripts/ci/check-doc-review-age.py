@@ -7,7 +7,7 @@ from datetime import datetime
 # Ensure we can import from scripts/lib
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PATH
+from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PATH, _unquote
 
 REVIEW_POLICY_PATH = 'manifest/review-policy.yaml'
 
@@ -36,7 +36,7 @@ def load_review_policy():
                         except ValueError:
                             pass
                     elif key == 'mode':
-                        policy['mode'] = val
+                        policy['mode'] = _unquote(val).lower()
 
     return policy
 

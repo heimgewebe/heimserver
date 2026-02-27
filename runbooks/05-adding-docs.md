@@ -40,6 +40,7 @@ Add the filename to `manifest/repo-index.yaml` under the correct zone.
 ```yaml
 zones:
   norm:
+    path: architecture/
     canonical_docs:
       - ...
       - my-new-doc.md

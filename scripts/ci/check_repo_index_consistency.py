@@ -6,7 +6,7 @@ import re
 # Ensure we can import from scripts/lib
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from scripts.lib.docmeta import load_repo_index, parse_frontmatter, normalize_path, MANIFEST_PATH, ALLOWED_ROLES, ALLOWED_STATUS
+from scripts.lib.docmeta import load_repo_index, parse_frontmatter, normalize_path, validate_repo_relative_path, MANIFEST_PATH, ALLOWED_ROLES, ALLOWED_STATUS
 
 def main():
     print("Starting Repo Index Consistency Check...")
@@ -38,11 +38,31 @@ def main():
         base_path = zone_data.get('path', '')
         docs = zone_data.get('canonical_docs', [])
 
+        # Security check: Base path must be safe
+        try:
+            base_path = validate_repo_relative_path(base_path)
+        except ValueError as e:
+            errors.append(f"Invalid zone path '{base_path}': {e}")
+            continue
+
         for doc_filename in docs:
+            # Security check: Filename must be safe
+            if '/' in doc_filename or '\\' in doc_filename:
+                 # Although validate_repo_relative_path handles it, canonical_docs should ideally be simple filenames.
+                 # We validate the combined path anyway.
+                 pass
+
             filepath = os.path.join(base_path, doc_filename)
 
             # Normalize to POSIX for consistent ID mapping and graph checks
             filepath = filepath.replace('\\', '/')
+
+            # Validate full path safety
+            try:
+                filepath = validate_repo_relative_path(filepath)
+            except ValueError as e:
+                errors.append(f"Invalid document path '{filepath}': {e}")
+                continue
 
             # 1. Check file existence
             if not os.path.exists(filepath):
@@ -177,7 +197,7 @@ def main():
                         pass
                 elif os.path.exists(dep):
                     # Fallback for paths that worked without normalization (already relative to root?)
-                     for d_id, d_path in docs_by_id.items():
+                    for d_id, d_path in docs_by_id.items():
                         if d_path == dep:
                             target_id = d_id
                             break

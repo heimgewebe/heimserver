@@ -72,6 +72,28 @@ def normalize_path(base_dir, rel_path):
     # Ensure forward slashes for POSIX consistency
     return full_path.replace('\\', '/')
 
+def validate_repo_relative_path(path):
+    """
+    Validates that a path is relative to the repo root and does not traverse upwards.
+    Returns the normalized path if valid, raises ValueError if invalid.
+    """
+    # Normalize to POSIX
+    normalized = path.replace('\\', '/')
+
+    # Check for absolute path (including Windows drive letters)
+    if os.path.isabs(normalized) or (os.name == 'nt' and ':' in normalized):
+        raise ValueError(f"Path must be relative to repo root, got absolute path: {path}")
+
+    # Normalize using os.path.normpath to resolve .. and .
+    # Note: On Windows this uses backslashes, so we convert back
+    resolved = os.path.normpath(normalized).replace('\\', '/')
+
+    # Check for upward traversal
+    if resolved.startswith('../') or resolved == '..' or '/../' in resolved:
+        raise ValueError(f"Path traverses outside repo root: {path}")
+
+    return resolved
+
 def parse_frontmatter(filepath):
     """Parses Markdown frontmatter manually."""
     if not os.path.exists(filepath):
@@ -114,9 +136,9 @@ def parse_frontmatter(filepath):
                 if val == '[]':
                      data[key] = []
                 else:
-                     items = [x.strip() for x in val[1:-1].split(',')]
-                     clean_items = [_unquote(item) for item in items]
-                     data[key] = clean_items
+                    items = [x.strip() for x in val[1:-1].split(',')]
+                    clean_items = [_unquote(item) for item in items]
+                    data[key] = clean_items
                 current_list_key = None
             else:
                 # Plain value
