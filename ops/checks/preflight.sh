@@ -193,7 +193,12 @@ if [ -d "$EDGE_DIR" ]; then
             if ss -lntup | grep -E ':8081' | grep -iE 'pihole-FTL|lighttpd' >/dev/null 2>&1; then
                  ok "Port 8081 active (Pi-hole FTL/Lighttpd identified)"
             else
-                 warn "Port 8081 in use by unknown process! (Expected: Pi-hole FTL). Check Drift."
+                 # Drift Detection: Warn if Weltgewebe/Java/Go seems to be using 8081
+                 if ss -lntup | grep -E ':8081' | grep -iE 'java|weltgewebe|go' >/dev/null 2>&1; then
+                     warn "Port 8081 stolen by App/Weltgewebe! (Invariante 1 violation). 8081 belongs to Pi-hole."
+                 else
+                     warn "Port 8081 in use by unknown process! (Expected: Pi-hole FTL). Check Drift."
+                 fi
             fi
         fi
     fi

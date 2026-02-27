@@ -6,17 +6,16 @@
 
 ---
 
-## 1. Zielbild: Minimalprinzip (Internal Only)
+## 1. Zielbild: Ein Port, Ein Owner, Ein Zweck
 
-Um maximale Isolation und minimale Angriffsfläche zu erreichen, werden **keine** Applikations-Ports auf dem Host publiziert.
-Das Edge-Gateway ist der **einzige** Ingress-Punkt (Single Point of Entry).
+Jeder Port auf dem Heimserver hat genau einen definierten Owner und Zweck. Konflikte werden durch Zuweisung (Pi-hole) oder Isolation (Localhost-Binding) gelöst.
 
 ## 2. Invarianten (Harte Regeln)
 
-1.  **8081 gehört Pi-hole FTL:** Dieser Port ist durch das Pi-hole Webinterface (Host-Mode) belegt.
-2.  **Strict Internal Policy:** Applikations-Dienste (Weltgewebe API, DB, Gateway) binden **keine** Host-Ports. Sie kommunizieren nur intern im Docker-Netzwerk.
-3.  **Gateway-Exklusivität:** Port 80/443 gehören exklusiv dem Edge-Gateway (Caddy). Kein Doppel-Proxy.
-4.  **Health-Strategie:** Health Checks erfolgen **ausschließlich** über Docker-Health (`docker inspect`) oder Container-interne Mechanismen. Kein `curl localhost:<port>` vom Host.
+1.  **8081 gehört Pi-hole FTL:** Reserviert für das Pi-hole Webinterface im Host-Mode. **Verboten für Weltgewebe.**
+2.  **9081 ist Edge-Diagnose:** Reserviert für lokalen Caddy-Admin/Metrics Zugriff (nur `127.0.0.1`). **Verboten als App-Ingress.**
+3.  **80/443 gehören Edge-Gateway:** Exklusiver Ingress.
+4.  **Apps sind Internal:** Weltgewebe-Apps (API, DB) binden standardmäßig **keine** Host-Ports.
 
 ## 3. Port-Matrix (Host-Namespace)
 
@@ -29,47 +28,42 @@ Das Edge-Gateway ist der **einzige** Ingress-Punkt (Single Point of Entry).
 | **Edge HTTP** | 80 | TCP | 0.0.0.0 | Redirect / ACME | Edge Caddy |
 | **Edge HTTPS** | 443 | TCP | 0.0.0.0 | TLS Termination | Edge Caddy |
 | **Edge QUIC** | 443 | UDP | 0.0.0.0 | HTTP/3 (Optional) | Edge Caddy |
+| **Edge Diag** | 9081 | TCP | **127.0.0.1** | Local Metrics/Health | Edge Caddy |
 | **Weltgewebe** | - | - | - | **Intern (kein Publish)** | Weltgewebe |
 
 ## 4. Erläuterung der Zuweisung
 
-### 4.1 Pi-hole (Host-Mode)
-Da Pi-hole im `network_mode: host` läuft, um Client-IPs zu sehen, belegt es Ports direkt am Interface.
-*   **Konflikt:** Standardmäßig will Pi-hole Port 80.
-*   **Lösung:** Pi-hole wird auf 8081 (Web) verschoben. Port 53 bleibt DNS.
+### 4.1 Pi-hole (8081)
+Pi-hole läuft im Host-Mode. Da Port 80 durch Caddy belegt ist, weicht Pi-hole auf 8081 aus.
+*   **Prüfung:** `sudo ss -ltnp | grep :8081` → `users:(("pihole-FTL",...))`
 
-### 4.2 Edge Caddy (Gateway)
-Caddy ist der einzige Prozess, der 80/443 binden darf. Er terminiert TLS und routet intern weiter.
-*   Requests an `pihole.heimgewebe.home.arpa` → Caddy (443) → Upstream (localhost:8081).
-*   Requests an `api.weltgewebe.home.arpa` → Caddy (443) → Upstream (weltgewebe-api:8080).
+### 4.2 Edge Diag (9081)
+Dient der Diagnose des Edge-Gateways vom Host aus (z.B. `curl localhost:9081/metrics`).
+*   **Bindung:** Zwingend `127.0.0.1`. Niemals `0.0.0.0`.
+*   **Prüfung:** `sudo ss -ltnp | grep :9081` → `127.0.0.1:9081`
 
-### 4.3 Weltgewebe (Applikation)
-Weltgewebe ist eine Applikation, keine Infrastruktur.
-*   **API (8080):** Bleibt im Docker-Netzwerk. Kein Host-Port.
-*   **Gateway (9081):** ENTFERNT. Kein Host-Port mehr.
-*   **Health Checks:** Werden primär über Docker-Health (`docker inspect`) gelöst.
+### 4.3 Weltgewebe (Internal)
+Keine Host-Ports. Health-Checks erfolgen via Docker Health (`docker inspect`).
+*   **Prüfung:** `sudo ss -ltnp | grep -E ":(8080|5432)"` → Leer.
 
 ## 5. Diagnose & Drift-Erkennung
 
-Prüfen der Invarianten:
-
 ```bash
-# 1. Prüfen auf unerlaubte Listener (z.B. Postgres/API/Gateway auf Host)
-sudo ss -lntup | grep -E ":(5432|8080|9081)"
-# -> Sollte LEER sein.
-
-# 2. Prüfen der Owner (8081 muss Pi-hole sein)
+# Invariante Check
+# 1. 8081 muss Pi-hole sein
 sudo ss -lntup | grep ":8081"
-# -> users:(("pihole-FTL",...))
+# -> pihole-FTL
+
+# 2. 9081 muss localhost sein (falls aktiv)
+sudo ss -lntup | grep ":9081"
+# -> 127.0.0.1:9081
+
+# 3. Keine App-Ports
+sudo ss -lntup | grep -E ":(8080|5432)"
+# -> (leer)
 ```
 
 ## 6. Wiederherstellung (Recovery)
 
-Falls Konflikte auftreten (z.B. "Address already in use"):
-
-1.  **Identifizieren:** `sudo ss -lntup -p`
-2.  **Entscheiden:** Wer verletzt die Matrix?
-    *   Ist es `lighttpd` auf 80? → Pi-hole Config prüfen (`server.port`).
-    *   Ist es `postgres` auf 5432? → `ports:` Sektion im Compose-File entfernen.
-    *   Ist es `edge-caddy` auf 9081? → `ports:` Sektion im Compose-File entfernen.
-3.  **Korrigieren:** Dienst stoppen, Konfiguration anpassen, Neustart.
+*   **8081 Konflikt:** Pi-hole Konfiguration prüfen (`/etc/pihole/pihole-FTL.conf` oder Docker Env `WEB_PORT`).
+*   **9081 Exposed:** Caddy Compose prüfen – muss `127.0.0.1:9081:9081` sein.

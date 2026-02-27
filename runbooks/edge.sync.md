@@ -80,8 +80,13 @@ docker compose exec edge-caddy cat /data/caddy/pki/authorities/local/root.crt > 
 
 2.  **Health Check (Local):**
     ```bash
+    # Diagnostic only (if active in Caddyfile):
     curl -f http://127.0.0.1:9081/health/ready
-    # Expect: OK
+    # Expect: OK or Connection Refused (if disabled)
+
+    # Primary Check:
+    docker compose ps edge-caddy
+    docker logs edge-caddy | tail -n 20
     ```
 
 3.  **Public Endpoint (Network):**
