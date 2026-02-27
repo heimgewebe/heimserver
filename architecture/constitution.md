@@ -1,3 +1,13 @@
+---
+id: constitution
+role: norm
+status: canonical
+last_reviewed: 2026-02-13
+depends_on: []
+verifies_with:
+  - ops/checks/preflight.sh
+---
+
 # constitution.md
 
 Version 4.0 · Konsolidierte Verfassung

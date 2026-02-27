@@ -1,3 +1,14 @@
+---
+id: port-matrix
+role: norm
+status: canonical
+last_reviewed: 2026-02-25
+depends_on:
+  - architecture/network.md
+verifies_with:
+  - ops/checks/preflight.sh
+---
+
 # Port-Matrix Heimserver & Gateway-Ownership
 
 **Dokumentklasse:** ARCHITEKTUR · INVARIANTE

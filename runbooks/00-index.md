@@ -1,3 +1,13 @@
+---
+id: runbooks-index
+role: runbooks
+status: canonical
+last_reviewed: 2026-02-13
+depends_on: []
+verifies_with:
+  - scripts/ci/check-runbook-invariants.sh
+---
+
 # Runbooks Index
 
 Diese Runbooks sind operative Abläufe (Recovery/Rotation/Änderungen).

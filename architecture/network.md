@@ -1,3 +1,13 @@
+---
+id: network
+role: norm
+status: canonical
+last_reviewed: 2026-02-13
+depends_on: []
+verifies_with:
+  - ops/checks/preflight.sh
+---
+
 # network.md
 
 Kanonische Netz- und Transportarchitektur

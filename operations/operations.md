@@ -1,3 +1,14 @@
+---
+id: operations
+role: action
+status: canonical
+last_reviewed: 2026-02-13
+depends_on:
+  - runtime/runtime.md
+verifies_with:
+  - ops/audit/collect.sh
+---
+
 # operations.md
 
 Betriebs- und Eingriffsprotokoll

@@ -22,6 +22,20 @@ Zusätzlich:
 *   `runbooks/`: Konkrete Handlungsanweisungen (Step-by-Step).
 *   `ops/`: Skripte und Checks zur Automatisierung.
 
+## Declarative Repo Structure
+
+The repository structure is declared in:
+`manifest/repo-index.yaml`
+
+Only canonical docs should be listed in `manifest/repo-index.yaml`.
+
+A human-readable system overview is generated in:
+[`SYSTEM_MAP.md`](SYSTEM_MAP.md)
+
+Do not edit SYSTEM_MAP.md manually.
+Regenerate via:
+`python3 scripts/generate-system-map.py`
+
 ## Safety Checks (vor jedem Push)
 
 Keine sensiblen Dateien getrackt?
