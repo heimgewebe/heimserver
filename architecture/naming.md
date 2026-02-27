@@ -1,3 +1,13 @@
+---
+id: naming
+role: norm
+status: canonical
+last_reviewed: 2026-02-13
+depends_on: []
+verifies_with:
+  - ops/checks/preflight.sh
+---
+
 # naming.md
 
 Kanonische Namens- und Adressierungsarchitektur

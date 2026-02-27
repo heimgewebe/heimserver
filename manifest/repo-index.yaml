@@ -1,0 +1,24 @@
+zones:
+  norm:
+    path: architecture/
+    canonical_docs:
+      - constitution.md
+      - naming.md
+      - network.md
+      - networking/port-matrix.md
+  reality:
+    path: runtime/
+    canonical_docs:
+      - runtime.md
+  action:
+    path: operations/
+    canonical_docs:
+      - operations.md
+  runbooks:
+    path: runbooks/
+    canonical_docs:
+      - 00-index.md
+
+checks:
+  - ops/checks/preflight.sh
+  - scripts/ci/check-runbook-invariants.sh

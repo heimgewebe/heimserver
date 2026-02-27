@@ -1,3 +1,15 @@
+---
+id: runtime
+role: reality
+status: canonical
+last_reviewed: 2026-02-18
+depends_on:
+  - architecture/constitution.md
+  - architecture/network.md
+verifies_with:
+  - ops/audit/collect.sh
+---
+
 # runtime.md
 
 Status: Operativ kanonisch
@@ -529,7 +541,7 @@ Wenn tot:
 
 ---
 
-### 9.3 VPN kein Zugriff auf LAN
+### 9.3 VPN kein Zugriff LAN
 
 Check:
 
