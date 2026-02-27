@@ -15,6 +15,8 @@ import re
 import sys
 
 MANIFEST_PATH = 'manifest/repo-index.yaml'
+ALLOWED_ROLES = {"norm", "reality", "action", "runbooks"}
+ALLOWED_STATUS = {"canonical"}
 
 def load_manifest():
     data = {'zones': {}, 'checks': []}
@@ -78,13 +80,13 @@ def parse_frontmatter(filepath):
 
         # Check list item
         if stripped.startswith('- '):
-             if current_list_key:
-                 val = stripped[2:].strip()
-                 # Unquote
-                 if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+            if current_list_key:
+                val = stripped[2:].strip()
+                # Unquote
+                if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
                     val = val[1:-1]
-                 data[current_list_key].append(val)
-             continue
+                data[current_list_key].append(val)
+            continue
 
         if ':' in line:
             key, val = line.split(':', 1)
@@ -155,12 +157,18 @@ def main():
                     seen_ids[doc_id] = filepath
 
             # 4. Check status
-            if 'status' not in fm:
+            status = fm.get('status')
+            if not status:
                  errors.append(f"Missing 'status' in frontmatter: {filepath}")
+            elif status not in ALLOWED_STATUS:
+                 errors.append(f"Invalid 'status' '{status}': {filepath} (Allowed: {ALLOWED_STATUS})")
 
             # 5. Check role
-            if 'role' not in fm:
+            role = fm.get('role')
+            if not role:
                  errors.append(f"Missing 'role' in frontmatter: {filepath}")
+            elif role not in ALLOWED_ROLES:
+                 errors.append(f"Invalid 'role' '{role}': {filepath} (Allowed: {ALLOWED_ROLES})")
 
             # 6. Check last_reviewed format
             reviewed = fm.get('last_reviewed')

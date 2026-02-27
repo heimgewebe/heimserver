@@ -151,6 +151,11 @@ def generate_system_map(manifest):
         for doc in canonical_docs:
             # Use os.path.join for file system check
             filepath = os.path.join(path_prefix, doc)
+
+            # Use posixpath for markdown link (always forward slashes)
+            clean_prefix = path_prefix.rstrip('/')
+            link_path = posixpath.join(clean_prefix, doc)
+
             fm = parse_frontmatter(filepath)
 
             if fm:
@@ -169,16 +174,11 @@ def generate_system_map(manifest):
                 if not verifies_str:
                     verifies_str = "-"
 
-                # Use posixpath for markdown link (always forward slashes)
-                # Ensure path_prefix doesn't have trailing slash for join if not empty
-                clean_prefix = path_prefix.rstrip('/')
-                link_path = posixpath.join(clean_prefix, doc)
-
                 file_link = f"[{doc}]({link_path})"
 
                 lines.append(f"| {file_link} | `{doc_id}` | {status} | {reviewed} | {verifies_str} |")
             else:
-                 lines.append(f"| [{doc}]({filepath}) | ❌ Error | - | - | - |")
+                 lines.append(f"| [{doc}]({link_path}) | ❌ Error | - | - | - |")
 
         lines.append("")
 
@@ -227,7 +227,10 @@ def generate_system_map(manifest):
     else:
         lines.append("_No checks listed._")
 
-    return "\n".join(lines)
+    content = "\n".join(lines)
+    if not content.endswith('\n'):
+        content += '\n'
+    return content
 
 def main():
     if not os.path.exists(MANIFEST_PATH):
