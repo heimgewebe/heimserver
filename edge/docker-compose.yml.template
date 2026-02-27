@@ -6,10 +6,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      # Health/Debug: Host loopback binding isolates this.
-      # Container listens on :9081, mapped to 127.0.0.1:9081 on host.
-      # 8081 is occupied by weltgewebe-api/pihole-FTL (IPv6) in current runtime.
-      - "127.0.0.1:9081:9081"
+      # 9081 removed (Internal Only Policy).
+      # Health checks must use `docker inspect` or internal network.
     networks:
       - edge
       - heimnet

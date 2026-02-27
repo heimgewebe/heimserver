@@ -6,21 +6,6 @@
     }
 }
 
-# --- Internal Health & Debug (Loopback Only via 9081) ---
-# Container: listens on :9081. Host: bound to 127.0.0.1:9081.
-:9081 {
-    # Health check
-    handle /health/ready {
-        respond "OK" 200
-    }
-
-    # Metrics (Disabled by default - Security Policy)
-    # Enable only if strictly needed and secured (e.g. BasicAuth).
-    # handle /metrics {
-    #     metrics
-    # }
-}
-
 # --- Heimgewebe (Infrastructure) ---
 
 http://leitstand.heimgewebe.home.arpa {

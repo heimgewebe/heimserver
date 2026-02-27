@@ -178,31 +178,100 @@ if [ -d "$EDGE_DIR" ]; then
         warn "Skip: Docker checks (daemon unreachable)"
     fi
 
-    # 2. Check 9081 Loopback (Host Binding) - Edge Debug
-    # Important: Caddy inside container listens on :9081, but host binding MUST be 127.0.0.1:9081
+    # 2. Port Matrix Guard (Strict Internal Policy)
     if command -v ss >/dev/null 2>&1; then
-        if ss -lntup | grep -E '127\.0\.0\.1:9081' >/dev/null 2>&1; then
-            ok "Port 9081 (Edge Debug) bound to loopback (Host)"
-        elif ss -lntup | grep -E ':9081' >/dev/null 2>&1; then
-             warn "Port 9081 exposed on non-loopback interface on HOST!"
+        # Check 1: App Ports (8080/5432) -> Invariant Violation if PUBLICLY exposed or via docker-proxy
+        # Logic:
+        # - WARN if docker-proxy on 8080/5432 (published container port).
+        # - WARN if listening on 0.0.0.0 or [::] (public exposure).
+        # - ALLOW if listening ONLY on 127.0.0.1 (e.g. code-server ssh tunnel).
+
+        # Robust filtering to detect exposure
+        # We look for ANY listener on 8080/5432.
+        # If found, we check if it is NOT loopback (127.0.0.1 or ::1).
+        # OR if it is docker-proxy (regardless of bind, usually implies publish).
+
+        # Force list context by echo to avoid grep failing on empty input
+        listeners_8080_5432=$(ss -lntup | grep -E ':(8080|5432)\b' || true)
+
+        if [ -n "$listeners_8080_5432" ]; then
+            # Deterministic Classification per line
+            # Default to OK, switch to VIOLATION or WARN if found
+
+            has_violation=0
+            has_unknown=0
+
+            # Read line by line
+            while IFS= read -r line; do
+                # 1. docker-proxy -> VIOLATION (checked on full line for process name)
+                if echo "$line" | grep -q "docker-proxy"; then
+                    has_violation=1
+                    break
+                fi
+
+                # Extract Local Address field (usually 4th column in ss -lntup)
+                # Use printf for safer variable expansion
+                local_field=$(printf '%s\n' "$line" | awk '{print $4}')
+
+                # 2. Public Binds (0.0.0.0, *, :::, [::]) -> VIOLATION
+                # Check ONLY the local address field to avoid matching peer addresses
+                if echo "$local_field" | grep -F "0.0.0.0:" >/dev/null 2>&1 || \
+                   echo "$local_field" | grep -F "[::]:" >/dev/null 2>&1 || \
+                   echo "$local_field" | grep -F ":::" >/dev/null 2>&1 || \
+                   echo "$local_field" | grep -F "*:" >/dev/null 2>&1; then
+                    has_violation=1
+                    break
+                fi
+
+                # 3. Localhost Binds (127.0.0.1, ::1) -> OK (Continue)
+                if echo "$local_field" | grep -F "127.0.0.1:" >/dev/null 2>&1 || \
+                   echo "$local_field" | grep -F "::1:" >/dev/null 2>&1; then
+                    continue
+                fi
+
+                # 4. If neither -> Unknown (e.g. LAN IP) -> Treat as WARN/VIOLATION context dependent
+                has_unknown=1
+
+            done <<< "$listeners_8080_5432"
+
+            if [ "$has_violation" -eq 1 ]; then
+                 warn "App Ports (8080/5432) PUBLICLY exposed (0.0.0.0/::/*/docker-proxy)! VIOLATION."
+            elif [ "$has_unknown" -eq 1 ]; then
+                 warn "App Ports (8080/5432) exposed on non-loopback (likely LAN)! VIOLATION."
+            else
+                 ok "App Ports (8080/5432) active but localhost-only (Allowed for dev tools)."
+            fi
         else
-             warn "Port 9081 not listening on host (Edge Caddy down?)"
+            ok "App Ports (8080/5432) internal only (Correct)"
         fi
 
-        # Informational drift check for legacy 8081 usage
+        # Check 2: Drift Detection (9081)
+        if ss -lntup | grep -E ':9081\b' >/dev/null 2>&1; then
+            warn "Port 9081 exposed! This is legacy drift (Strict Policy: 9081 removed)."
+        else
+            ok "Port 9081 not present (Correct)"
+        fi
+
+        # 8081: Pi-hole FTL (Owner Check)
         if ss -lntup | grep -E ':8081' >/dev/null 2>&1; then
-            warn "Port 8081 in use (legacy API/Pi-hole context). Expected: not Edge health."
+            # We attempt to check the process name, but ss output varies.
+            if ss -lntup | grep -E ':8081' | grep -iE 'pihole-FTL|lighttpd' >/dev/null 2>&1; then
+                 ok "Port 8081 active (Pi-hole FTL/Lighttpd identified)"
+            else
+                 # Drift Detection: Warn if Weltgewebe/Java/Go seems to be using 8081
+                 if ss -lntup | grep -E ':8081' | grep -iE 'java|weltgewebe|go' >/dev/null 2>&1; then
+                     warn "Port 8081 stolen by App/Weltgewebe! (Invariante 1 violation). 8081 belongs to Pi-hole."
+                 else
+                     warn "Port 8081 in use by unknown process! (Expected: Pi-hole FTL). Check Drift."
+                 fi
+            fi
         fi
     fi
 
     # 3. Check Cloudflare Headers (Drift)
     if command -v curl >/dev/null 2>&1; then
-        # Check local endpoint via loopback health check
-        if curl -fsS http://127.0.0.1:9081/health/ready >/dev/null 2>&1; then
-             ok "Edge Health Check (9081) OK"
-        else
-             warn "Edge Health Check (9081) failed or unreachable"
-        fi
+        # Edge Health Check via 9081 is REMOVED (Internal Policy).
+        # We only check Cloudflare Headers if we can resolve the domain.
 
         # Check for Cloudflare headers (if domain resolves and CA is present)
         # Using grep instead of rg (ripgrep) for standard compliance.

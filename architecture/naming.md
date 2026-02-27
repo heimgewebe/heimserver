@@ -238,15 +238,6 @@ Keine Sub-Sub-Domains ohne Not.
 
 ---
 
-## 12. Betriebs- und Debug-Schnittstellen (Global)
-
-Edge Caddy:
-`127.0.0.1:9081` (Host) → `:9081` (Container)
-Zweck: Healthcheck, Metrics (secured/disabled)
-Invariante: NIEMALS öffentlich exposen.
-*Hinweis: 8081 ist durch weltgewebe-api (IPv4) und pihole-FTL (IPv6) belegt (Observed: Audit 2026-02-25).*
-
----
 
 ## 13. Essenz
 
