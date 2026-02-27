@@ -375,9 +375,8 @@ Local Listeners (127.0.0.1 Only):
 | 3000 | TCP | deploy-leitstand-1 | 127.0.0.1 | |
 | 5335 | TCP/UDP | dns-unbound | 127.0.0.1 | Pi-hole Upstream |
 | 8080 | TCP | code-server | 127.0.0.1 | SSH-Tunnel Access |
-| **-** | - | **Weltgewebe API** | **-** | **Internal Only (kein Host-Port)** |
 
-*Hinweis: 9081 wurde entfernt (Strict Internal Policy). 8081 ist reserviert für Pi-hole.*
+*Hinweis: Weltgewebe API ist internal-only (kein Host-Port). 9081 entfernt. 8081 reserviert für Pi-hole.*
 
 Caddy Admin:
 Port 2019 ist NICHT published (nur container-intern erreichbar).

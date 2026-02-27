@@ -180,11 +180,18 @@ if [ -d "$EDGE_DIR" ]; then
 
     # 2. Port Matrix Guard (Strict Internal Policy)
     if command -v ss >/dev/null 2>&1; then
-        # 9081, 8080, 5432: MUST NOT BE EXPOSED
-        if ss -lntup | grep -E ':(9081|8080|5432)\b' >/dev/null 2>&1; then
-            warn "Port 9081, 8080 or 5432 exposed on Host! VIOLATION of Strict Internal Policy."
+        # Check 1: App Ports (8080/5432) -> Invariant Violation
+        if ss -lntup | grep -E ':(8080|5432)\b' >/dev/null 2>&1; then
+            warn "App Ports (8080/5432) exposed on Host! VIOLATION of Strict Internal Policy."
         else
-            ok "Ports 9081/8080/5432 not exposed on Host (Correct)"
+            ok "App Ports (8080/5432) internal only (Correct)"
+        fi
+
+        # Check 2: Drift Detection (9081)
+        if ss -lntup | grep -E ':9081\b' >/dev/null 2>&1; then
+            warn "Port 9081 exposed! This is legacy drift (Strict Policy: 9081 removed)."
+        else
+            ok "Port 9081 not present (Correct)"
         fi
 
         # 8081: Pi-hole FTL (Owner Check)
