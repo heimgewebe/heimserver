@@ -210,7 +210,8 @@ if [ -d "$EDGE_DIR" ]; then
                 fi
 
                 # Extract Local Address field (usually 4th column in ss -lntup)
-                local_field=$(echo "$line" | awk '{print $4}')
+                # Use printf for safer variable expansion
+                local_field=$(printf '%s\n' "$line" | awk '{print $4}')
 
                 # 2. Public Binds (0.0.0.0, *, :::, [::]) -> VIOLATION
                 # Check ONLY the local address field to avoid matching peer addresses
@@ -234,9 +235,9 @@ if [ -d "$EDGE_DIR" ]; then
             done <<< "$listeners_8080_5432"
 
             if [ "$has_violation" -eq 1 ]; then
-                 warn "App Ports (8080/5432) PUBLICLY exposed (docker-proxy or 0.0.0.0)! VIOLATION."
+                 warn "App Ports (8080/5432) PUBLICLY exposed (0.0.0.0/::/*/docker-proxy)! VIOLATION."
             elif [ "$has_unknown" -eq 1 ]; then
-                 warn "App Ports (8080/5432) exposed on non-loopback interface! VIOLATION."
+                 warn "App Ports (8080/5432) exposed on non-loopback (likely LAN)! VIOLATION."
             else
                  ok "App Ports (8080/5432) active but localhost-only (Allowed for dev tools)."
             fi
