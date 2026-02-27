@@ -6,16 +6,17 @@
 
 ---
 
-## 1. Zielbild: Kollisionsarme Trennung
+## 1. Zielbild: Minimalprinzip (Internal Only)
 
-Um Konflikte zwischen Host-Diensten (Pi-hole), Infrastruktur (SSH/WireGuard) und Applikationen (Weltgewebe) zu verhindern, gilt das Prinzip: **Ein Owner pro Port**.
+Um maximale Isolation und minimale Angriffsfläche zu erreichen, werden **keine** Applikations-Ports auf dem Host publiziert.
+Das Edge-Gateway ist der **einzige** Ingress-Punkt (Single Point of Entry).
 
 ## 2. Invarianten (Harte Regeln)
 
-1.  **8081 gehört Pi-hole FTL:** Dieser Port ist durch das Pi-hole Webinterface (Host-Mode) belegt. Weltgewebe darf 8081 nicht nutzen.
-2.  **Unpublished by Default:** Applikations-Dienste (API, DB) binden **keine** Host-Ports. Sie kommunizieren nur intern im Docker-Netzwerk.
+1.  **8081 gehört Pi-hole FTL:** Dieser Port ist durch das Pi-hole Webinterface (Host-Mode) belegt.
+2.  **Strict Internal Policy:** Applikations-Dienste (Weltgewebe API, DB, Gateway) binden **keine** Host-Ports. Sie kommunizieren nur intern im Docker-Netzwerk.
 3.  **Gateway-Exklusivität:** Port 80/443 gehören exklusiv dem Edge-Gateway (Caddy). Kein Doppel-Proxy.
-4.  **Localhost-Binding:** Wenn ein optionaler Host-Port für Applikationen nötig ist (z.B. Debugging/Health), muss dieser an `127.0.0.1` gebunden werden (nicht `0.0.0.0`).
+4.  **Health-Strategie:** Health Checks erfolgen **ausschließlich** über Docker-Health (`docker inspect`) oder Container-interne Mechanismen. Kein `curl localhost:<port>` vom Host.
 
 ## 3. Port-Matrix (Host-Namespace)
 
@@ -28,9 +29,7 @@ Um Konflikte zwischen Host-Diensten (Pi-hole), Infrastruktur (SSH/WireGuard) und
 | **Edge HTTP** | 80 | TCP | 0.0.0.0 | Redirect / ACME | Edge Caddy |
 | **Edge HTTPS** | 443 | TCP | 0.0.0.0 | TLS Termination | Edge Caddy |
 | **Edge QUIC** | 443 | UDP | 0.0.0.0 | HTTP/3 (Optional) | Edge Caddy |
-| **Weltgewebe GW**| 9081 | TCP | 127.0.0.1 | Health / Local Ingress | Weltgewebe (Optional) |
-| **Postgres** | 5432 | TCP | - | **Intern (kein Publish)** | Weltgewebe DB |
-| **API** | 8080 | TCP | - | **Intern (kein Publish)** | Weltgewebe API |
+| **Weltgewebe** | - | - | - | **Intern (kein Publish)** | Weltgewebe |
 
 ## 4. Erläuterung der Zuweisung
 
@@ -47,25 +46,21 @@ Caddy ist der einzige Prozess, der 80/443 binden darf. Er terminiert TLS und rou
 ### 4.3 Weltgewebe (Applikation)
 Weltgewebe ist eine Applikation, keine Infrastruktur.
 *   **API (8080):** Bleibt im Docker-Netzwerk. Kein Host-Port.
-*   **Health Checks:** Werden primär über Docker-Health (`docker inspect`) oder interne Curls gelöst.
-*   **Optionales Gateway (9081):** Falls ein HTTP-Einstiegspunkt für lokale Tools (z.B. `curl` vom Host) nötig ist, wird Port 9081 verwendet. **Niemals 8081.**
+*   **Gateway (9081):** ENTFERNT. Kein Host-Port mehr.
+*   **Health Checks:** Werden primär über Docker-Health (`docker inspect`) gelöst.
 
 ## 5. Diagnose & Drift-Erkennung
 
 Prüfen der Invarianten:
 
 ```bash
-# 1. Prüfen auf unerlaubte Listener (z.B. Postgres auf Host)
-sudo ss -lntup | grep -E ":(5432|8080)"
+# 1. Prüfen auf unerlaubte Listener (z.B. Postgres/API/Gateway auf Host)
+sudo ss -lntup | grep -E ":(5432|8080|9081)"
 # -> Sollte LEER sein.
 
 # 2. Prüfen der Owner (8081 muss Pi-hole sein)
 sudo ss -lntup | grep ":8081"
 # -> users:(("pihole-FTL",...))
-
-# 3. Prüfen Gateway Binding (9081 nur auf 127.0.0.1)
-sudo ss -lntup | grep ":9081"
-# -> 127.0.0.1:9081 ...
 ```
 
 ## 6. Wiederherstellung (Recovery)
@@ -75,5 +70,6 @@ Falls Konflikte auftreten (z.B. "Address already in use"):
 1.  **Identifizieren:** `sudo ss -lntup -p`
 2.  **Entscheiden:** Wer verletzt die Matrix?
     *   Ist es `lighttpd` auf 80? → Pi-hole Config prüfen (`server.port`).
-    *   Ist es `postgres` auf 5432? → `ports:` Sektion im Compose-File auf `127.0.0.1` beschränken oder entfernen.
+    *   Ist es `postgres` auf 5432? → `ports:` Sektion im Compose-File entfernen.
+    *   Ist es `edge-caddy` auf 9081? → `ports:` Sektion im Compose-File entfernen.
 3.  **Korrigieren:** Dienst stoppen, Konfiguration anpassen, Neustart.

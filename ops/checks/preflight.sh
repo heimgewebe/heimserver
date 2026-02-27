@@ -178,15 +178,13 @@ if [ -d "$EDGE_DIR" ]; then
         warn "Skip: Docker checks (daemon unreachable)"
     fi
 
-    # 2. Port Matrix Guard (9081, 8081, 8080, 5432)
+    # 2. Port Matrix Guard (Strict Internal Policy)
     if command -v ss >/dev/null 2>&1; then
-        # 9081: Weltgewebe Gateway (Strict Localhost)
-        if ss -lntup | grep -E '127\.0\.0\.1:9081' >/dev/null 2>&1; then
-            ok "Port 9081 (Weltgewebe Gateway) bound to loopback (Host)"
-        elif ss -lntup | grep -E ':9081' >/dev/null 2>&1; then
-             warn "Port 9081 exposed on non-loopback interface! Violation of 'Localhost-Binding' invariant."
+        # 9081, 8080, 5432: MUST NOT BE EXPOSED
+        if ss -lntup | grep -E ':(9081|8080|5432)\b' >/dev/null 2>&1; then
+            warn "Port 9081, 8080 or 5432 exposed on Host! VIOLATION of Strict Internal Policy."
         else
-             warn "Port 9081 not listening on host (Optional Gateway inactive?)"
+            ok "Ports 9081/8080/5432 not exposed on Host (Correct)"
         fi
 
         # 8081: Pi-hole FTL (Owner Check)
@@ -198,23 +196,12 @@ if [ -d "$EDGE_DIR" ]; then
                  warn "Port 8081 in use by unknown process! (Expected: Pi-hole FTL). Check Drift."
             fi
         fi
-
-        # 8080/5432: Unpublished by Default
-        if ss -lntup | grep -E ':(8080|5432)\b' >/dev/null 2>&1; then
-            warn "Port 8080 (API) or 5432 (DB) exposed on Host! Violation of 'Unpublished by Default' invariant."
-        else
-            ok "Ports 8080/5432 not exposed on Host (Correct)"
-        fi
     fi
 
     # 3. Check Cloudflare Headers (Drift)
     if command -v curl >/dev/null 2>&1; then
-        # Check local endpoint via loopback health check
-        if curl -fsS http://127.0.0.1:9081/health/ready >/dev/null 2>&1; then
-             ok "Edge Health Check (9081) OK"
-        else
-             warn "Edge Health Check (9081) failed or unreachable"
-        fi
+        # Edge Health Check via 9081 is REMOVED (Internal Policy).
+        # We only check Cloudflare Headers if we can resolve the domain.
 
         # Check for Cloudflare headers (if domain resolves and CA is present)
         # Using grep instead of rg (ripgrep) for standard compliance.

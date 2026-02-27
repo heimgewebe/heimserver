@@ -4,18 +4,16 @@ set -euo pipefail
 # weltgewebe-up: Deployment and Health Check Logic
 #
 # PURPOSE:
-#   Deploys Weltgewebe services (API, DB, optional Gateway).
-#   Implements a prioritized health check strategy that supports unpublished ports.
+#   Deploys Weltgewebe services (API, DB).
+#   Implements a strict "Internal Only" health check strategy.
 #
 # STRATEGY:
 #   1. HEALTH_URL (Explicit override)
-#   2. Docker Health (Preferred for internal services)
-#   3. Host Port Check (Fallback, ONLY if published and != 0)
-#   4. Gateway Check (Only if enabled)
+#   2. Docker Health (Strict requirement for internal services)
 #
 # INVARIANTS:
-#   - NEVER default to checking port 8081 (reserved for Pi-hole).
-#   - Detect "0.0.0.0:0" or empty port as "unpublished".
+#   - NO Host Port Checks (8081, 9081, 8080 are NOT published).
+#   - Services must report "healthy" via `docker inspect`.
 
 log() { printf "[%s] %s\n" "$(date +'%H:%M:%S')" "$*"; }
 warn() { printf "[%s] WARN: %s\n" "$(date +'%H:%M:%S')" "$*" >&2; }
@@ -30,8 +28,6 @@ mkdir -p "$WELTGEWEBE_STATE_DIR"
 
 check_health() {
     local service_name="weltgewebe-api"
-    local max_retries=30
-    local retry_delay=2
 
     log "Starting Health Check for '$service_name'..."
 
@@ -48,8 +44,7 @@ check_health() {
         fi
     fi
 
-    # 2. Strategy: Docker Health (Internal)
-    # Check if container is running and has health status
+    # 2. Strategy: Docker Health (Strict Internal)
     if command -v docker >/dev/null; then
         local health_status
         health_status=$(docker inspect --format='{{.State.Health.Status}}' "$service_name" 2>/dev/null || echo "unknown")
@@ -61,61 +56,17 @@ check_health() {
             log "Service is starting..."
         elif [ "$health_status" = "unhealthy" ]; then
             warn "Docker Health reports: unhealthy"
-        fi
-
-        # If no healthcheck is defined in Dockerfile, status is usually empty or template fails
-        # We fall through to port check if strictly needed, or trust "running" state if no port published.
-    fi
-
-    # 3. Strategy: Host Port Check (Fallback)
-    # Only if port is published and != 0
-    local host_port=""
-    if command -v docker >/dev/null; then
-        # Format: 0.0.0.0:8080 or ::1:8080 or empty
-        host_port=$(docker compose port "$service_name" 8080 2>/dev/null || true)
-
-        # Clean up port string (remove IP)
-        if [ -n "$host_port" ]; then
-            host_port="${host_port##*:}"
-        fi
-    fi
-
-    if [ -n "$host_port" ] && [ "$host_port" != "0" ]; then
-        log "Strategy: Host Port Check (Port $host_port)"
-        if command -v curl >/dev/null; then
-            if curl -fsS "http://127.0.0.1:$host_port/health/ready" >/dev/null 2>&1; then
-                log "Health OK (Host Port $host_port)"
-                return 0
-            fi
         else
-            warn "curl not found, skipping Host Port check."
-        fi
-    else
-        log "Strategy Info: API Port not published (or 0). Skipping Host Port Check."
-        # If we are here, and Docker Health was "healthy", we would have returned.
-        # If Docker Health is missing/unknown, and Port is unpublished, we rely on container "running" state
-        # as a weak signal, but ideally we want a real check.
-
-        local container_state
-        container_state=$(docker inspect --format='{{.State.Status}}' "$service_name" 2>/dev/null || echo "unknown")
-        if [ "$container_state" = "running" ]; then
-             log "Health OK (Weak: Container Running, No Port Published)"
-             return 0
-        fi
-    fi
-
-    # 4. Strategy: Gateway Check (Optional 9081)
-    # Check if Gateway service is enabled and 9081 is bound
-    if command -v ss >/dev/null; then
-        if ss -lntup | grep -q ":9081"; then
-             log "Strategy: Gateway Check (9081)"
-             if command -v curl >/dev/null; then
-                 if curl -fsS "http://127.0.0.1:9081/health/ready" >/dev/null 2>&1; then
-                     log "Health OK (Gateway 9081)"
-                     return 0
-                 fi
+             # If unknown/empty, we check if at least running, but warn heavily.
+             local state
+             state=$(docker inspect --format='{{.State.Status}}' "$service_name" 2>/dev/null || echo "unknown")
+             if [ "$state" = "running" ]; then
+                 log "WARN: Container running but no HEALTHCHECK defined. Assuming OK."
+                 return 0
              fi
         fi
+    else
+        fail "Docker not found. Cannot verify internal service health."
     fi
 
     return 1
@@ -131,4 +82,4 @@ for ((i=1; i<=30; i++)); do
     sleep 2
 done
 
-fail "Deployment failed or timed out."
+fail "Deployment failed or timed out (Docker Health check failed)."

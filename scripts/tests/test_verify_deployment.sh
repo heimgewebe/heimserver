@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # test_verify_deployment.sh
-# Tests hermetic health check logic of weltgewebe-up
+# Tests hermetic health check logic of weltgewebe-up (Internal Only Policy)
 
 log() { echo "TEST: $*"; }
 fail() { echo "FAIL: $*" >&2; exit 1; }
@@ -19,10 +19,8 @@ setup_mocks() {
     cat <<EOF > "$MOCK_BIN/curl"
 #!/bin/bash
 if [[ "\$1" == "-fsS" ]]; then
-    # Simple mock: if URL contains "9081", succeed
-    if [[ "\$2" == *"9081"* ]]; then exit 0; fi
-    # If URL contains "8080", fail unless explicitly set
-    if [[ "\$2" == *"8080"* ]]; then exit 1; fi
+    # Simple mock: if URL contains "example.com", succeed
+    if [[ "\$2" == *"example.com"* ]]; then exit 0; fi
     exit 1
 fi
 exit 0
@@ -37,32 +35,17 @@ if [[ "\$1" == "inspect" ]]; then
         # Default behavior: unknown or starting
         if [[ -f "/tmp/mock_docker_health_healthy" ]]; then echo "healthy"; exit 0; fi
         if [[ -f "/tmp/mock_docker_health_unhealthy" ]]; then echo "unhealthy"; exit 0; fi
+        if [[ -f "/tmp/mock_docker_health_running" ]]; then echo ""; exit 0; fi # No Healthcheck
         echo "starting"
     elif [[ "\$*" == *"State.Status"* ]]; then
         echo "running"
     else
         echo "{}"
     fi
-elif [[ "\$1" == "compose" ]] && [[ "\$2" == "port" ]]; then
-    # Mock compose port output
-    if [[ -f "/tmp/mock_compose_port_8080" ]]; then echo "0.0.0.0:8080"; exit 0; fi
-    if [[ -f "/tmp/mock_compose_port_unpublished" ]]; then echo ""; exit 0; fi
-    echo ""
 fi
 exit 0
 EOF
     chmod +x "$MOCK_BIN/docker"
-
-    # Mock ss: simulate port listeners
-    cat <<EOF > "$MOCK_BIN/ss"
-#!/bin/bash
-if [[ "\$*" == *"-lntup"* ]]; then
-    if [[ -f "/tmp/mock_ss_9081" ]]; then echo "LISTEN 0 0 127.0.0.1:9081"; exit 0; fi
-    echo ""
-fi
-exit 0
-EOF
-    chmod +x "$MOCK_BIN/ss"
 }
 
 cleanup() {
@@ -73,60 +56,37 @@ trap cleanup EXIT
 
 setup_mocks
 
-# TEST 1: Unpublished API (Docker Health = healthy)
-log "Running Test 1: Unpublished API (Docker Health = healthy)..."
+# TEST 1: Internal API (Docker Health = healthy)
+log "Running Test 1: Internal API (Docker Health = healthy)..."
 touch /tmp/mock_docker_health_healthy
-touch /tmp/mock_compose_port_unpublished
 # Should succeed quickly due to "healthy" status
 if timeout 5s bash "$SCRIPT" >/dev/null; then
-    log "PASS: Test 1 (Unpublished API, Healthy Container)"
+    log "PASS: Test 1 (Internal API, Healthy Container)"
 else
     fail "Test 1 Failed"
 fi
 rm /tmp/mock_docker_health_healthy
 
-# TEST 2: Published API (Port 8080, Health Check via Port)
-# Note: Our script prioritizes Docker Health. If Docker Health is not explicitly healthy,
-# it falls back to port check. But our mock curl fails 8080 by default.
-# Let's test the PATH where Docker Health is "unknown" but Port is published.
-# Wait, script logic: if health != healthy, checks port.
-# If port published, tries curl.
-log "Running Test 2: Published API (Port 8080)..."
-touch /tmp/mock_compose_port_8080
-# Mock curl needs to succeed for 8080 here
-cat <<EOF > "$MOCK_BIN/curl"
-#!/bin/bash
-if [[ "\$2" == *"8080"* ]]; then exit 0; fi
-exit 1
-EOF
-chmod +x "$MOCK_BIN/curl"
-
+# TEST 2: Internal API (No Healthcheck, just Running)
+# Should WARN but succeed
+log "Running Test 2: Internal API (Running, No Healthcheck)..."
+touch /tmp/mock_docker_health_running
 if timeout 5s bash "$SCRIPT" >/dev/null; then
-    log "PASS: Test 2 (Published API, Port Check)"
+    log "PASS: Test 2 (Running Container Fallback)"
 else
     fail "Test 2 Failed"
 fi
-rm /tmp/mock_compose_port_8080
+rm /tmp/mock_docker_health_running
 
-# TEST 3: Gateway Check (Port 9081 Active)
-log "Running Test 3: Gateway Check (9081)..."
-touch /tmp/mock_ss_9081
-# Mock curl for 9081
-cat <<EOF > "$MOCK_BIN/curl"
-#!/bin/bash
-if [[ "\$2" == *"9081"* ]]; then exit 0; fi
-exit 1
-EOF
-chmod +x "$MOCK_BIN/curl"
-
-# Ensure API is not healthy/published so it falls through to Gateway check
-rm -f /tmp/mock_docker_health_healthy
-touch /tmp/mock_compose_port_unpublished
-
-if timeout 5s bash "$SCRIPT" >/dev/null; then
-    log "PASS: Test 3 (Gateway Check)"
+# TEST 3: Unhealthy Container (Should Fail)
+log "Running Test 3: Unhealthy Container..."
+touch /tmp/mock_docker_health_unhealthy
+# We expect failure here, so we wrap it
+if ! timeout 5s bash "$SCRIPT" >/dev/null 2>&1; then
+    log "PASS: Test 3 (Correctly Failed on Unhealthy)"
 else
-    fail "Test 3 Failed"
+    fail "Test 3 Failed (Should have failed but succeeded)"
 fi
+rm /tmp/mock_docker_health_unhealthy
 
 echo "ALL TESTS PASSED."

@@ -186,7 +186,7 @@ Siehe: [`networking/port-matrix.md`](networking/port-matrix.md)
 *   **Ports 80/443:** Exklusiv Edge-Gateway (Caddy) [TCP, UDP optional].
 *   **Port 53:** `dns-pihole` (Host-Mode).
 *   **Port 8081:** `dns-pihole` Webinterface (Reserviert).
-*   **Port 9081:** Weltgewebe-Gateway (nur localhost).
+*   **Apps (API/DB/Gateway):** Internal only (keine Host-Ports).
 
 ---
 
