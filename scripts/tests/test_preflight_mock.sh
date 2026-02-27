@@ -73,6 +73,7 @@ setup_mocks
 log "Running Test 1: Public Exposure (0.0.0.0:8080)..."
 cat <<EOF > "$MOCK_BIN/ss"
 #!/bin/bash
+# Format: Netid State Recv-Q Send-Q Local_Address:Port Peer_Address:Port Process
 echo "LISTEN 0 0 0.0.0.0:8080 0.0.0.0:* users:((\"my-app\",pid=123,fd=4))"
 EOF
 chmod +x "$MOCK_BIN/ss"
@@ -90,6 +91,7 @@ fi
 log "Running Test 2: Docker Proxy (docker-proxy:8080)..."
 cat <<EOF > "$MOCK_BIN/ss"
 #!/bin/bash
+# Note: Peer is :::* which could confuse a full-line match, but docker-proxy ensures VIOLATION anyway
 echo "LISTEN 0 0 :::8080 :::* users:((\"docker-proxy\",pid=123,fd=4))"
 EOF
 chmod +x "$MOCK_BIN/ss"
@@ -104,6 +106,7 @@ else
 fi
 
 # TEST 3: Localhost Only (127.0.0.1:8080) -> ALLOW (OK)
+# CRITICAL: Peer address is 0.0.0.0:*, which MUST NOT trigger a public bind violation.
 log "Running Test 3: Localhost Only (127.0.0.1:8080)..."
 cat <<EOF > "$MOCK_BIN/ss"
 #!/bin/bash
@@ -115,9 +118,9 @@ OUTPUT=$(bash "$SCRIPT" 2>&1)
 if echo "$OUTPUT" | grep -q "VIOLATION"; then
     echo "OUTPUT WAS:"
     echo "$OUTPUT"
-    fail "Test 3 Failed: False Positive! Reported VIOLATION on localhost."
+    fail "Test 3 Failed: False Positive! Reported VIOLATION on localhost with peer 0.0.0.0:*."
 elif echo "$OUTPUT" | grep -q "localhost-only (Allowed"; then
-    log "PASS: Allows localhost-only"
+    log "PASS: Allows localhost-only (ignores peer column)"
 else
     echo "OUTPUT WAS:"
     echo "$OUTPUT"

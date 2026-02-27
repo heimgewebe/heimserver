@@ -203,35 +203,32 @@ if [ -d "$EDGE_DIR" ]; then
 
             # Read line by line
             while IFS= read -r line; do
-                # 1. docker-proxy -> VIOLATION
+                # 1. docker-proxy -> VIOLATION (checked on full line for process name)
                 if echo "$line" | grep -q "docker-proxy"; then
                     has_violation=1
                     break
                 fi
 
+                # Extract Local Address field (usually 4th column in ss -lntup)
+                local_field=$(echo "$line" | awk '{print $4}')
+
                 # 2. Public Binds (0.0.0.0, *, :::, [::]) -> VIOLATION
-                # Robust Pattern Matching:
-                # - 0.0.0.0: matches explicit 0.0.0.0 bind
-                # - [::]: matches explicit IPv6 all-bind
-                # - ::: matches shorthand IPv6 all-bind (often :::8080)
-                # - *: matches wildcard bind (*:8080)
-                if echo "$line" | grep -F "0.0.0.0:" >/dev/null 2>&1 || \
-                   echo "$line" | grep -F "[::]:" >/dev/null 2>&1 || \
-                   echo "$line" | grep -F ":::" >/dev/null 2>&1 || \
-                   echo "$line" | grep -F "*:" >/dev/null 2>&1; then
+                # Check ONLY the local address field to avoid matching peer addresses
+                if echo "$local_field" | grep -F "0.0.0.0:" >/dev/null 2>&1 || \
+                   echo "$local_field" | grep -F "[::]:" >/dev/null 2>&1 || \
+                   echo "$local_field" | grep -F ":::" >/dev/null 2>&1 || \
+                   echo "$local_field" | grep -F "*:" >/dev/null 2>&1; then
                     has_violation=1
                     break
                 fi
 
                 # 3. Localhost Binds (127.0.0.1, ::1) -> OK (Continue)
-                # Using fixed strings for safety
-                if echo "$line" | grep -F "127.0.0.1:" >/dev/null 2>&1 || \
-                   echo "$line" | grep -F "::1:" >/dev/null 2>&1; then
+                if echo "$local_field" | grep -F "127.0.0.1:" >/dev/null 2>&1 || \
+                   echo "$local_field" | grep -F "::1:" >/dev/null 2>&1; then
                     continue
                 fi
 
                 # 4. If neither -> Unknown (e.g. LAN IP) -> Treat as WARN/VIOLATION context dependent
-                # For Strict Policy, anything non-localhost is a violation or warning.
                 has_unknown=1
 
             done <<< "$listeners_8080_5432"
