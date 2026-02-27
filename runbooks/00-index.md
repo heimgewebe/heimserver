@@ -1,6 +1,6 @@
 ---
 id: runbooks-index
-role: runbook
+role: runbooks
 status: canonical
 last_reviewed: 2026-02-13
 depends_on: []

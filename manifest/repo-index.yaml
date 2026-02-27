@@ -22,3 +22,4 @@ zones:
 checks:
   - ops/checks/preflight.sh
   - scripts/ci/check-runbook-invariants.sh
+  - scripts/ci/check-repo-index-consistency.sh

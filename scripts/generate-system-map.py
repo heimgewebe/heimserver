@@ -2,6 +2,7 @@
 import os
 import re
 import sys
+import posixpath
 from datetime import datetime
 
 MANIFEST_PATH = 'manifest/repo-index.yaml'
@@ -12,7 +13,7 @@ def load_manifest():
     current_zone = None
     in_checks = False
 
-    with open(MANIFEST_PATH, 'r') as f:
+    with open(MANIFEST_PATH, 'r', encoding='utf-8') as f:
         for line in f:
             stripped = line.strip()
             if not stripped or stripped.startswith('#'):
@@ -58,10 +59,11 @@ def parse_frontmatter(filepath):
     if not os.path.exists(filepath):
         return None
 
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+    # CRLF-tolerant regex
+    match = re.match(r'^---\r?\n(.*?)\r?\n---\r?(?:\n|$)', content, re.DOTALL)
     if not match:
         return None
 
@@ -147,6 +149,7 @@ def generate_system_map(manifest):
         lines.append("|---|---|---|---|---|")
 
         for doc in canonical_docs:
+            # Use os.path.join for file system check
             filepath = os.path.join(path_prefix, doc)
             fm = parse_frontmatter(filepath)
 
@@ -166,8 +169,12 @@ def generate_system_map(manifest):
                 if not verifies_str:
                     verifies_str = "-"
 
-                # Make file path a link relative to repo root
-                file_link = f"[{doc}]({filepath})"
+                # Use posixpath for markdown link (always forward slashes)
+                # Ensure path_prefix doesn't have trailing slash for join if not empty
+                clean_prefix = path_prefix.rstrip('/')
+                link_path = posixpath.join(clean_prefix, doc)
+
+                file_link = f"[{doc}]({link_path})"
 
                 lines.append(f"| {file_link} | `{doc_id}` | {status} | {reviewed} | {verifies_str} |")
             else:
@@ -190,8 +197,18 @@ def generate_system_map(manifest):
             fm = parse_frontmatter(filepath)
             if fm and fm.get('depends_on'):
                 deps = fm.get('depends_on')
-                if isinstance(deps, list) and deps:
-                    deps_str = ", ".join([f"`{d}`" for d in deps])
+
+                deps_arr = []
+                if isinstance(deps, list):
+                    deps_arr = deps
+                elif isinstance(deps, str):
+                    if deps.startswith('[') and deps.endswith(']'):
+                         pass
+                    else:
+                         deps_arr = [deps]
+
+                if deps_arr:
+                    deps_str = ", ".join([f"`{d}`" for d in deps_arr])
                     deps_list.append(f"- **{doc}** depends on: {deps_str}")
 
     if deps_list:
@@ -205,6 +222,7 @@ def generate_system_map(manifest):
     checks = manifest.get('checks', [])
     if checks:
         for check in checks:
+            # Check implies check path is relative to root
             lines.append(f"- [`{check}`]({check})")
     else:
         lines.append("_No checks listed._")
@@ -220,7 +238,7 @@ def main():
         manifest = load_manifest()
         content = generate_system_map(manifest)
 
-        with open(OUTPUT_FILE, 'w') as f:
+        with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
             f.write(content)
 
         print(f"Successfully generated {OUTPUT_FILE}")

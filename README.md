@@ -31,6 +31,8 @@ A human-readable system overview is generated in:
 [`SYSTEM_MAP.md`](SYSTEM_MAP.md)
 
 Do not edit SYSTEM_MAP.md manually.
+Regenerate via:
+`python3 scripts/generate-system-map.py`
 
 ## Safety Checks (vor jedem Push)
 

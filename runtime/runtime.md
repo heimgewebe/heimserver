@@ -541,7 +541,7 @@ Wenn tot:
 
 ---
 
-### 9.3 VPN kein Zugriff LAN
+### 9.3 VPN kein Zugriff auf LAN
 
 Check:
 
