@@ -195,39 +195,41 @@ if [ -d "$EDGE_DIR" ]; then
         listeners_8080_5432=$(ss -lntup | grep -E ':(8080|5432)\b' || true)
 
         if [ -n "$listeners_8080_5432" ]; then
-            # Heuristic: Check for public exposure or docker-proxy
-            # 1. docker-proxy is always suspicious for App ports
-            # 2. 0.0.0.0 or [::] or * means public bind
-            # 3. If NONE of those, it might be 127.0.0.1 (Allowed)
+            # Deterministic Classification per line
+            # Default to OK, switch to VIOLATION or WARN if found
 
-            # Check for public binding (0.0.0.0 or [::] or *) OR docker-proxy process name
-            # Note: 0.0.0.0:8080 matches '0\.0\.0\.0:'
-            # Note: docker-proxy process name often appears in users:(("docker-proxy"...))
+            has_violation=0
+            has_unknown=0
 
-            # The regex 0\.0\.0\.0 matches anywhere, so 0.0.0.0:8080 is caught.
-            # * matches literal * (as in *:8080 or * 8080).
-            # Debug: what are we matching against?
-            # echo "DEBUG: listeners='$listeners_8080_5432'"
+            # Read line by line
+            while IFS= read -r line; do
+                # 1. docker-proxy -> VIOLATION
+                if echo "$line" | grep -q "docker-proxy"; then
+                    has_violation=1
+                    break
+                fi
 
-            # Using basic grep without -E/-F if possible or simple pipes to avoid issues
-            # We check variable content directly
-            # Check for common public bindings (0.0.0.0, ::, *) or docker-proxy
-            # Note: We use grep -F for fixed strings where possible, except * which needs escaping or -F
-            # Check for common public bindings:
-            # 0.0.0.0, [::], *, or docker-proxy process name.
+                # 2. Public Binds (0.0.0.0, *, :::, [::]) -> VIOLATION
+                # Match specific bind patterns to avoid false positives on substrings
+                if echo "$line" | grep -qE "0\.0\.0\.0:|\[::\]:|:::\d|\*:\d"; then
+                    has_violation=1
+                    break
+                fi
 
-            is_exposed=0
-            if echo "$listeners_8080_5432" | grep "0.0.0.0" >/dev/null 2>&1; then is_exposed=1; fi
-            if echo "$listeners_8080_5432" | grep "::" >/dev/null 2>&1; then is_exposed=1; fi
-            if echo "$listeners_8080_5432" | grep "*" >/dev/null 2>&1; then is_exposed=1; fi
-            if echo "$listeners_8080_5432" | grep "docker-proxy" >/dev/null 2>&1; then is_exposed=1; fi
+                # 3. Localhost Binds (127.0.0.1, ::1) -> OK (Continue)
+                if echo "$line" | grep -qE "127\.0\.0\.1:|::1:"; then
+                    continue
+                fi
 
-            if [ "$is_exposed" -eq 1 ]; then
+                # 4. If neither -> Unknown (e.g. LAN IP) -> Treat as WARN/VIOLATION context dependent
+                # For Strict Policy, anything non-localhost is a violation or warning.
+                has_unknown=1
+
+            done <<< "$listeners_8080_5432"
+
+            if [ "$has_violation" -eq 1 ]; then
                  warn "App Ports (8080/5432) PUBLICLY exposed (docker-proxy or 0.0.0.0)! VIOLATION."
-            # Check for ANY line that does NOT contain localhost IP.
-            # grep -v returns success (0) if it prints anything (i.e. finds a non-matching line).
-            elif echo "$listeners_8080_5432" | grep -v "127.0.0.1" | grep -v "::1" >/dev/null 2>&1; then
-                 # If not loopback and not caught above (weird bind?) -> Warn
+            elif [ "$has_unknown" -eq 1 ]; then
                  warn "App Ports (8080/5432) exposed on non-loopback interface! VIOLATION."
             else
                  ok "App Ports (8080/5432) active but localhost-only (Allowed for dev tools)."

@@ -154,4 +154,22 @@ else
     fail "Test 5 Failed: Did not detect violation"
 fi
 
+# TEST 6: Mixed (Localhost + Public) -> WARN
+log "Running Test 6: Mixed (Localhost + Public)..."
+cat <<EOF > "$MOCK_BIN/ss"
+#!/bin/bash
+echo "LISTEN 0 0 127.0.0.1:8080 0.0.0.0:* users:((\"good-app\",pid=123,fd=4))"
+echo "LISTEN 0 0 0.0.0.0:8080 0.0.0.0:* users:((\"bad-app\",pid=456,fd=5))"
+EOF
+chmod +x "$MOCK_BIN/ss"
+
+OUTPUT=$(bash "$SCRIPT" 2>&1)
+if echo "$OUTPUT" | grep -q "VIOLATION"; then
+    log "PASS: Detects VIOLATION in mixed output"
+else
+    echo "OUTPUT WAS:"
+    echo "$OUTPUT"
+    fail "Test 6 Failed: Did not detect violation in mixed output"
+fi
+
 echo "ALL PREFLIGHT LOGIC TESTS PASSED."
