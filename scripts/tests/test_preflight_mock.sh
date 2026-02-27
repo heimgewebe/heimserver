@@ -137,4 +137,21 @@ else
     fail "Test 4 Failed: Did not detect violation"
 fi
 
+# TEST 5: IPv6 Public Exposure (:::8080) -> WARN
+log "Running Test 5: IPv6 Public Exposure (:::8080)..."
+cat <<EOF > "$MOCK_BIN/ss"
+#!/bin/bash
+echo "LISTEN 0 0 :::8080 :::* users:((\"my-app\",pid=123,fd=4))"
+EOF
+chmod +x "$MOCK_BIN/ss"
+
+OUTPUT=$(bash "$SCRIPT" 2>&1)
+if echo "$OUTPUT" | grep -q "VIOLATION"; then
+    log "PASS: Detects VIOLATION on :::8080"
+else
+    echo "OUTPUT WAS:"
+    echo "$OUTPUT"
+    fail "Test 5 Failed: Did not detect violation"
+fi
+
 echo "ALL PREFLIGHT LOGIC TESTS PASSED."
