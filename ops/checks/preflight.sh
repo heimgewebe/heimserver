@@ -178,20 +178,32 @@ if [ -d "$EDGE_DIR" ]; then
         warn "Skip: Docker checks (daemon unreachable)"
     fi
 
-    # 2. Check 9081 Loopback (Host Binding) - Edge Debug
-    # Important: Caddy inside container listens on :9081, but host binding MUST be 127.0.0.1:9081
+    # 2. Port Matrix Guard (9081, 8081, 8080, 5432)
     if command -v ss >/dev/null 2>&1; then
+        # 9081: Weltgewebe Gateway (Strict Localhost)
         if ss -lntup | grep -E '127\.0\.0\.1:9081' >/dev/null 2>&1; then
-            ok "Port 9081 (Edge Debug) bound to loopback (Host)"
+            ok "Port 9081 (Weltgewebe Gateway) bound to loopback (Host)"
         elif ss -lntup | grep -E ':9081' >/dev/null 2>&1; then
-             warn "Port 9081 exposed on non-loopback interface on HOST!"
+             warn "Port 9081 exposed on non-loopback interface! Violation of 'Localhost-Binding' invariant."
         else
-             warn "Port 9081 not listening on host (Edge Caddy down?)"
+             warn "Port 9081 not listening on host (Optional Gateway inactive?)"
         fi
 
-        # Informational drift check for legacy 8081 usage
+        # 8081: Pi-hole FTL (Owner Check)
         if ss -lntup | grep -E ':8081' >/dev/null 2>&1; then
-            warn "Port 8081 in use (legacy API/Pi-hole context). Expected: not Edge health."
+            # We attempt to check the process name, but ss output varies.
+            if ss -lntup | grep -E ':8081' | grep -iE 'pihole-FTL|lighttpd' >/dev/null 2>&1; then
+                 ok "Port 8081 active (Pi-hole FTL/Lighttpd identified)"
+            else
+                 warn "Port 8081 in use by unknown process! (Expected: Pi-hole FTL). Check Drift."
+            fi
+        fi
+
+        # 8080/5432: Unpublished by Default
+        if ss -lntup | grep -E ':(8080|5432)\b' >/dev/null 2>&1; then
+            warn "Port 8080 (API) or 5432 (DB) exposed on Host! Violation of 'Unpublished by Default' invariant."
+        else
+            ok "Ports 8080/5432 not exposed on Host (Correct)"
         fi
     fi
 

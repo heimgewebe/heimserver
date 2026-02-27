@@ -181,11 +181,12 @@ Caddy hängt in:
 
 ### 7.1 Port-Ownership & Host-Netz (Invariante)
 
-Siehe: [`networking/gateway-port-ownership.md`](networking/gateway-port-ownership.md)
+Siehe: [`networking/port-matrix.md`](networking/port-matrix.md)
 
-*   Ports 80/443: Exklusiv Edge-Gateway (Caddy) [TCP, UDP optional].
-*   Port 53: `dns-pihole` (Host-Mode).
-*   Pi-hole Web: 8081 (konfliktfrei).
+*   **Ports 80/443:** Exklusiv Edge-Gateway (Caddy) [TCP, UDP optional].
+*   **Port 53:** `dns-pihole` (Host-Mode).
+*   **Port 8081:** `dns-pihole` Webinterface (Reserviert).
+*   **Port 9081:** Weltgewebe-Gateway (nur localhost).
 
 ---
 
