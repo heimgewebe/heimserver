@@ -33,6 +33,7 @@
 | Document | ID | Status | Reviewed | Verifies With |
 |---|---|---|---|---|
 | [00-index.md](runbooks/00-index.md) | `runbooks-index` | canonical | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
+| [05-adding-docs.md](runbooks/05-adding-docs.md) | `runbook-adding-docs` | canonical | 2026-02-18 | `scripts/ci/check-repo-index-consistency.sh` |
 
 ## Dependencies
 Documents that depend on others:
@@ -45,3 +46,4 @@ Documents that depend on others:
 - [`ops/checks/preflight.sh`](ops/checks/preflight.sh)
 - [`scripts/ci/check-runbook-invariants.sh`](scripts/ci/check-runbook-invariants.sh)
 - [`scripts/ci/check-repo-index-consistency.sh`](scripts/ci/check-repo-index-consistency.sh)
+- [`scripts/ci/check-doc-review-age.py`](scripts/ci/check-doc-review-age.py)
