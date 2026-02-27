@@ -180,9 +180,58 @@ if [ -d "$EDGE_DIR" ]; then
 
     # 2. Port Matrix Guard (Strict Internal Policy)
     if command -v ss >/dev/null 2>&1; then
-        # Check 1: App Ports (8080/5432) -> Invariant Violation
-        if ss -lntup | grep -E ':(8080|5432)\b' >/dev/null 2>&1; then
-            warn "App Ports (8080/5432) exposed on Host! VIOLATION of Strict Internal Policy."
+        # Check 1: App Ports (8080/5432) -> Invariant Violation if PUBLICLY exposed or via docker-proxy
+        # Logic:
+        # - WARN if docker-proxy on 8080/5432 (published container port).
+        # - WARN if listening on 0.0.0.0 or [::] (public exposure).
+        # - ALLOW if listening ONLY on 127.0.0.1 (e.g. code-server ssh tunnel).
+
+        # Robust filtering to detect exposure
+        # We look for ANY listener on 8080/5432.
+        # If found, we check if it is NOT loopback (127.0.0.1 or ::1).
+        # OR if it is docker-proxy (regardless of bind, usually implies publish).
+
+        # Force list context by echo to avoid grep failing on empty input
+        listeners_8080_5432=$(ss -lntup | grep -E ':(8080|5432)\b' || true)
+
+        if [ -n "$listeners_8080_5432" ]; then
+            # Heuristic: Check for public exposure or docker-proxy
+            # 1. docker-proxy is always suspicious for App ports
+            # 2. 0.0.0.0 or [::] or * means public bind
+            # 3. If NONE of those, it might be 127.0.0.1 (Allowed)
+
+            # Check for public binding (0.0.0.0 or [::] or *) OR docker-proxy process name
+            # Note: 0.0.0.0:8080 matches '0\.0\.0\.0:'
+            # Note: docker-proxy process name often appears in users:(("docker-proxy"...))
+
+            # The regex 0\.0\.0\.0 matches anywhere, so 0.0.0.0:8080 is caught.
+            # * matches literal * (as in *:8080 or * 8080).
+            # Debug: what are we matching against?
+            # echo "DEBUG: listeners='$listeners_8080_5432'"
+
+            # Using basic grep without -E/-F if possible or simple pipes to avoid issues
+            # We check variable content directly
+            # Check for common public bindings (0.0.0.0, ::, *) or docker-proxy
+            # Note: We use grep -F for fixed strings where possible, except * which needs escaping or -F
+            # Check for common public bindings:
+            # 0.0.0.0, [::], *, or docker-proxy process name.
+
+            is_exposed=0
+            if echo "$listeners_8080_5432" | grep "0.0.0.0" >/dev/null 2>&1; then is_exposed=1; fi
+            if echo "$listeners_8080_5432" | grep "::" >/dev/null 2>&1; then is_exposed=1; fi
+            if echo "$listeners_8080_5432" | grep "*" >/dev/null 2>&1; then is_exposed=1; fi
+            if echo "$listeners_8080_5432" | grep "docker-proxy" >/dev/null 2>&1; then is_exposed=1; fi
+
+            if [ "$is_exposed" -eq 1 ]; then
+                 warn "App Ports (8080/5432) PUBLICLY exposed (docker-proxy or 0.0.0.0)! VIOLATION."
+            # Check for ANY line that does NOT contain localhost IP.
+            # grep -v returns success (0) if it prints anything (i.e. finds a non-matching line).
+            elif echo "$listeners_8080_5432" | grep -v "127.0.0.1" | grep -v "::1" >/dev/null 2>&1; then
+                 # If not loopback and not caught above (weird bind?) -> Warn
+                 warn "App Ports (8080/5432) exposed on non-loopback interface! VIOLATION."
+            else
+                 ok "App Ports (8080/5432) active but localhost-only (Allowed for dev tools)."
+            fi
         else
             ok "App Ports (8080/5432) internal only (Correct)"
         fi
