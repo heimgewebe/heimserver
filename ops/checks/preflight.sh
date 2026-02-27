@@ -210,14 +210,23 @@ if [ -d "$EDGE_DIR" ]; then
                 fi
 
                 # 2. Public Binds (0.0.0.0, *, :::, [::]) -> VIOLATION
-                # Match specific bind patterns to avoid false positives on substrings
-                if echo "$line" | grep -qE "0\.0\.0\.0:|\[::\]:|:::\d|\*:\d"; then
+                # Robust Pattern Matching:
+                # - 0.0.0.0: matches explicit 0.0.0.0 bind
+                # - [::]: matches explicit IPv6 all-bind
+                # - ::: matches shorthand IPv6 all-bind (often :::8080)
+                # - *: matches wildcard bind (*:8080)
+                if echo "$line" | grep -F "0.0.0.0:" >/dev/null 2>&1 || \
+                   echo "$line" | grep -F "[::]:" >/dev/null 2>&1 || \
+                   echo "$line" | grep -F ":::" >/dev/null 2>&1 || \
+                   echo "$line" | grep -F "*:" >/dev/null 2>&1; then
                     has_violation=1
                     break
                 fi
 
                 # 3. Localhost Binds (127.0.0.1, ::1) -> OK (Continue)
-                if echo "$line" | grep -qE "127\.0\.0\.1:|::1:"; then
+                # Using fixed strings for safety
+                if echo "$line" | grep -F "127.0.0.1:" >/dev/null 2>&1 || \
+                   echo "$line" | grep -F "::1:" >/dev/null 2>&1; then
                     continue
                 fi
 

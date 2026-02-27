@@ -112,12 +112,16 @@ EOF
 chmod +x "$MOCK_BIN/ss"
 
 OUTPUT=$(bash "$SCRIPT" 2>&1)
-if echo "$OUTPUT" | grep -q "localhost-only (Allowed"; then
+if echo "$OUTPUT" | grep -q "VIOLATION"; then
+    echo "OUTPUT WAS:"
+    echo "$OUTPUT"
+    fail "Test 3 Failed: False Positive! Reported VIOLATION on localhost."
+elif echo "$OUTPUT" | grep -q "localhost-only (Allowed"; then
     log "PASS: Allows localhost-only"
 else
     echo "OUTPUT WAS:"
     echo "$OUTPUT"
-    fail "Test 3 Failed: Did not allow localhost"
+    fail "Test 3 Failed: Did not explicitly allow localhost"
 fi
 
 # TEST 4: Wildcard Bind (*:8080) -> WARN
