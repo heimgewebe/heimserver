@@ -27,6 +27,8 @@ Zusätzlich:
 The repository structure is declared in:
 `manifest/repo-index.yaml`
 
+Only canonical docs should be listed in `manifest/repo-index.yaml`.
+
 A human-readable system overview is generated in:
 [`SYSTEM_MAP.md`](SYSTEM_MAP.md)
 
