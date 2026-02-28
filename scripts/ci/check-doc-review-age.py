@@ -151,7 +151,10 @@ if __name__ == "__main__":
 
             print("Self-check passed.")
         finally:
-            os.remove(temp_path)
+            try:
+                os.remove(temp_path)
+            except FileNotFoundError:
+                pass
 
         sys.exit(0)
 
