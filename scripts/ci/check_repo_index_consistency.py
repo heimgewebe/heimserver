@@ -98,8 +98,8 @@ def main():
             status = fm.get('status')
             if not status:
                  errors.append(f"Missing 'status' in frontmatter: {filepath}")
-            elif status not in ALLOWED_STATUS:
-                 errors.append(f"Invalid 'status' '{status}': {filepath} (Allowed: {ALLOWED_STATUS})")
+            elif status != 'canonical':
+                 errors.append(f"Non-canonical status '{status}' for canonical doc: {filepath} (Must be 'canonical')")
 
             # 5. Check role
             role = fm.get('role')
