@@ -11,15 +11,16 @@ from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PAT
 
 REVIEW_POLICY_PATH = 'manifest/review-policy.yaml'
 
-def load_review_policy():
+def load_review_policy(policy_path=REVIEW_POLICY_PATH):
     """Simple parser for review policy yaml."""
     policy = {
         'default_review_cycle_days': 90,
         'mode': 'warn'
     }
+    warnings = 0
 
-    if os.path.exists(REVIEW_POLICY_PATH):
-        with open(REVIEW_POLICY_PATH, 'r', encoding='utf-8') as f:
+    if os.path.exists(policy_path):
+        with open(policy_path, 'r', encoding='utf-8') as f:
             for line in f:
                 stripped = line.strip()
                 if not stripped or stripped.startswith('#'):
@@ -34,20 +35,31 @@ def load_review_policy():
                         try:
                             policy['default_review_cycle_days'] = int(val)
                         except ValueError:
-                            pass
+                            print(f"Warning: Invalid '{key}' value '{val}', falling back to 90.", file=sys.stderr)
+                            warnings += 1
                     elif key == 'mode':
-                        policy['mode'] = _unquote(val).lower()
+                        mode_val = _unquote(val).lower()
+                        if mode_val in ('warn', 'fail'):
+                            policy['mode'] = mode_val
+                        else:
+                            print(f"Warning: Invalid '{key}' value '{val}', must be 'warn' or 'fail'. Falling back to 'warn'.", file=sys.stderr)
+                            warnings += 1
+                    else:
+                        print(f"Warning: Unknown key '{key}' in policy file.", file=sys.stderr)
+                        warnings += 1
 
-    return policy
+    return policy, warnings
 
 def main():
     print("Starting Document Review Age Check...")
 
-    policy = load_review_policy()
+    policy_path = os.environ.get('REVIEW_POLICY_PATH', REVIEW_POLICY_PATH)
+    policy, warnings = load_review_policy(policy_path)
     default_cycle = policy.get('default_review_cycle_days', 90)
     mode = policy.get('mode', 'warn')
 
     print(f"Policy: Cycle={default_cycle} days, Mode={mode}")
+    print(f"Policy parsed with {warnings} warnings.")
 
     try:
         manifest = load_repo_index(MANIFEST_PATH)
