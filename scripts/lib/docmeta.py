@@ -134,7 +134,7 @@ def parse_frontmatter(filepath):
             elif val.startswith('[') and val.endswith(']'):
                 # Inline list
                 if val == '[]':
-                     data[key] = []
+                    data[key] = []
                 else:
                     items = [x.strip() for x in val[1:-1].split(',')]
                     clean_items = [_unquote(item) for item in items]

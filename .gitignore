@@ -24,3 +24,8 @@ wireguard/
 # README.md ist die einzige getrackte Datei in diesem Baum.
 ops/audit/snapshots/*
 !ops/audit/snapshots/README.md
+
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
