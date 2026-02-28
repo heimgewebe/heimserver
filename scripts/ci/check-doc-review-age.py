@@ -2,6 +2,7 @@
 import os
 import sys
 import re
+import tempfile
 from datetime import datetime
 
 # Ensure we can import from scripts/lib
@@ -10,16 +11,19 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PATH, _unquote
 
 REVIEW_POLICY_PATH = 'manifest/review-policy.yaml'
+DEFAULT_CYCLE_DAYS = 90
+DEFAULT_MODE = 'warn'
 
-def load_review_policy():
-    """Simple parser for review policy yaml."""
+def load_review_policy(policy_path=REVIEW_POLICY_PATH):
+    """Parse review-policy YAML (line-based). Returns (policy, warnings)."""
     policy = {
-        'default_review_cycle_days': 90,
-        'mode': 'warn'
+        'default_review_cycle_days': DEFAULT_CYCLE_DAYS,
+        'mode': DEFAULT_MODE
     }
+    warnings = 0
 
-    if os.path.exists(REVIEW_POLICY_PATH):
-        with open(REVIEW_POLICY_PATH, 'r', encoding='utf-8') as f:
+    if os.path.exists(policy_path):
+        with open(policy_path, 'r', encoding='utf-8') as f:
             for line in f:
                 stripped = line.strip()
                 if not stripped or stripped.startswith('#'):
@@ -32,22 +36,35 @@ def load_review_policy():
 
                     if key == 'default_review_cycle_days':
                         try:
-                            policy['default_review_cycle_days'] = int(val)
+                            policy['default_review_cycle_days'] = int(_unquote(val))
                         except ValueError:
-                            pass
+                            print(f"Warning: Invalid '{key}' value '{val}', falling back to {DEFAULT_CYCLE_DAYS}.", file=sys.stderr)
+                            policy['default_review_cycle_days'] = DEFAULT_CYCLE_DAYS
+                            warnings += 1
                     elif key == 'mode':
-                        policy['mode'] = _unquote(val).lower()
+                        mode_val = _unquote(val).lower()
+                        if mode_val in ('warn', 'fail'):
+                            policy['mode'] = mode_val
+                        else:
+                            print(f"Warning: Invalid '{key}' value '{val}', must be 'warn' or 'fail'. Falling back to '{DEFAULT_MODE}'.", file=sys.stderr)
+                            policy['mode'] = DEFAULT_MODE
+                            warnings += 1
+                    else:
+                        print(f"Warning: Unknown key '{key}' in policy file.", file=sys.stderr)
+                        warnings += 1
 
-    return policy
+    return policy, warnings
 
 def main():
     print("Starting Document Review Age Check...")
 
-    policy = load_review_policy()
-    default_cycle = policy.get('default_review_cycle_days', 90)
-    mode = policy.get('mode', 'warn')
+    policy_path = os.environ.get('REVIEW_POLICY_PATH', REVIEW_POLICY_PATH)
+    policy, warnings = load_review_policy(policy_path)
+    default_cycle = policy.get('default_review_cycle_days', DEFAULT_CYCLE_DAYS)
+    mode = policy.get('mode', DEFAULT_MODE)
 
     print(f"Policy: Cycle={default_cycle} days, Mode={mode}")
+    print(f"Policy parsed with {warnings} warnings.")
 
     try:
         manifest = load_repo_index(MANIFEST_PATH)
@@ -115,4 +132,30 @@ def main():
         sys.exit(0)
 
 if __name__ == "__main__":
+    if os.environ.get('CHECK_SELFTEST') == '1':
+        print("Running self-check...")
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False) as tf:
+            temp_path = tf.name
+            tf.write("default_review_cycle_days: 30\n")
+            tf.write("default_review_cycle_days: nope\n")
+            tf.write("mode: fail\n")
+            tf.write("mode: wat\n")
+            tf.write("unknown_key: true\n")
+
+        try:
+            policy, warnings = load_review_policy(temp_path)
+
+            assert policy['default_review_cycle_days'] == DEFAULT_CYCLE_DAYS, f"Expected {DEFAULT_CYCLE_DAYS}, got {policy['default_review_cycle_days']}"
+            assert policy['mode'] == DEFAULT_MODE, f"Expected '{DEFAULT_MODE}', got {policy['mode']}"
+            assert warnings == 3, f"Expected exactly 3 warnings, got {warnings}"
+
+            print("Self-check passed.")
+        finally:
+            try:
+                os.remove(temp_path)
+            except FileNotFoundError:
+                pass
+
+        sys.exit(0)
+
     main()
