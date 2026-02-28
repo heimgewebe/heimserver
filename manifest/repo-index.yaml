@@ -3,6 +3,7 @@ zones:
     path: architecture/
     canonical_docs:
       - constitution.md
+      - docmeta.schema.md
       - naming.md
       - network.md
       - networking/port-matrix.md

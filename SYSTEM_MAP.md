@@ -9,6 +9,7 @@
 | Document | ID | Status | Reviewed | Verifies With |
 |---|---|---|---|---|
 | [constitution.md](architecture/constitution.md) | `constitution` | canonical | 2026-02-13 | `ops/checks/preflight.sh` |
+| [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | canonical | 2026-02-18 | `scripts/ci/check-repo-index-consistency.sh` |
 | [naming.md](architecture/naming.md) | `naming` | canonical | 2026-02-13 | `ops/checks/preflight.sh` |
 | [network.md](architecture/network.md) | `network` | canonical | 2026-02-13 | `ops/checks/preflight.sh` |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | canonical | 2026-02-25 | `ops/checks/preflight.sh` |
