@@ -3,6 +3,7 @@ zones:
     path: architecture/
     canonical_docs:
       - constitution.md
+      - docmeta.schema.md
       - naming.md
       - network.md
       - networking/port-matrix.md
@@ -18,8 +19,10 @@ zones:
     path: runbooks/
     canonical_docs:
       - 00-index.md
+      - 05-adding-docs.md
 
 checks:
   - ops/checks/preflight.sh
   - scripts/ci/check-runbook-invariants.sh
   - scripts/ci/check-repo-index-consistency.sh
+  - scripts/ci/check-doc-review-age.py

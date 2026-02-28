@@ -1,0 +1,10 @@
+# Review Policy
+# Governance configuration for document lifecycle reviews.
+
+# Default days after which a document is considered 'overdue' for review.
+default_review_cycle_days: 90
+
+# Check mode:
+# - warn: Print warnings but exit 0 (CI passes)
+# - fail: Print errors and exit 1 (CI fails)
+mode: warn

@@ -1,121 +1,14 @@
 #!/usr/bin/env python3
 import os
-import re
 import sys
 import posixpath
 
-MANIFEST_PATH = 'manifest/repo-index.yaml'
+# Ensure we can import from scripts/lib
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PATH
+
 OUTPUT_FILE = 'SYSTEM_MAP.md'
-
-def load_manifest():
-    data = {'zones': {}, 'checks': []}
-    current_zone = None
-    in_checks = False
-
-    with open(MANIFEST_PATH, 'r', encoding='utf-8') as f:
-        for line in f:
-            stripped = line.strip()
-            if not stripped or stripped.startswith('#'):
-                continue
-
-            if stripped == 'zones:':
-                in_checks = False
-                continue
-            elif stripped == 'checks:':
-                in_checks = True
-                continue
-
-            if in_checks:
-                if stripped.startswith('- '):
-                    data['checks'].append(stripped[2:])
-            else:
-                # In zones
-                # Check for zone definition: "  norm:" (2 spaces)
-                if line.startswith('  ') and not line.startswith('    ') and stripped.endswith(':'):
-                    zone_name = stripped[:-1]
-                    current_zone = zone_name
-                    data['zones'][current_zone] = {'path': '', 'canonical_docs': []}
-
-                # Check for path: "    path: ..." (4 spaces)
-                elif line.startswith('    path:'):
-                    path = stripped.split(':', 1)[1].strip()
-                    if current_zone:
-                        data['zones'][current_zone]['path'] = path
-
-                # Check for canonical_docs list start
-                elif line.startswith('    canonical_docs:'):
-                    pass # Just a header
-
-                # Check for list items: "      - ..." (6 spaces)
-                elif line.startswith('      - '):
-                    doc = stripped[2:]
-                    if current_zone:
-                        data['zones'][current_zone]['canonical_docs'].append(doc)
-
-    return data
-
-def parse_frontmatter(filepath):
-    if not os.path.exists(filepath):
-        return None
-
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
-
-    # CRLF-tolerant regex
-    match = re.match(r'^---\r?\n(.*?)\r?\n---\r?(?:\n|$)', content, re.DOTALL)
-    if not match:
-        return None
-
-    fm_content = match.group(1)
-    data = {}
-    current_list_key = None
-
-    for line in fm_content.splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith('#'):
-            continue
-
-        # Check if line is a list item
-        if stripped.startswith('- '):
-            if current_list_key:
-                val = stripped[2:].strip()
-                # If val is quoted, unquote
-                if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
-                    val = val[1:-1]
-                data[current_list_key].append(val)
-            continue
-
-        if ':' in stripped:
-            key, val = stripped.split(':', 1)
-            key = key.strip()
-            val = val.strip()
-
-            if not val:
-                current_list_key = key
-                data[key] = []
-            elif val.startswith('[') and val.endswith(']'):
-                # Inline list
-                if val == '[]':
-                     data[key] = []
-                else:
-                     items = [x.strip() for x in val[1:-1].split(',')]
-                     # remove quotes
-                     clean_items = []
-                     for item in items:
-                         if (item.startswith('"') and item.endswith('"')) or (item.startswith("'") and item.endswith("'")):
-                             clean_items.append(item[1:-1])
-                         else:
-                             clean_items.append(item)
-                     data[key] = clean_items
-                current_list_key = None
-            else:
-                # Plain value
-                if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
-                    val = val[1:-1]
-                data[key] = val
-                current_list_key = None
-
-    return data
 
 def generate_system_map(manifest):
     lines = []
@@ -237,7 +130,7 @@ def main():
         sys.exit(1)
 
     try:
-        manifest = load_manifest()
+        manifest = load_repo_index(MANIFEST_PATH)
         content = generate_system_map(manifest)
 
         with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
