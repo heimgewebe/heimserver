@@ -12,7 +12,7 @@ from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PAT
 REVIEW_POLICY_PATH = 'manifest/review-policy.yaml'
 
 def load_review_policy(policy_path=REVIEW_POLICY_PATH):
-    """Simple parser for review policy yaml."""
+    """Simple parser for review policy yaml. Returns a tuple: (policy_dict, warnings_count)."""
     policy = {
         'default_review_cycle_days': 90,
         'mode': 'warn'
@@ -33,9 +33,10 @@ def load_review_policy(policy_path=REVIEW_POLICY_PATH):
 
                     if key == 'default_review_cycle_days':
                         try:
-                            policy['default_review_cycle_days'] = int(val)
+                            policy['default_review_cycle_days'] = int(_unquote(val))
                         except ValueError:
                             print(f"Warning: Invalid '{key}' value '{val}', falling back to 90.", file=sys.stderr)
+                            policy['default_review_cycle_days'] = 90
                             warnings += 1
                     elif key == 'mode':
                         mode_val = _unquote(val).lower()
@@ -43,6 +44,7 @@ def load_review_policy(policy_path=REVIEW_POLICY_PATH):
                             policy['mode'] = mode_val
                         else:
                             print(f"Warning: Invalid '{key}' value '{val}', must be 'warn' or 'fail'. Falling back to 'warn'.", file=sys.stderr)
+                            policy['mode'] = 'warn'
                             warnings += 1
                     else:
                         print(f"Warning: Unknown key '{key}' in policy file.", file=sys.stderr)
@@ -127,4 +129,24 @@ def main():
         sys.exit(0)
 
 if __name__ == "__main__":
+    if os.environ.get('CHECK_SELFTEST') == '1':
+        print("Running self-check...")
+        temp_path = '/tmp/test_review_policy.yaml'
+        with open(temp_path, 'w', encoding='utf-8') as f:
+            f.write("default_review_cycle_days: 30\n")
+            f.write("default_review_cycle_days: nope\n")
+            f.write("mode: fail\n")
+            f.write("mode: wat\n")
+            f.write("unknown_key: true\n")
+
+        policy, warnings = load_review_policy(temp_path)
+
+        assert policy['default_review_cycle_days'] == 90, f"Expected 90, got {policy['default_review_cycle_days']}"
+        assert policy['mode'] == 'warn', f"Expected 'warn', got {policy['mode']}"
+        assert warnings >= 2, f"Expected >= 2 warnings, got {warnings}"
+
+        os.remove(temp_path)
+        print("Self-check passed.")
+        sys.exit(0)
+
     main()
