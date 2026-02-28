@@ -139,6 +139,7 @@ def main():
         if not fm:
             continue
 
+        # Empfehlung: depends_on bevorzugt id statt Dateiname; Dateiname nur wenn eindeutig.
         deps = fm.get('depends_on', [])
 
         # Normalize deps to list
@@ -176,7 +177,7 @@ def main():
                             target_id = d_id
                             break
                 else:
-                    errors.append(f"Ambiguous dependency '{dep}' in {filepath}: matches multiple files {candidates}. Use ID or full path.")
+                    errors.append(f"Ambiguous dependency '{dep}' in {filepath}: matches multiple files {candidates}. filename-matching erwartet exakt den Manifest-String (oder nutze ID).")
                     continue
 
             # Case 3: Is it a filepath?
@@ -202,7 +203,7 @@ def main():
                             target_id = d_id
                             break
                 else:
-                    errors.append(f"Dependency not found: '{dep}' (checked as '{norm_dep}') in {filepath}")
+                    errors.append(f"Dependency not found: '{dep}' (checked as '{norm_dep}') in {filepath}. filename-matching erwartet exakt den Manifest-String (oder nutze ID).")
                     continue
 
             if target_id:
