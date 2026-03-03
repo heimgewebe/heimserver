@@ -15,7 +15,8 @@ DEFAULT_CYCLE_DAYS = 90
 DEFAULT_MODE = 'warn'
 
 def load_review_policy(policy_path=REVIEW_POLICY_PATH):
-    """Parse review-policy YAML (line-based). Returns (policy, warnings)."""
+    """Parse review-policy YAML (line-based). Returns (policy, warnings).
+    The policy parser is a line-based subset; inline comments and nested structures are not supported."""
     policy = {
         'default_review_cycle_days': DEFAULT_CYCLE_DAYS,
         'mode': DEFAULT_MODE
@@ -132,6 +133,7 @@ def main():
         sys.exit(0)
 
 if __name__ == "__main__":
+    # Selftest runs only when env var is set; CI uses normal path
     if os.environ.get('CHECK_SELFTEST') == '1':
         print("Running self-check...")
         with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False) as tf:
