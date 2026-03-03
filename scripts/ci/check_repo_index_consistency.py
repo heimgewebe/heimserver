@@ -154,6 +154,7 @@ def main():
         graph[current_node] = []
 
         for dep in deps:
+            # Recommendation: depends_on should prefer document IDs over filenames; filenames only if unambiguous.
             # Dependency can be:
             # 1. A doc ID (ideal)
             # 2. A filename (ambiguous if duplicates exist, but we check)
@@ -176,7 +177,7 @@ def main():
                             target_id = d_id
                             break
                 else:
-                    errors.append(f"Ambiguous dependency '{dep}' in {filepath}: matches multiple files {candidates}. Use ID or full path.")
+                    errors.append(f"Ambiguous dependency '{dep}' in {filepath}: matches multiple files {candidates}. Filename matching requires the exact manifest string; prefer using a document ID.")
                     continue
 
             # Case 3: Is it a filepath?

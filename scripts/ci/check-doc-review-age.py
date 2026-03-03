@@ -12,7 +12,7 @@ from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PAT
 REVIEW_POLICY_PATH = 'manifest/review-policy.yaml'
 
 def load_review_policy():
-    """Simple parser for review policy yaml."""
+    """The policy parser is a line-based subset; inline comments and nested structures are not supported."""
     policy = {
         'default_review_cycle_days': 90,
         'mode': 'warn'
