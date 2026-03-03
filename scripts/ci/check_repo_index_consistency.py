@@ -177,7 +177,7 @@ def main():
                             target_id = d_id
                             break
                 else:
-                    errors.append(f"Ambiguous dependency '{dep}' in {filepath}: matches multiple files {candidates}. Filename-matching requires the exact manifest string; prefer using an ID.")
+                    errors.append(f"Ambiguous dependency '{dep}' in {filepath}: matches multiple files {candidates}. Use a document ID (recommended) or an exact path. Filename matching requires an exact match.")
                     continue
 
             # Case 3: Is it a filepath?
@@ -203,7 +203,7 @@ def main():
                             target_id = d_id
                             break
                 else:
-                    errors.append(f"Dependency not found: '{dep}' (checked as '{norm_dep}') in {filepath}. Filename-matching requires the exact manifest string; prefer using an ID.")
+                    errors.append(f"Dependency not found: '{dep}' (checked as '{norm_dep}') in {filepath}. Use a document ID (recommended) or an exact path. Filename matching requires an exact match.")
                     continue
 
             if target_id:
