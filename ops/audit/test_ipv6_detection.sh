@@ -25,7 +25,8 @@ check_ipv6_listeners() {
   ok_called=0
 
   # Replicates the hardened logic chain:
-  # Uses tightened regex (numerical port required) to avoid false positives from peer columns (e.g. *:*)
+  # Uses -n for numeric ports (simulated here) and tightened regex
+  # to avoid false positives from peer columns (e.g. *:*)
   if printf '%s\n' "$ss_output" | awk '{for(i=1;i<=NF;i++) if($i ~ /^\[::\]:[0-9]+$|^:::[0-9]+$|^\*:[0-9]+$/) print $i}' | grep -q .; then
     gap "IPv6 wildcard listeners detected. IPv6 may not be fully disabled or services bind dual-stack."
   else
@@ -98,10 +99,10 @@ run_test "False Positive Prevention (*:* as peer)" \
 tcp LISTEN 0 128 0.0.0.0:443 *:*" \
 0
 
-# Case 9: Service names (if ss is used without -n)
-# Current logic expects numeric ports; if service names are used, it won't match.
-# This is a documented limitation/choice for precision.
-run_test "Service Names (should not match currently)" \
+# Case 9: Service names (Out of Scope due to ss -n)
+# Prod uses `ss -n`, so service names are not expected in the input.
+# We document this choice by expecting NO match (ok_called=1).
+run_test "Service Names (Out of Scope due to ss -n)" \
 "tcp LISTEN 0 128 [::]:http [::]:*" \
 0
 
