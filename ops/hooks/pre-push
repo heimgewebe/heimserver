@@ -17,12 +17,13 @@ bad_patterns=(
   'wg0\.conf$'
   'rules\.v4$'
   'rules\.v6$'
-  'audit-snapshots'
-  'server-facts'
+  'ops/audit/snapshots'
 )
 
 for pat in "${bad_patterns[@]}"; do
-  if echo "$tracked" | grep -E "$pat" >/dev/null 2>&1; then
+  # Check if pattern matches any tracked files, excluding allowed exceptions (like README.md)
+  matches="$(echo "$tracked" | grep -E "$pat" | grep -v "ops/audit/snapshots/README.md" || true)"
+  if [ -n "$matches" ]; then
     fail "Tracked file matches forbidden pattern: $pat"
   fi
 done

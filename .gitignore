@@ -10,14 +10,12 @@
 **/*.tar
 **/*.tar.gz
 **/*.zip
-**/audit-snapshots/
 **/docker-compose.override.yml
 .env
 Caddyfile
 logs/
 rules.v4
 rules.v6
-server-facts/
 wireguard/
 
 # Audit Snapshots (Inhalte ignorieren, aber Struktur erhalten)
