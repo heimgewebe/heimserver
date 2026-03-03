@@ -18,15 +18,15 @@ ok() {
   ok_called=1
 }
 
-# The logic to test (Robust version as implemented in ops/audit/collect.sh)
+# The logic to test (Hardened version as implemented in ops/audit/collect.sh)
 check_ipv6_listeners() {
   local ss_output="$1"
   gap_called=0
   ok_called=0
 
-  # This replicates the robust logic chain:
-  # ss -H -lntup | awk '{for(i=1;i<=NF;i++) if($i ~ /^\[::\]:|^:::|^\*:/) print $i}' | grep -q .
-  if echo "$ss_output" | awk '{for(i=1;i<=NF;i++) if($i ~ /^\[::\]:|^:::|^\*:/) print $i}' | grep -q .; then
+  # Replicates the hardened logic chain:
+  # Uses tightened regex (numerical port required) to avoid false positives from peer columns (e.g. *:*)
+  if printf '%s\n' "$ss_output" | awk '{for(i=1;i<=NF;i++) if($i ~ /^\[::\]:[0-9]+$|^:::[0-9]+$|^\*:[0-9]+$/) print $i}' | grep -q .; then
     gap "IPv6 wildcard listeners detected. IPv6 may not be fully disabled or services bind dual-stack."
   else
     ok "No IPv6 wildcard listeners detected via ss."
@@ -42,10 +42,11 @@ run_test() {
   echo "Running test: $name"
   check_ipv6_listeners "$input"
 
-  if [ "$gap_called" -eq "$expected_gap" ]; then
+  # Harden assertions: exactly one of ok/gap must be called
+  if [ "$gap_called" -eq "$expected_gap" ] && [ "$ok_called" -eq "$((1 - expected_gap))" ]; then
     echo "  RESULT: SUCCESS"
   else
-    echo "  RESULT: FAILURE (expected_gap=$expected_gap, but gap_called=$gap_called)"
+    echo "  RESULT: FAILURE (expected_gap=$expected_gap, gap_called=$gap_called, ok_called=$ok_called)"
     exit 1
   fi
   echo "-------------------------------------------------------------------------------"
@@ -85,9 +86,23 @@ run_test "Mixed IPv4 and IPv6" \
 tcp LISTEN 0 128 [::]:443 [::]:*" \
 1
 
-# Case 7: Ubuntu 24.04 '*' style for IPv6 (if it happens)
+# Case 7: Ubuntu 24.04 '*' style for IPv6
 run_test "IPv6 Wildcard (*:port)" \
 "tcp LISTEN 0 128 *:80 *:*" \
 1
+
+# Case 8: False Positive Prevention (*:* in peer column)
+# Even if *:port appears in peer column, it shouldn't trigger if it lacks a numeric port or isn't a wildcard bind
+run_test "False Positive Prevention (*:* as peer)" \
+"tcp LISTEN 0 128 127.0.0.1:80 *:*
+tcp LISTEN 0 128 0.0.0.0:443 *:*" \
+0
+
+# Case 9: Service names (if ss is used without -n)
+# Current logic expects numeric ports; if service names are used, it won't match.
+# This is a documented limitation/choice for precision.
+run_test "Service Names (should not match currently)" \
+"tcp LISTEN 0 128 [::]:http [::]:*" \
+0
 
 echo "All IPv6 detection tests passed!"
