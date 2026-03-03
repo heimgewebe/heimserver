@@ -65,8 +65,10 @@ fi
 if have ss; then
   # Listener check: if IPv6 disabled, ideally no :::80/:::443 etc.
   run "host listeners (ss -lntup)" "listeners_ss_lntup.txt" ss -lntup
-  if ss -H -lntup | awk '{print $4}' | grep -qE '^\[::\]:|^:::'; then
-    gap "IPv6 listeners detected (:::*). IPv6 may not be fully disabled or services bind dual-stack."
+  # Robust check for IPv6 wildcard listeners (handles different ss output formats)
+  # Uses -n for numeric ports and tightened regex to avoid false positives from peer columns (e.g. *:*)
+  if ss -H -lntupn | awk '{for(i=1;i<=NF;i++) if($i ~ /^\[::\]:[0-9]+$|^:::[0-9]+$|^\*:[0-9]+$/) print $i}' | grep -q .; then
+    gap "IPv6 wildcard listeners detected. IPv6 may not be fully disabled or services bind dual-stack."
   else
     ok "No IPv6 wildcard listeners detected via ss."
   fi
