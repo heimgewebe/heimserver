@@ -20,5 +20,5 @@ wireguard/
 
 # Audit Snapshots (Inhalte ignorieren, aber Struktur erhalten)
 # README.md ist die einzige getrackte Datei in diesem Baum.
-ops/audit/snapshots/*
+ops/audit/snapshots/**
 !ops/audit/snapshots/README.md
