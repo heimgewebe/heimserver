@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Snapshot: schreibt einen Audit-Snapshot (Textdateien) nach außerhalb von Git.
-# Default-Zielpfad (kanonisch): /home/alex/server-facts/audit-snapshots/<timestamp>
+# Snapshot: schreibt einen Audit-Snapshot (Textdateien).
+# Default-Zielpfad: ops/audit/snapshots/<timestamp> (innerhalb des Repos, aber git-ignored)
 #
 # Usage:
 #   bash ops/checks/snapshot.sh
 #   SNAPSHOT_DIR=/path/to/dir bash ops/checks/snapshot.sh
 
 ts="$(date +"%Y%m%d-%H%M%S")"
-default_dir="/home/alex/server-facts/audit-snapshots/${ts}"
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+default_dir="${repo_root}/ops/audit/snapshots/${ts}"
 out="${SNAPSHOT_DIR:-$default_dir}"
 
 mkdir -p "$out"

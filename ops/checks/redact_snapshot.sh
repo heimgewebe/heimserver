@@ -25,7 +25,7 @@ cp -a "${in}/." "${out}/"
 # - obvious tokens/password strings (best-effort)
 find "${out}" -type f -print0 2>/dev/null | while IFS= read -r -d '' f; do
   if file -b --mime-type "${f}" | grep -qE '^text/'; then
-    sed -i \
+    sed -i -E \
       -e 's/^\s*PrivateKey\s*=.*$/PrivateKey = [REDACTED]/' \
       -e 's/-----BEGIN [A-Z ]*PRIVATE KEY-----/-----BEGIN [REDACTED PRIVATE KEY]-----/' \
       -e 's/-----END [A-Z ]*PRIVATE KEY-----/-----END [REDACTED PRIVATE KEY]-----/' \

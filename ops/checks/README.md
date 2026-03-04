@@ -64,5 +64,5 @@ Commands:
 ## Scripts
 
 - `preflight.sh` — schnelle Assertions, keine Änderungen
-- `snapshot.sh` — schreibt strukturiert in audit-snapshots
+- `snapshot.sh` — schreibt strukturiert in ops/audit/snapshots
 - `redact_snapshot.sh` — best-effort Redaction (vor dem Teilen prüfen)

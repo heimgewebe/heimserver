@@ -40,7 +40,7 @@ Regenerate via:
 
 Keine sensiblen Dateien getrackt?
 
-    git ls-files | grep -E "(audit|server-facts|rules\\.v4|rules\\.v6|\\.env|wireguard|\\.key|\\.pem)" || echo "OK"
+    git ls-files | grep -E "(audit|rules\\.v4|rules\\.v6|\\.env|wireguard|\\.key|\\.pem)" || echo "OK"
 
 Repo-Policy:
 - Repo bleibt privat.
@@ -62,7 +62,7 @@ Secrets-Pfad initialisieren (Server):
 
 Snapshot redacted kopieren (vor dem Teilen prüfen):
 
-    bash ops/checks/redact_snapshot.sh /home/alex/server-facts/audit-snapshots/<ts>
+    bash ops/checks/redact_snapshot.sh ops/audit/snapshots/<ts>
 
 ## Repo-Intention
 
