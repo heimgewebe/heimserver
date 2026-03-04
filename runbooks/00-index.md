@@ -18,3 +18,6 @@ Diese Runbooks sind operative Abläufe (Recovery/Rotation/Änderungen).
 ## Security
 - `30-wireguard-rotation.md` — Rotation / Neuaufsetzen ohne Keys in Git
 - `31-pki-rotation.md` — Caddy internal CA / PKI Rotation (ohne private keys in Git)
+
+## Common Deployment Failures
+- [`ops.runbook.edge-caddy-port-conflict.md`](ops.runbook.edge-caddy-port-conflict.md) — Edge gateway fails to start due to port conflicts (8081)
