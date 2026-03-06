@@ -28,26 +28,26 @@ The container remained in "Created" state and never bound ports 80/443, causing 
 ## 3. Diagnosis steps
 Commands used during diagnosis:
 ```bash
+cd /opt/heimgewebe/edge
 sudo ss -tulpn | grep 8081
-rg 8081 docker-compose.override.yml
+rg 8081 docker-compose.override.yml # if present on host
 ```
 
 Observed state:
 `0.0.0.0:8081 users:(("pihole-FTL"))`
 
-Compose configuration:
+Compose configuration (e.g., in a host-local override):
 `127.0.0.1:8081:8081`
 
 ## 4. Root cause
 Pi-hole already binds port 8081 globally (0.0.0.0:8081), which prevents Docker from binding 127.0.0.1:8081.
 
 ## 5. Fix
-Remove the port mapping
-`127.0.0.1:8081:8081`
-from `docker-compose.override.yml`.
+Remove any `127.0.0.1:8081:8081` host port mapping from the edge Compose configuration on the host (for example from `docker-compose.override.yml`, if present).
 
-Remove the mapping and restart the stack:
+Restart the stack from the correct directory:
 ```bash
+cd /opt/heimgewebe/edge
 docker compose down
 docker compose up -d
 ```
