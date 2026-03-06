@@ -26,9 +26,13 @@ During deployment the container failed with:
 The container remained in "Created" state and never bound ports 80/443, causing the gateway to appear offline.
 
 ## 3. Diagnosis steps
-Commands used during diagnosis:
+Change to the stack directory:
 ```bash
 cd /opt/heimgewebe/edge
+```
+
+Commands used during diagnosis:
+```bash
 sudo ss -tulpn | grep 8081
 rg 8081 docker-compose.override.yml # if present on host
 ```
@@ -48,6 +52,9 @@ Remove any `127.0.0.1:8081:8081` host port mapping from the edge Compose configu
 Restart the stack from the correct directory:
 ```bash
 cd /opt/heimgewebe/edge
+```
+
+```bash
 docker compose down
 docker compose up -d
 ```
