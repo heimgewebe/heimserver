@@ -42,6 +42,8 @@ Erwartung:
 	•	`dns-pihole` → Up (healthy)
 	•	`deploy-leitstand-1` → Up
 	•	`weltgewebe-api` → Up
+	•	`weltgewebe-nats` → Up (healthy)
+	•	`weltgewebe-db` → Up
 
 Kein Restarting.
 Kein Exited.
