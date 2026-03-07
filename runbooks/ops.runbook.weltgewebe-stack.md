@@ -54,7 +54,7 @@ docker ps --format '{{.Names}} {{.Status}}' | grep weltgewebe
 Woran man erkennt, dass NATS fehlt oder nicht korrekt läuft:
 - **API-Logs:** Der `api`-Service wirft Connection-Errors oder Timeouts beim Versuch, auf NATS zuzugreifen (z.B. `dial tcp: lookup nats`).
 - **Funktionalität:** Events oder asynchrone Jobs werden nicht verarbeitet, State-Updates schlagen fehl.
-- **Docker Status:** `docker inspect --format='{{json .State.Status}}' weltgewebe-nats-1` liefert nicht `"running"`.
+- **Docker Status:** `docker inspect --format='{{json .State.Status}}' $(docker compose -p weltgewebe ps -q nats)` liefert nicht `"running"` (oder Container fehlt komplett).
 
 **Lösung:**
 Sicherstellen, dass im Weltgewebe-Repo (Contract) der `nats` Service definiert und provisioniert ist und beim Deployment auf dem Heimserver mit hochgefahren wird.
