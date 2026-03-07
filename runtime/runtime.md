@@ -326,8 +326,8 @@ Erwartete Kernrollen:
 | edge-caddy | Reverse Proxy / TLS | kritisch |
 | deploy-leitstand-1 | UI / Leitstand | hoch |
 | weltgewebe-api | API Backend | hoch |
-| weltgewebe-nats | Message Broker | hoch |
-| weltgewebe-db | Database | hoch |
+| weltgewebe-nats | Nachrichtenbroker | hoch |
+| weltgewebe-db | Datenbank | hoch |
 
 Audit (Ist-Zustand 2026-02-13; Beleg: `docker_ps.txt`):
 
@@ -338,8 +338,18 @@ Audit (Ist-Zustand 2026-02-13; Beleg: `docker_ps.txt`):
 | deploy-leitstand-1 | Leitstand | Up | deploy_default, heimnet |
 | dns-unbound | Resolver | healthy | dns_default |
 | weltgewebe-api | API | Up | - |
+
+Audit (Ist-Zustand 2026-03-07):
+
+| Container | Rolle | Status | Netzwerke |
+|---|---|---|---|
+| dns-pihole | DNS | healthy | host (implizit 53/tcp+udp, 80/tcp) |
+| edge-caddy | Proxy | Up | edge, heimnet |
+| deploy-leitstand-1 | Leitstand | Up | deploy_default, heimnet |
+| dns-unbound | Resolver | healthy | dns_default |
+| weltgewebe-api | API | Up | - |
 | weltgewebe-nats | NATS | Up | - |
-| weltgewebe-db | Database | Up | - |
+| weltgewebe-db | Datenbank | Up | - |
 
 Invariante:
 

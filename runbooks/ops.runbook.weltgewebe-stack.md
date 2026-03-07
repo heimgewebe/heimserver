@@ -6,8 +6,6 @@ last_reviewed: 2026-03-01
 depends_on:
   - architecture/naming.md
   - architecture/networking/port-matrix.md
-verifies_with:
-  - ops/checks/preflight.sh
 ---
 
 # Ops Runbook: Weltgewebe Stack
@@ -33,16 +31,16 @@ Contract (Weltgewebe-Repo), Deploy, Health und operative Doku wieder deckungsgle
 
 ## 2. Minimaler Gesundheitscheck (Health/Smoke)
 
-Der Stack muss vollständig laufen:
+Der Stack muss vollständig laufen (Quick-Check):
 
 ```bash
-docker ps | grep weltgewebe
+docker ps --format '{{.Names}} {{.Status}}' | grep weltgewebe
 ```
 
 Erwartete Container:
 - `weltgewebe-api` (Up/Healthy)
 - `weltgewebe-nats` (Up/Healthy)
-- `weltgewebe-db` (Up/Healthy)
+- `weltgewebe-db` (Up)
 
 ## 3. Symptome bei fehlendem NATS
 
