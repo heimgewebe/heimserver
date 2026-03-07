@@ -35,13 +35,13 @@ Sondern: „Läuft es kohärent mit der Architektur?“
 
 Container
 
-`docker ps`
+`docker ps` und `docker compose -p weltgewebe ps`
 
 Erwartung:
 	•	`edge-caddy` → Up
 	•	`dns-pihole` → Up (healthy)
 	•	`deploy-leitstand-1` → Up
-	•	`weltgewebe-api` → Up
+	•	Weltgewebe-Services (`api`, `nats`, `db`) → Up
 
 Kein Restarting.
 Kein Exited.

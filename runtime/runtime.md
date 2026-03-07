@@ -326,6 +326,8 @@ Erwartete Kernrollen:
 | edge-caddy | Reverse Proxy / TLS | kritisch |
 | deploy-leitstand-1 | UI / Leitstand | hoch |
 | weltgewebe-api | API Backend | hoch |
+| weltgewebe-nats | Nachrichtenbroker | hoch |
+| weltgewebe-db | Datenbank | hoch |
 
 Audit (Ist-Zustand 2026-02-13; Beleg: `docker_ps.txt`):
 
