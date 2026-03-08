@@ -57,15 +57,19 @@ Gemäß der [Port-Matrix](../architecture/networking/port-matrix.md) gehört Por
 Prüfe die Health der Weltgewebe-API ausschließlich über Edge/FQDN oder Docker-native Checks:
 
 a) **Edge/FQDN-Check (empfohlen):**
+
+Auf Heimservern mit `tls internal` muss dem `curl`-Aufruf entweder das Caddy-CA-Zertifikat mitgegeben werden (via `--cacert`), oder die CA muss systemweit als vertrauenswürdig hinterlegt sein.
+
 ```bash
-curl -fsS https://api.weltgewebe.home.arpa/health/ready
+curl -fsS --cacert /opt/heimgewebe/edge/certs/caddy-local-root.crt https://api.weltgewebe.home.arpa/health/ready
 # oder (falls als Alias)
-curl -fsS https://weltgewebe.home.arpa/api/health/ready
+curl -fsS --cacert /opt/heimgewebe/edge/certs/caddy-local-root.crt https://weltgewebe.home.arpa/api/health/ready
 ```
 
 b) **Docker-native Checks (innerhalb des Netzwerks):**
 ```bash
-docker inspect --format='{{json .State.Health}}' $(docker compose -p weltgewebe ps -q api)
+API_CID="$(docker compose -p weltgewebe ps -q api)"
+docker inspect --format='{{json .State.Health}}' "$API_CID"
 ```
 
 ## 3. Symptome bei fehlendem NATS

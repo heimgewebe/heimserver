@@ -272,12 +272,16 @@ if [ -d "$EDGE_DIR" ]; then
     # Validates that no Weltgewebe containers publish ANY host ports (they must be internal only)
     # See architecture/networking/port-matrix.md for canonical truth.
     if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-        # Check if any container with 'weltgewebe' in its name has a published port
-        # Only process if there's actually output
-        if docker ps --format '{{.Names}} {{.Ports}}' | grep -i 'weltgewebe' | grep -E '[0-9]+->' >/dev/null 2>&1; then
-            warn "Drift Detected! Weltgewebe container is publishing a host port (e.g. 8081). Weltgewebe MUST be internal-only. See architecture/networking/port-matrix.md!"
+        weltgewebe_containers=$(docker ps --format '{{.Names}} {{.Ports}}' | grep -E '^weltgewebe-' || true)
+
+        if [ -z "$weltgewebe_containers" ]; then
+            echo "Info: No Weltgewebe containers currently running. (Skipping host-port check)"
         else
-            ok "Weltgewebe containers internal-only (no host ports published)"
+            if echo "$weltgewebe_containers" | grep -E '[0-9]+->' >/dev/null 2>&1; then
+                warn "Drift Detected! Weltgewebe container is publishing a host port (e.g. 8081). Weltgewebe MUST be internal-only. See architecture/networking/port-matrix.md!"
+            else
+                ok "Weltgewebe containers internal-only (no host ports published)"
+            fi
         fi
     fi
 
