@@ -28,7 +28,7 @@ https://weltgewebe.home.arpa {
     tls internal
 
     # Reverse proxy for API under the main domain
-    handle /api/* {
+    handle_path /api/* {
         reverse_proxy weltgewebe-api:8080
     }
 
