@@ -21,6 +21,8 @@ services:
       - edge_caddy_data:/data
       - edge_caddy_config:/config
       # Primary Static UI build path from Weltgewebe deployment
+      # WARNING: This path MUST exist with proper ownership before starting edge-caddy.
+      # If missing, Docker daemon will auto-create it as root:root, breaking subsequent Weltgewebe deployments.
       - /opt/weltgewebe/apps/web/build:/srv/weltgewebe-web:ro
 
 networks:
