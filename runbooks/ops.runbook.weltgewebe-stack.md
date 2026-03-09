@@ -49,6 +49,31 @@ Schneller Quick-Check (Containerebene):
 docker ps --format '{{.Names}} {{.Status}}' | grep weltgewebe
 ```
 
+### 2.1 API-Healthcheck (Kanonisch)
+
+Jegliche direkten API-Healthchecks über lokale Host-Ports (z.B. `127.0.0.1:8081/health/ready`) sind strikt verboten.
+Gemäß der [Port-Matrix](../architecture/networking/port-matrix.md) gehört Port 8081 exklusiv dem Pi-hole (FTL), und Weltgewebe-Apps dürfen generell keine Host-Ports binden (internal-only).
+
+Prüfe die Health der Weltgewebe-API ausschließlich über Edge/FQDN oder Docker-native Checks:
+
+a) **Edge/FQDN-Check (empfohlen):**
+
+Auf Heimservern mit `tls internal` muss dem `curl`-Aufruf entweder das Caddy-CA-Zertifikat mitgegeben werden (via `--cacert`), oder die CA muss systemweit als vertrauenswürdig hinterlegt sein.
+
+*(Hinweis: Der Pfad `/opt/heimgewebe/edge/certs/caddy-local-root.crt` existiert aktuell ebenfalls und enthält dieselbe Root-CA, ist aber nicht der kanonische Referenzpfad im Runbook.)*
+
+```bash
+curl -fsS --cacert /opt/heimgewebe/edge/edge-ca.crt https://api.weltgewebe.home.arpa/health/ready
+# oder (falls als Alias)
+curl -fsS --cacert /opt/heimgewebe/edge/edge-ca.crt https://weltgewebe.home.arpa/api/health/ready
+```
+
+b) **Docker-native Checks (innerhalb des Netzwerks):**
+```bash
+API_CID="$(docker compose -p weltgewebe ps -q api)"
+docker inspect --format='{{json .State.Health}}' "$API_CID"
+```
+
 ## 3. Symptome bei fehlendem NATS
 
 Woran man erkennt, dass NATS fehlt oder nicht korrekt läuft:

@@ -260,10 +260,27 @@ if [ -d "$EDGE_DIR" ]; then
             else
                  # Drift Detection: Warn if Weltgewebe/Java/Go seems to be using 8081
                  if ss -lntup | grep -E ':8081' | grep -iE 'java|weltgewebe|go' >/dev/null 2>&1; then
-                     warn "Port 8081 stolen by App/Weltgewebe! (Invariante 1 violation). 8081 belongs to Pi-hole."
+                     warn "Port 8081 stolen by App/Weltgewebe! (Violation: architecture/networking/port-matrix.md). 8081 belongs to Pi-hole."
                  else
                      warn "Port 8081 in use by unknown process! (Expected: Pi-hole FTL). Check Drift."
                  fi
+            fi
+        fi
+    fi
+
+    # 2.1. Guard: Weltgewebe internal-only validation (Docker Native Check)
+    # Validates that no Weltgewebe containers publish ANY host ports (they must be internal only)
+    # See architecture/networking/port-matrix.md for canonical truth.
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+        weltgewebe_containers=$(docker ps --format '{{.Names}} {{.Ports}}' | grep -E '^weltgewebe-' || true)
+
+        if [ -z "$weltgewebe_containers" ]; then
+            echo "Info: No Weltgewebe containers currently running. (Skipping host-port check)"
+        else
+            if echo "$weltgewebe_containers" | grep -E '[0-9]+->' >/dev/null 2>&1; then
+                warn "Drift Detected! Weltgewebe container is publishing a host port (e.g. 8081). Weltgewebe MUST be internal-only. See architecture/networking/port-matrix.md!"
+            else
+                ok "Weltgewebe containers internal-only (no host ports published)"
             fi
         fi
     fi
