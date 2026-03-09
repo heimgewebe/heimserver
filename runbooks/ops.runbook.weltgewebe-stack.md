@@ -60,10 +60,12 @@ a) **Edge/FQDN-Check (empfohlen):**
 
 Auf Heimservern mit `tls internal` muss dem `curl`-Aufruf entweder das Caddy-CA-Zertifikat mitgegeben werden (via `--cacert`), oder die CA muss systemweit als vertrauenswürdig hinterlegt sein.
 
+*(Hinweis: Der Pfad `/opt/heimgewebe/edge/certs/caddy-local-root.crt` existiert aktuell ebenfalls und enthält dieselbe Root-CA, ist aber nicht der kanonische Referenzpfad im Runbook.)*
+
 ```bash
-curl -fsS --cacert /opt/heimgewebe/edge/certs/caddy-local-root.crt https://api.weltgewebe.home.arpa/health/ready
+curl -fsS --cacert /opt/heimgewebe/edge/edge-ca.crt https://api.weltgewebe.home.arpa/health/ready
 # oder (falls als Alias)
-curl -fsS --cacert /opt/heimgewebe/edge/certs/caddy-local-root.crt https://weltgewebe.home.arpa/api/health/ready
+curl -fsS --cacert /opt/heimgewebe/edge/edge-ca.crt https://weltgewebe.home.arpa/api/health/ready
 ```
 
 b) **Docker-native Checks (innerhalb des Netzwerks):**
