@@ -20,8 +20,8 @@ services:
       # Root CA export is a manual step (see runbooks/edge.sync.md)
       - edge_caddy_data:/data
       - edge_caddy_config:/config
-      # Static site content (if applicable)
-      - ./html:/srv/weltgewebe-web:ro
+      # Primary Static UI build path from Weltgewebe deployment
+      - /opt/weltgewebe/apps/web/build:/srv/weltgewebe-web:ro
 
 networks:
   edge:
