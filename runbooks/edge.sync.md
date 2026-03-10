@@ -24,8 +24,8 @@ Before starting the Edge container, ensure the directory exists and has the corr
 
 ```bash
 sudo mkdir -p /opt/weltgewebe/apps/web/build
-# Adjust ownership to match your deployment user
-# sudo chown -R myuser:myuser /opt/weltgewebe
+# Adjust ownership of the UI build path to match the deployment user
+# sudo chown -R myuser:mygroup /opt/weltgewebe/apps/web/build
 ```
 
 ### 2. Verify External Networks
