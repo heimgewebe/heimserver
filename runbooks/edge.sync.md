@@ -20,7 +20,7 @@ sudo chown -R root:root /opt/heimgewebe/edge
 **Note for Weltgewebe Static UI:**
 The Edge Caddy requires the external path `/opt/weltgewebe/apps/web/build` to exist to serve the static UI locally.
 If this directory does not exist, Docker will automatically create it as `root:root` when starting `edge-caddy`, which will cause permission errors for subsequent Weltgewebe builds.
-Before starting the Edge container, ensure the directory exists and has the correct ownership for the deployment user (e.g., `heimgewebe` or whoever runs the Weltgewebe build).
+Before starting the Edge container, ensure the directory exists and has the correct ownership for the actual deployment user on the host.
 
 ```bash
 sudo mkdir -p /opt/weltgewebe/apps/web/build
