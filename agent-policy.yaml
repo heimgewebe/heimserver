@@ -1,0 +1,31 @@
+safe_read_paths:
+  - architecture/
+  - runtime/
+  - runbooks/
+  - manifest/
+  - AGENTS.md
+  - repo.meta.yaml
+  - SYSTEM_MAP.md
+
+guarded_write_paths:
+  - architecture/
+  - runtime/
+  - runbooks/
+  - manifest/repo-index.yaml
+
+forbidden_write_paths:
+  - ops/audit/snapshots/** (unredacted)
+  - /etc/heimserver/secrets/
+  - docker-compose.override.yml
+  - .env
+  - "*.key"
+  - "*.pem"
+
+proof_requirements:
+  - "Changes to runtime/runtime.md must be substantiated by preflight.sh output or a committed evidence file."
+  - "Changes to architecture requires explicit verification via operations."
+
+required_checks:
+  - bash ops/checks/preflight.sh
+  - scripts/ci/check-repo-index-consistency.sh
+  - scripts/ci/check-doc-review-age.py

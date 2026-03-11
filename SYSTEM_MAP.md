@@ -13,6 +13,7 @@
 | [naming.md](architecture/naming.md) | `naming` | canonical | 2026-02-13 | `ops/checks/preflight.sh` |
 | [network.md](architecture/network.md) | `network` | canonical | 2026-02-13 | `ops/checks/preflight.sh` |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | canonical | 2026-02-25 | `ops/checks/preflight.sh` |
+| [glossary.md](architecture/glossary.md) | `glossary` | canonical | 2026-03-11 | - |
 
 ## Zone: REALITY
 **Path:** `runtime/`
@@ -43,6 +44,7 @@
 Documents that depend on others:
 
 - **networking/port-matrix.md** depends on: `architecture/network.md`
+- **glossary.md** depends on: `constitution`
 - **runtime.md** depends on: `architecture/constitution.md`, `architecture/network.md`
 - **operations.md** depends on: `runtime/runtime.md`
 - **ops.runbook.edge-caddy-port-conflict.md** depends on: `architecture/networking/port-matrix.md`, `runbooks/00-index.md`

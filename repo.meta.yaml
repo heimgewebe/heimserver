@@ -1,0 +1,30 @@
+repo_name: heimserver
+role: Ops-Orakel, Trust-Pivot, Edge-Gateway-Konfiguration
+purpose: Operational deployment, enforcement, and health monitoring of the Weltgewebe application stack. Defines the canonical truth for infrastructure, networking, and security boundaries.
+truth_sources:
+  - architecture/
+  - runtime/
+  - ops/checks/preflight.sh
+generated_artifacts:
+  - SYSTEM_MAP.md
+  - docs/_generated/
+related_repos:
+  - weltgewebe: manages the application contract and app-level definitions
+  - leitstand: deployment configurations for monitoring and management
+safe_commands:
+  - bash ops/checks/preflight.sh
+  - make preflight
+  - make snapshot
+  - make redact
+  - bash ops/install-hooks.sh
+risky_paths:
+  - edge/
+  - weltgewebe/ (app stack)
+forbidden_paths:
+  - /etc/heimserver/secrets/
+  - docker-compose.override.yml
+  - ops/audit/snapshots/** (unredacted)
+required_checks:
+  - bash ops/checks/preflight.sh
+  - scripts/ci/check-repo-index-consistency.sh
+  - scripts/ci/check-doc-review-age.py

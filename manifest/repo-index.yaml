@@ -7,6 +7,7 @@ zones:
       - naming.md
       - network.md
       - networking/port-matrix.md
+      - glossary.md
   reality:
     path: runtime/
     canonical_docs:

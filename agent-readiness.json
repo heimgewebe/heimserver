@@ -1,0 +1,39 @@
+{
+  "score": 8,
+  "total": 8,
+  "percentage": 100.0,
+  "checks": {
+    "Kanonische Repo-Identit\u00e4t (repo.meta.yaml)": {
+      "path": "repo.meta.yaml",
+      "status": "pass"
+    },
+    "Handlungsgrenzen f\u00fcr Agents (agent-policy.yaml)": {
+      "path": "agent-policy.yaml",
+      "status": "pass"
+    },
+    "Terminologie-/Glossar-Governance (architecture/glossary.md)": {
+      "path": "architecture/glossary.md",
+      "status": "pass"
+    },
+    "Semantische Relationen (docs/_generated/relations.json)": {
+      "path": "docs/_generated/relations.json",
+      "status": "pass"
+    },
+    "Generierte Orientierung (SYSTEM_MAP.md)": {
+      "path": "SYSTEM_MAP.md",
+      "status": "pass"
+    },
+    "Wahrheitsschichten (manifest/repo-index.yaml)": {
+      "path": "manifest/repo-index.yaml",
+      "status": "pass"
+    },
+    "Agent Einstiegspunkt (AGENTS.md)": {
+      "path": "AGENTS.md",
+      "status": "pass"
+    },
+    "Verifikationspfade (ops/checks/preflight.sh)": {
+      "path": "ops/checks/preflight.sh",
+      "status": "pass"
+    }
+  }
+}
