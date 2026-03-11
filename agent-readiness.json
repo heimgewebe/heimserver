@@ -1,6 +1,6 @@
 {
-  "score": 8,
-  "total": 8,
+  "score": 11,
+  "total": 11,
   "percentage": 100.0,
   "checks": {
     "Kanonische Repo-Identit\u00e4t (repo.meta.yaml)": {
@@ -33,6 +33,18 @@
     },
     "Verifikationspfade (ops/checks/preflight.sh)": {
       "path": "ops/checks/preflight.sh",
+      "status": "pass"
+    },
+    "Implementierungs-Registry (audit/impl-registry.yaml)": {
+      "path": "audit/impl-registry.yaml",
+      "status": "pass"
+    },
+    "Kritische Implementierungen \u00dcbersicht (docs/_generated/impl-index.md)": {
+      "path": "docs/_generated/impl-index.md",
+      "status": "pass"
+    },
+    "Historisierungskarte (docs/_generated/supersession-map.md)": {
+      "path": "docs/_generated/supersession-map.md",
       "status": "pass"
     }
   }

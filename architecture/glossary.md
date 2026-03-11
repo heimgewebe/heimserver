@@ -1,7 +1,11 @@
 ---
 id: glossary
 role: norm
-status: canonical
+status: active
+canonicality: canonical
+doc_type: reference
+title: Glossary
+summary: Canonical definitions of terms
 last_reviewed: 2026-03-11
 depends_on:
   - constitution

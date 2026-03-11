@@ -1,7 +1,11 @@
 ---
 id: ops-runbook-heimserver-edge
 role: runbooks
-status: canonical
+status: active
+canonicality: canonical
+doc_type: runbook
+title: Heimserver Edge Runbook
+summary: Operations for Heimserver Edge gateway
 last_reviewed: 2026-03-11
 depends_on:
   - architecture/network.md

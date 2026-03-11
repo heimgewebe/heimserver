@@ -1,7 +1,11 @@
 ---
 id: runtime
 role: reality
-status: canonical
+status: active
+canonicality: canonical
+doc_type: status
+title: Runtime Status
+summary: Captured runtime state reality
 last_reviewed: 2026-02-18
 depends_on:
   - architecture/constitution.md

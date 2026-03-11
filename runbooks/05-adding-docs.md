@@ -1,7 +1,11 @@
 ---
 id: runbook-adding-docs
 role: runbooks
-status: canonical
+status: active
+canonicality: canonical
+doc_type: guide
+title: Adding Docs Guide
+summary: How to add canonical documents
 last_reviewed: 2026-02-18
 depends_on: []
 verifies_with:
@@ -21,7 +25,11 @@ Create your markdown file in the appropriate directory (`architecture/`, `runtim
 ---
 id: my-new-doc
 role: norm
-status: canonical
+status: active
+canonicality: canonical
+doc_type: guide
+title: Adding Docs Guide
+summary: How to add canonical documents
 last_reviewed: 2026-02-18
 depends_on: []
 verifies_with: []

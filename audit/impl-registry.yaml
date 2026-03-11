@@ -1,0 +1,31 @@
+implementations:
+  - id: impl.ops.preflight
+    path: ops/checks/preflight.sh
+    impl_type: script
+    status: active
+    documented_by:
+      - architecture/constitution.md
+      - operations/operations.md
+    verified_by: []
+    supersedes: []
+    deprecated_by: []
+
+  - id: impl.ci.repo-consistency
+    path: scripts/ci/check-repo-index-consistency.sh
+    impl_type: script
+    status: active
+    documented_by:
+      - architecture/docmeta.schema.md
+    verified_by: []
+    supersedes: []
+    deprecated_by: []
+
+  - id: impl.ci.review-age
+    path: scripts/ci/check-doc-review-age.py
+    impl_type: script
+    status: active
+    documented_by:
+      - architecture/docmeta.schema.md
+    verified_by: []
+    supersedes: []
+    deprecated_by: []

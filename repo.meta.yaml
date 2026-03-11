@@ -1,30 +1,94 @@
 repo_name: heimserver
+repo_type: core
 role: Ops-Orakel, Trust-Pivot, Edge-Gateway-Konfiguration
-purpose: Operational deployment, enforcement, and health monitoring of the Weltgewebe application stack. Defines the canonical truth for infrastructure, networking, and security boundaries.
-truth_sources:
+status: active
+summary: >
+  Operational deployment, enforcement, and health monitoring of the Weltgewebe application stack.
+  Defines the canonical truth for infrastructure, networking, and security boundaries.
+
+owners:
+  - heimgewebe-ops
+
+primary_languages:
+  - markdown
+  - bash
+  - python
+
+entrypoints:
+  - README.md
+  - AGENTS.md
+  - SYSTEM_MAP.md
+
+canonical_sources:
+  - repo.meta.yaml
+  - manifest/repo-index.yaml
   - architecture/
   - runtime/
   - ops/checks/preflight.sh
+
+discovery_roots:
+  - architecture/
+  - runtime/
+  - operations/
+  - runbooks/
+  - ops/
+  - scripts/
+
 generated_artifacts:
   - SYSTEM_MAP.md
+  - docs/_generated/relations.json
+  - docs/_generated/backlinks.md
+  - docs/_generated/orphans.md
+  - docs/_generated/impl-index.md
+  - docs/_generated/supersession-map.md
+  - agent-readiness.json
+  - agent-readiness.md
+
+safe_read_paths:
+  - README.md
+  - AGENTS.md
+  - architecture/
+  - runtime/
+  - runbooks/
+  - manifest/
+  - repo.meta.yaml
+  - SYSTEM_MAP.md
+
+guarded_write_paths:
+  - architecture/
+  - runtime/
+  - runbooks/
+  - manifest/repo-index.yaml
+  - ops/checks/
+  - scripts/
+
+forbidden_write_paths:
   - docs/_generated/
-related_repos:
-  - weltgewebe: manages the application contract and app-level definitions
-  - leitstand: deployment configurations for monitoring and management
-safe_commands:
-  - bash ops/checks/preflight.sh
-  - make preflight
-  - make snapshot
-  - make redact
-  - bash ops/install-hooks.sh
-risky_paths:
-  - edge/
-  - weltgewebe/ (app stack)
-forbidden_paths:
   - /etc/heimserver/secrets/
   - docker-compose.override.yml
   - ops/audit/snapshots/** (unredacted)
+
 required_checks:
   - bash ops/checks/preflight.sh
   - scripts/ci/check-repo-index-consistency.sh
   - scripts/ci/check-doc-review-age.py
+
+indexing:
+  enabled: true
+  require_frontmatter_for_docs: true
+  require_registry_for_critical_impl: true
+  fail_on_untyped_docs: true
+  fail_on_missing_doc_index: false
+  fail_on_orphans: false
+  fail_on_unmapped_critical_impl: false
+
+related_repos:
+  - weltgewebe
+  - leitstand
+
+keywords:
+  - ops
+  - infrastructure
+  - edge
+  - gateway
+  - agent-ready

@@ -1,7 +1,11 @@
 ---
 id: operations
 role: action
-status: canonical
+status: active
+canonicality: canonical
+doc_type: policy
+title: Operations Policy
+summary: Operational procedures protocol
 last_reviewed: 2026-02-13
 depends_on:
   - runtime/runtime.md

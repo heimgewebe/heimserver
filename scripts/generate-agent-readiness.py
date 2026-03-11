@@ -18,7 +18,10 @@ def generate_agent_readiness():
         "Generierte Orientierung (SYSTEM_MAP.md)": "SYSTEM_MAP.md",
         "Wahrheitsschichten (manifest/repo-index.yaml)": "manifest/repo-index.yaml",
         "Agent Einstiegspunkt (AGENTS.md)": "AGENTS.md",
-        "Verifikationspfade (ops/checks/preflight.sh)": "ops/checks/preflight.sh"
+        "Verifikationspfade (ops/checks/preflight.sh)": "ops/checks/preflight.sh",
+        "Implementierungs-Registry (audit/impl-registry.yaml)": "audit/impl-registry.yaml",
+        "Kritische Implementierungen Übersicht (docs/_generated/impl-index.md)": "docs/_generated/impl-index.md",
+        "Historisierungskarte (docs/_generated/supersession-map.md)": "docs/_generated/supersession-map.md"
     }
 
     results = {}

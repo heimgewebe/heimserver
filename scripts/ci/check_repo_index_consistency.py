@@ -6,7 +6,7 @@ import re
 # Ensure we can import from scripts/lib
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from scripts.lib.docmeta import load_repo_index, parse_frontmatter, normalize_path, validate_repo_relative_path, MANIFEST_PATH, ALLOWED_ROLES, ALLOWED_STATUS
+from scripts.lib.docmeta import load_repo_index, parse_frontmatter, normalize_path, validate_repo_relative_path, MANIFEST_PATH, ALLOWED_ROLES, ALLOWED_STATUS, ALLOWED_CANONICALITY, ALLOWED_DOC_TYPES
 
 def main():
     print("Starting Repo Index Consistency Check...")
@@ -98,8 +98,32 @@ def main():
             status = fm.get('status')
             if not status:
                  errors.append(f"Missing 'status' in frontmatter: {filepath}")
-            elif status != 'canonical':
-                 errors.append(f"Non-canonical status '{status}' for canonical doc: {filepath} (Must be 'canonical')")
+            elif status not in ALLOWED_STATUS:
+                 errors.append(f"Invalid status '{status}' in frontmatter: {filepath} (Allowed: {ALLOWED_STATUS})")
+
+            # Check canonicality
+            canonicality = fm.get('canonicality')
+            if not canonicality:
+                 errors.append(f"Missing 'canonicality' in frontmatter: {filepath}")
+            elif canonicality not in ALLOWED_CANONICALITY:
+                 errors.append(f"Invalid canonicality '{canonicality}' in frontmatter: {filepath} (Allowed: {ALLOWED_CANONICALITY})")
+
+            # Check doc_type
+            doc_type = fm.get('doc_type')
+            if not doc_type:
+                 errors.append(f"Missing 'doc_type' in frontmatter: {filepath}")
+            elif doc_type not in ALLOWED_DOC_TYPES:
+                 errors.append(f"Invalid doc_type '{doc_type}' in frontmatter: {filepath} (Allowed: {ALLOWED_DOC_TYPES})")
+
+            # Check title
+            title = fm.get('title')
+            if not title:
+                 errors.append(f"Missing 'title' in frontmatter: {filepath}")
+
+            # Check summary
+            summary = fm.get('summary')
+            if not summary:
+                 errors.append(f"Missing 'summary' in frontmatter: {filepath}")
 
             # 5. Check role
             role = fm.get('role')

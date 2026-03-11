@@ -1,6 +1,6 @@
 # Agent Readiness Report
 
-**Score:** 8/8 (100.0%)
+**Score:** 11/11 (100.0%)
 
 ## Checks
 
@@ -14,3 +14,6 @@
 | ✅ | Wahrheitsschichten (manifest/repo-index.yaml) | `manifest/repo-index.yaml` |
 | ✅ | Agent Einstiegspunkt (AGENTS.md) | `AGENTS.md` |
 | ✅ | Verifikationspfade (ops/checks/preflight.sh) | `ops/checks/preflight.sh` |
+| ✅ | Implementierungs-Registry (audit/impl-registry.yaml) | `audit/impl-registry.yaml` |
+| ✅ | Kritische Implementierungen Übersicht (docs/_generated/impl-index.md) | `docs/_generated/impl-index.md` |
+| ✅ | Historisierungskarte (docs/_generated/supersession-map.md) | `docs/_generated/supersession-map.md` |
