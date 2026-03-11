@@ -1,5 +1,5 @@
 repo_name: heimserver
-repo_type: core
+repo_type: ops
 role: Ops-Orakel, Trust-Pivot, Edge-Gateway-Konfiguration
 status: active
 summary: >
@@ -41,8 +41,6 @@ generated_artifacts:
   - docs/_generated/orphans.md
   - docs/_generated/impl-index.md
   - docs/_generated/supersession-map.md
-  - agent-readiness.json
-  - agent-readiness.md
 
 safe_read_paths:
   - README.md
@@ -71,7 +69,7 @@ forbidden_write_paths:
 required_checks:
   - bash ops/checks/preflight.sh
   - scripts/ci/check-repo-index-consistency.sh
-  - scripts/ci/check-doc-review-age.py
+  - python3 scripts/ci/check-doc-review-age.py
 
 indexing:
   enabled: true

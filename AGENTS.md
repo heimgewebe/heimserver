@@ -1,64 +1,78 @@
-# AGENTS
+# AGENTS.md — Heimserver Ops Repo (Entry Point)
 
-## Purpose
-Dieses Repo dient primär als Orientierung + Operationalisierung für Agents. Es ist das Ops-Orakel für die Heimserver-Infrastruktur.
+Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agents. Es enthält explizite Policy-Regeln in `agent-policy.yaml` und Repo-Metadaten in `repo.meta.yaml`.
 
-## Read This First
-Beginne immer mit `repo.meta.yaml`, `AGENTS.md` und der durch `scripts/generate-system-map.py` generierten `SYSTEM_MAP.md`. Führe vor jeglichen Änderungen `bash ops/checks/preflight.sh` aus, um den aktuellen Systemzustand gegen den dokumentierten Kanon abzugleichen.
+## Kanon (was ist „wahr“?)
 
-## Canonical Sources
+- **Kanonische Runtime (IST-Zustand):** `runtime/runtime.md`
 - **Kanonischer Kontext (Architektur):** `architecture/constitution.md`
 - **Kanonische Netz-Architektur:** `architecture/network.md`
 - **Kanonische Namens-Architektur:** `architecture/naming.md`
-- **Kanonische Terminologie:** `architecture/glossary.md`
-- **Kanonische Runtime (IST-Zustand):** `runtime/runtime.md`
 - **Operative Checks (Wahrheitsquelle):** `ops/checks/preflight.sh`
+- **Operatives Protokoll (Betrieb):** `operations/operations.md`
+- **Runbooks (Handlungsabläufe):** `runbooks/`
+- **Templates (keine Secrets):** `security/templates/`
 
-## Discovery Rules
-Neue Markdown-Dateien in den Discovery-Roots (`architecture/`, `runtime/`, `runbooks/`, etc.) werden automatisch gescannt. Wenn eine Datei nicht über `manifest/repo-index.yaml` als kanonisch registriert ist, wird sie als Orphan (verwaist) markiert. Jedes Dokument muss Frontmatter mit Relationen (`depends_on`, `documents`, `implemented_by`, `supersedes`) tragen, um den semantischen Graph zu pflegen.
+## Repo-Policy (Privat vs. Public)
 
-## Generated Files
-- `SYSTEM_MAP.md`: Kanonische Übersicht, abgeleitet aus dem Manifest.
-- `docs/_generated/relations.json`: Semantischer Relationengraph.
-- `docs/_generated/backlinks.md`: Rückverweise zwischen Dokumenten.
-- `docs/_generated/orphans.md`: Liste von Dokumenten ohne Referenzziele.
-- `agent-readiness.md`: Status des agentischen Reifegrads.
+**Status:** Dauerhaft privat.
+**Regel:** Reale IPs, Subnetze und Pfade sind im Repo erlaubt, um die operative Realität abzubilden.
+**Verbot:** Niemals Keys, Secrets, Zertifikate (Private Keys), Logs oder unredacted Snapshots committen.
+**Guardrail:** Repo darf niemals public geschaltet werden; wenn doch, ist das ein Security Incident.
 
-Diese Dateien dürfen **niemals** manuell editiert werden.
+## Grundsatz: Secrets-Shadow-Pfad (außerhalb von Git)
 
-## Safe Read Paths
-- `README.md`
-- `AGENTS.md`
-- `repo.meta.yaml`
-- `architecture/`
-- `runtime/`
-- `runbooks/`
-- `manifest/`
-- `SYSTEM_MAP.md`
+**NIEMALS** Private Keys/Root-CA Keys in Git committen.
+Stattdessen: fester Pfad auf dem Server.
 
-## Guarded / Risky Paths
-- `architecture/` (Änderung erfordert Abstimmung mit operations)
-- `runtime/runtime.md` (Änderung erfordert Beleg durch preflight.sh oder Commit-Artefakte)
-- `ops/checks/` (Ändert Wahrheitsdefinitionen)
-- `scripts/ci/` (Ändert Policy-Durchsetzung)
-- `manifest/repo-index.yaml` (Definiert Kanon)
+Kanonischer Pfad (Server):
+- `/etc/heimserver/secrets` (empfohlen, root, 0700)
 
-**Verbotene Pfade (Forbidden Write Paths):**
-- `/etc/heimserver/secrets/`
-- `docker-compose.override.yml` (Nur lokal auf dem Server erlaubt)
-- `*.key`, `*.pem`, `.env`
-- Unredigierte Audit Snapshots (`ops/audit/snapshots/**`)
+Layout:
+- `/etc/heimserver/secrets/wireguard/wg0.key`
+- `/etc/heimserver/secrets/wireguard/peers/ipad.key`
+- `/etc/heimserver/secrets/pki/root-ca.key`
 
-## Required Checks
-- `bash ops/checks/preflight.sh` (Drift und Infrastruktur prüfen)
-- `scripts/ci/check-repo-index-consistency.sh` (Struktur und Frontmatter validieren)
-- `scripts/ci/check-doc-review-age.py` (Dokumenten-Freshness prüfen)
+Repo enthält nur:
+- Dateinamen-Konventionen
+- Templates
+- Runbooks
+- Checks
 
-## Common Traps
-- **Splitbrain:** Doku aktualisiert, aber Container/Ports im Host abweichend. Immer Preflight nutzen.
-- **Agenten-Regeln missachten:** Geheimnisse in Git committen.
-- **Port Conflicts:** Caddy Admin darf nicht lauschen (2019), Port 8081 gehört fest zu Pi-hole.
-- **Fehlende Header:** Caddy-Routing verlangt Host-Header bei `curl`-Tests (z. B. `curl -H "Host: weltgewebe.home.arpa"`).
+## Minimal-Workflow (für Agents)
 
-## Open Gaps
-- Die Repos (`heimserver`, `weltgewebe`, `leitstand`) sind lose gekoppelt. Semantische Abhängigkeiten über Repos hinweg sind derzeit primär in den Beschreibungen (z. B. im Glossary) erfasst und bedürfen noch robuster, repofremder Verknüpfungsmechanismen.
+1) **Preflight laufen lassen**
+   - `bash ops/checks/preflight.sh`
+
+2) **Drift prüfen**
+   - Vergleiche Output mit `runtime/runtime.md`
+   - Caddy Admin 2019 darf nicht lauschen
+   - DOCKER-USER: allow LAN/WG, drop rest für 80/443
+
+3) **Wenn Änderungen nötig**
+   - Dokument: `runtime/runtime.md` (bei Drift) oder `architecture/constitution.md` (bei Architektur) aktualisieren
+   - Runbook referenzieren (oder anlegen)
+
+## Hard Rules
+
+- Keine Secrets in Git (Keys, CA private keys, WireGuard private keys, .env)
+- Keine Audit-Snapshots in Git (nur Referenz-Pfade)
+- Keine produktiven Overrides (`docker-compose.override.yml`) in Git
+- Dokumente benötigen zwingend YAML Frontmatter (`check-repo-index-consistency.sh` erzwingt dies).
+
+## Common Paths (Konventionen)
+
+- Checks: `ops/checks/`
+- Hooks: `ops/hooks/`
+- Templates: `security/templates/`
+- Runbooks: `runbooks/`
+- Manifest: `manifest/`
+- Generierte Übersichten (nicht manuell editieren): `docs/_generated/`
+
+## Drift-Trigger (immer Preflight)
+
+- Änderung an Docker/Compose
+- Änderung an Firewall/iptables/netfilter-persistent
+- Änderung an WireGuard peers/routes
+- Änderung an Caddy/TLS/Hostnames
+- Änderung an DNS (FritzBox/Resolver)

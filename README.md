@@ -1,22 +1,12 @@
-# Heimserver
+# heimserver
 
-Dieses Repo ist das operative Rückgrat (Ops-Orakel) für den Heimserver. Es dient der konfigurativen Definition, Durchsetzung und Überwachung der Infrastruktur, auf der Dienste wie Weltgewebe laufen.
+Kanonischer Kontext liegt in [`architecture/constitution.md`](architecture/constitution.md).
 
-**Scope:**
-Dieses Repo beinhaltet Infrastrukturregeln, Netzwerktopologie (Edge, Port-Forwarding), Container-Orchestrierung und CI/CD-Governance.
-**Nicht im Scope:**
-Der produktive Code der Weltgewebe-Anwendungen, Anwendungslogik oder App-spezifische Konfiguration (dies gehört in die angrenzenden Repos).
+Primärer Einstieg für Agents: [`AGENTS.md`](AGENTS.md).
 
----
+Die maschinenlesbare Repo-Identität liegt in `repo.meta.yaml`, maschinenlesbare Änderungsgrenzen in `agent-policy.yaml`.
 
-## 🧭 Einstieg für Agents und Menschen
-
-*   **Agents:** Lest **zuerst** [`AGENTS.md`](AGENTS.md) für Arbeitsgrenzen und Policy.
-*   **Menschen & Agents:** Eine vollständige Übersicht der Dokumentation findet sich in [`docs/index.md`](docs/index.md).
-*   Die maschinenlesbare Repository-Identität liegt in `repo.meta.yaml`.
-*   Ein kurzer Status des agentischen Reifegrads findet sich in `docs/_generated/agent-readiness.md`.
-
-## 🏗️ Struktur & Hierarchie (Die Wahrheitsschichten)
+## Struktur & Hierarchie
 
 Das Repo folgt einer strikten Trennung zwischen Norm (Soll), Realität (Ist) und Handlung (Tun):
 
@@ -30,11 +20,9 @@ Das Repo folgt einer strikten Trennung zwischen Norm (Soll), Realität (Ist) und
     *   Protokolle, Checks und operative Eingriffe.
     *   Hier steht, *was getan wird*.
 
-**Zusätzlich:**
+Zusätzlich:
 *   `runbooks/`: Konkrete Handlungsanweisungen (Step-by-Step).
 *   `ops/`: Skripte und Checks zur Automatisierung.
-*   `docs/`: Der kanonische Einstieg in alle Begleitdokumente und Entscheidungen.
-*   `audit/`: Registrierung kritischer Skripte und Checks.
 
 ## Declarative Repo Structure
 

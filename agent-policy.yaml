@@ -1,3 +1,15 @@
+purpose: Definition of machine-readable operational boundaries for agents interacting with Heimserver infrastructure.
+
+read_order:
+  - repo.meta.yaml
+  - AGENTS.md
+  - SYSTEM_MAP.md
+  - docs/index.md
+
+documentation_update_rules:
+  - "Changes to architecture requires explicit verification via operations."
+  - "Changes to runtime.md require a preflight.sh output or a committed snapshot artifact to prove the real state."
+
 safe_read_paths:
   - architecture/
   - runtime/
@@ -14,12 +26,14 @@ guarded_write_paths:
   - manifest/repo-index.yaml
 
 forbidden_write_paths:
-  - ops/audit/snapshots/** (unredacted)
-  - /etc/heimserver/secrets/
+  - ops/audit/snapshots/
   - docker-compose.override.yml
   - .env
   - "*.key"
   - "*.pem"
+
+external_sensitive_paths:
+  - /etc/heimserver/secrets/
 
 requires_target_proof_for:
   - runtime/
@@ -35,4 +49,3 @@ required_checks_before_patch:
 human_review_required_for:
   - architecture/networking/
   - security/
-  - /etc/heimserver/secrets/

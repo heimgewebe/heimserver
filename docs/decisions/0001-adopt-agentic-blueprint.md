@@ -2,7 +2,7 @@
 id: docs.decisions.0001
 title: Adopt Agentic Blueprint
 doc_type: decision
-role: norm
+role: decisions
 status: active
 canonicality: canonical
 last_reviewed: 2026-03-11

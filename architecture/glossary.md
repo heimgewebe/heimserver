@@ -19,6 +19,7 @@ This glossary defines canonical terms used across the Heimserver infrastructure 
 ## K
 
 **Kanon (Canon)**
+*Etymologie: Griechisch 'kanon' (Richtscheit, Maßstab).*
 The definitive, documented truth of the infrastructure's intended or actual state, residing strictly in `architecture/` (Norm) or `runtime/` (Reality).
 
 ## D

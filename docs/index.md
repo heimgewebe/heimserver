@@ -2,7 +2,7 @@
 id: docs.index
 title: Canonical Documentation Index
 doc_type: reference
-role: norm
+role: docs
 status: active
 canonicality: canonical
 last_reviewed: 2026-03-11
@@ -22,7 +22,6 @@ Diese maschinell generierten Übersichten bilden die aktuelle Realität des Repo
 - **[Backlinks](_generated/backlinks.md):** Zeigt, welche Dokumente von welchen abhängig sind.
 - **[Orphans](_generated/orphans.md):** Entdeckte Dokumente, die nicht ordentlich im Manifest referenziert wurden.
 - **[Supersession Map](_generated/supersession-map.md):** Historie von veralteten Dokumenten.
-- **[Agent Readiness](_generated/agent-readiness.md):** Bewertung der Maschinenlesbarkeit des Repos.
 
 ## 🏗️ Kern-Dokumentgruppen
 
