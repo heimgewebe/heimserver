@@ -35,6 +35,9 @@
 |---|---|---|---|---|
 | [00-index.md](runbooks/00-index.md) | `runbooks-index` | canonical | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
 | [05-adding-docs.md](runbooks/05-adding-docs.md) | `runbook-adding-docs` | canonical | 2026-02-18 | `scripts/ci/check-repo-index-consistency.sh` |
+| [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | canonical | 2026-02-25 | `ops/checks/preflight.sh` |
+| [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | canonical | 2026-03-07 | - |
+| [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | canonical | 2026-03-11 | - |
 
 ## Dependencies
 Documents that depend on others:
@@ -42,6 +45,9 @@ Documents that depend on others:
 - **networking/port-matrix.md** depends on: `architecture/network.md`
 - **runtime.md** depends on: `architecture/constitution.md`, `architecture/network.md`
 - **operations.md** depends on: `runtime/runtime.md`
+- **ops.runbook.edge-caddy-port-conflict.md** depends on: `architecture/networking/port-matrix.md`, `runbooks/00-index.md`
+- **ops.runbook.weltgewebe-stack.md** depends on: `architecture/naming.md`, `architecture/networking/port-matrix.md`
+- **ops.runbook.heimserver-edge.md** depends on: `architecture/network.md`, `architecture/networking/port-matrix.md`
 
 ## Automated Checks
 - [`ops/checks/preflight.sh`](ops/checks/preflight.sh)
