@@ -41,10 +41,12 @@ requires_target_proof_for:
   - ops/checks/
 
 required_checks_before_patch:
-  - repo-structure-guard (via check-repo-index-consistency.sh)
-  - docs-relations-guard (via generate-relations.py)
-  - preflight-guard (via ops/checks/preflight.sh)
-  - review-age-guard (via check-doc-review-age.py)
+  - scripts/ci/check_repo_index_consistency.py
+  - bash ops/checks/preflight.sh
+  - python3 scripts/ci/check-doc-review-age.py
+
+artifact_refresh_steps:
+  - python3 scripts/generate-relations.py
 
 human_review_required_for:
   - architecture/networking/

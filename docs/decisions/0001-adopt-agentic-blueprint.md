@@ -25,7 +25,7 @@ Wir haben uns entschieden, die "Ideale Blaupause für agentenfreundliche, selbst
 - **Nur `AGENTS.md` schreiben**: Ein langer Text in `AGENTS.md` ist hilfreich, veraltet aber ohne strukturierte Kopplung (wie `manifest/repo-index.yaml` und Generatoren) und meldet keine "Orphans".
 
 ## Folgen
-- Neue Markdown-Dateien müssen ab sofort Frontmatter tragen, sonst scheitert die CI (`check-repo-index-consistency.sh`).
+- Neue Markdown-Dateien müssen ab sofort Frontmatter tragen, sonst scheitert die CI (`check_repo_index_consistency.py`).
 - Jeder kritische Operator-Code muss in `audit/impl-registry.yaml` dokumentiert sein.
 - Die Generierungsskripte unter `scripts/` sind fester Bestandteil der CI/CD vor einem Merge.
 

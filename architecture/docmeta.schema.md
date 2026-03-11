@@ -9,7 +9,7 @@ summary: Definition of canonical metadata schema
 last_reviewed: 2026-02-18
 depends_on: []
 verifies_with:
-  - scripts/ci/check-repo-index-consistency.sh
+  - scripts/ci/check_repo_index_consistency.py
 ---
 
 # docmeta.schema.md
@@ -45,6 +45,8 @@ Every canonical document must start with a YAML frontmatter block containing the
 - `reality`: Observed runtime state.
 - `action`: Operational procedures.
 - `runbooks`: Specific execution guides.
+- `docs`: General references and indexes.
+- `decisions`: Architectural decision records.
 
 **Status:**
 - `active`: Currently in use.

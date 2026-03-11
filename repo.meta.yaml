@@ -6,9 +6,6 @@ summary: >
   Operational deployment, enforcement, and health monitoring of the Weltgewebe application stack.
   Defines the canonical truth for infrastructure, networking, and security boundaries.
 
-owners:
-  - heimgewebe-ops
-
 primary_languages:
   - markdown
   - bash
@@ -31,8 +28,8 @@ discovery_roots:
   - runtime/
   - operations/
   - runbooks/
+  - docs/
   - ops/
-  - scripts/
 
 generated_artifacts:
   - SYSTEM_MAP.md
@@ -62,13 +59,15 @@ guarded_write_paths:
 
 forbidden_write_paths:
   - docs/_generated/
-  - /etc/heimserver/secrets/
   - docker-compose.override.yml
-  - ops/audit/snapshots/** (unredacted)
+  - ops/audit/snapshots/**
+
+external_sensitive_paths:
+  - /etc/heimserver/secrets/
 
 required_checks:
   - bash ops/checks/preflight.sh
-  - scripts/ci/check-repo-index-consistency.sh
+  - scripts/ci/check_repo_index_consistency.py
   - python3 scripts/ci/check-doc-review-age.py
 
 indexing:

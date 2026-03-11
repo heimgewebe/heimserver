@@ -11,7 +11,7 @@ implementations:
     deprecated_by: []
 
   - id: impl.ci.repo-consistency
-    path: scripts/ci/check-repo-index-consistency.sh
+    path: scripts/ci/check_repo_index_consistency.py
     impl_type: script
     status: active
     documented_by:

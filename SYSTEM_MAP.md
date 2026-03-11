@@ -9,7 +9,7 @@
 | Document | ID | Status | Reviewed | Verifies With |
 |---|---|---|---|---|
 | [constitution.md](architecture/constitution.md) | `constitution` | active | 2026-02-13 | `ops/checks/preflight.sh` |
-| [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | active | 2026-02-18 | `scripts/ci/check-repo-index-consistency.sh` |
+| [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
 | [naming.md](architecture/naming.md) | `naming` | active | 2026-02-13 | `ops/checks/preflight.sh` |
 | [network.md](architecture/network.md) | `network` | active | 2026-02-13 | `ops/checks/preflight.sh` |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | active | 2026-02-25 | `ops/checks/preflight.sh` |
@@ -35,7 +35,7 @@
 | Document | ID | Status | Reviewed | Verifies With |
 |---|---|---|---|---|
 | [00-index.md](runbooks/00-index.md) | `runbooks-index` | active | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
-| [05-adding-docs.md](runbooks/05-adding-docs.md) | `runbook-adding-docs` | active | 2026-02-18 | `scripts/ci/check-repo-index-consistency.sh` |
+| [05-adding-docs.md](runbooks/05-adding-docs.md) | `runbook-adding-docs` | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
 | [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | active | 2026-02-25 | `ops/checks/preflight.sh` |
 | [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | active | 2026-03-07 | - |
 | [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | active | 2026-03-11 | - |
@@ -54,5 +54,5 @@ Documents that depend on others:
 ## Automated Checks
 - [`ops/checks/preflight.sh`](ops/checks/preflight.sh)
 - [`scripts/ci/check-runbook-invariants.sh`](scripts/ci/check-runbook-invariants.sh)
-- [`scripts/ci/check-repo-index-consistency.sh`](scripts/ci/check-repo-index-consistency.sh)
+- [`scripts/ci/check_repo_index_consistency.py`](scripts/ci/check_repo_index_consistency.py)
 - [`scripts/ci/check-doc-review-age.py`](scripts/ci/check-doc-review-age.py)

@@ -58,7 +58,7 @@ Repo enthält nur:
 - Keine Secrets in Git (Keys, CA private keys, WireGuard private keys, .env)
 - Keine Audit-Snapshots in Git (nur Referenz-Pfade)
 - Keine produktiven Overrides (`docker-compose.override.yml`) in Git
-- Dokumente benötigen zwingend YAML Frontmatter (`check-repo-index-consistency.sh` erzwingt dies).
+- Kanonische Dokumente benötigen zwingend YAML Frontmatter (`check_repo_index_consistency.py` erzwingt dies).
 
 ## Common Paths (Konventionen)
 

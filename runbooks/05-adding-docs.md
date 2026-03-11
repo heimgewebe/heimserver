@@ -9,7 +9,7 @@ summary: How to add canonical documents
 last_reviewed: 2026-02-18
 depends_on: []
 verifies_with:
-  - scripts/ci/check-repo-index-consistency.sh
+  - scripts/ci/check_repo_index_consistency.py
 ---
 
 # 05-adding-docs.md
@@ -59,7 +59,7 @@ zones:
 Run the consistency check to ensure the frontmatter is valid and the file is registered correctly.
 
 ```bash
-bash scripts/ci/check-repo-index-consistency.sh
+bash scripts/ci/check_repo_index_consistency.py
 ```
 
 ## 4. Update System Map
