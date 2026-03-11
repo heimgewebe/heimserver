@@ -24,6 +24,14 @@ zones:
       - ops.runbook.edge-caddy-port-conflict.md
       - ops.runbook.weltgewebe-stack.md
       - ops.runbook.heimserver-edge.md
+  decisions:
+    path: docs/decisions/
+    canonical_docs:
+      - 0001-adopt-agentic-blueprint.md
+  docs:
+    path: docs/
+    canonical_docs:
+      - index.md
 
 checks:
   - ops/checks/preflight.sh

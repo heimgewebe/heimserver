@@ -1,6 +1,6 @@
 # Agent Readiness Report
 
-**Score:** 11/11 (100.0%)
+**Score:** 14/14 (100.0%)
 
 ## Checks
 
@@ -17,3 +17,6 @@
 | ✅ | Implementierungs-Registry (audit/impl-registry.yaml) | `audit/impl-registry.yaml` |
 | ✅ | Kritische Implementierungen Übersicht (docs/_generated/impl-index.md) | `docs/_generated/impl-index.md` |
 | ✅ | Historisierungskarte (docs/_generated/supersession-map.md) | `docs/_generated/supersession-map.md` |
+| ✅ | Dokumentations-Einstieg (docs/index.md) | `docs/index.md` |
+| ✅ | Automatischer Dokumenten-Index (docs/_generated/doc-index.md) | `docs/_generated/doc-index.md` |
+| ✅ | Entscheidungs-Historie (docs/decisions/) | `docs/decisions/` |

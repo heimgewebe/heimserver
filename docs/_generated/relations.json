@@ -64,6 +64,16 @@
       "id": "ops-runbook-heimserver-edge",
       "path": "runbooks/ops.runbook.heimserver-edge.md",
       "zone": "runbooks"
+    },
+    {
+      "id": "docs.decisions.0001",
+      "path": "docs/decisions/0001-adopt-agentic-blueprint.md",
+      "zone": "decisions"
+    },
+    {
+      "id": "docs.index",
+      "path": "docs/index.md",
+      "zone": "docs"
     }
   ],
   "edges": [
@@ -120,6 +130,16 @@
     {
       "source": "ops-runbook-heimserver-edge",
       "target": "port-matrix",
+      "type": "depends_on"
+    },
+    {
+      "source": "docs.decisions.0001",
+      "target": "docmeta.schema",
+      "type": "depends_on"
+    },
+    {
+      "source": "docs.decisions.0001",
+      "target": "glossary",
       "type": "depends_on"
     }
   ]

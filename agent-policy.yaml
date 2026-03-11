@@ -21,11 +21,18 @@ forbidden_write_paths:
   - "*.key"
   - "*.pem"
 
-proof_requirements:
-  - "Changes to runtime/runtime.md must be substantiated by preflight.sh output or a committed evidence file."
-  - "Changes to architecture requires explicit verification via operations."
+requires_target_proof_for:
+  - runtime/
+  - architecture/
+  - ops/checks/
 
-required_checks:
-  - bash ops/checks/preflight.sh
-  - scripts/ci/check-repo-index-consistency.sh
-  - scripts/ci/check-doc-review-age.py
+required_checks_before_patch:
+  - repo-structure-guard (via check-repo-index-consistency.sh)
+  - docs-relations-guard (via generate-relations.py)
+  - preflight-guard (via ops/checks/preflight.sh)
+  - review-age-guard (via check-doc-review-age.py)
+
+human_review_required_for:
+  - architecture/networking/
+  - security/
+  - /etc/heimserver/secrets/

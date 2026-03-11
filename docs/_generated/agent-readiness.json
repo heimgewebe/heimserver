@@ -1,6 +1,6 @@
 {
-  "score": 11,
-  "total": 11,
+  "score": 14,
+  "total": 14,
   "percentage": 100.0,
   "checks": {
     "Kanonische Repo-Identit\u00e4t (repo.meta.yaml)": {
@@ -45,6 +45,18 @@
     },
     "Historisierungskarte (docs/_generated/supersession-map.md)": {
       "path": "docs/_generated/supersession-map.md",
+      "status": "pass"
+    },
+    "Dokumentations-Einstieg (docs/index.md)": {
+      "path": "docs/index.md",
+      "status": "pass"
+    },
+    "Automatischer Dokumenten-Index (docs/_generated/doc-index.md)": {
+      "path": "docs/_generated/doc-index.md",
+      "status": "pass"
+    },
+    "Entscheidungs-Historie (docs/decisions/)": {
+      "path": "docs/decisions/",
       "status": "pass"
     }
   }

@@ -21,7 +21,10 @@ def generate_agent_readiness():
         "Verifikationspfade (ops/checks/preflight.sh)": "ops/checks/preflight.sh",
         "Implementierungs-Registry (audit/impl-registry.yaml)": "audit/impl-registry.yaml",
         "Kritische Implementierungen Übersicht (docs/_generated/impl-index.md)": "docs/_generated/impl-index.md",
-        "Historisierungskarte (docs/_generated/supersession-map.md)": "docs/_generated/supersession-map.md"
+        "Historisierungskarte (docs/_generated/supersession-map.md)": "docs/_generated/supersession-map.md",
+        "Dokumentations-Einstieg (docs/index.md)": "docs/index.md",
+        "Automatischer Dokumenten-Index (docs/_generated/doc-index.md)": "docs/_generated/doc-index.md",
+        "Entscheidungs-Historie (docs/decisions/)": "docs/decisions/"
     }
 
     results = {}
@@ -45,10 +48,11 @@ def generate_agent_readiness():
         "checks": results
     }
 
-    with open('agent-readiness.json', 'w', encoding='utf-8') as f:
+    os.makedirs('docs/_generated', exist_ok=True)
+    with open('docs/_generated/agent-readiness.json', 'w', encoding='utf-8') as f:
         json.dump(report_json, f, indent=2)
 
-    with open('agent-readiness.md', 'w', encoding='utf-8') as f:
+    with open('docs/_generated/agent-readiness.md', 'w', encoding='utf-8') as f:
         f.write("# Agent Readiness Report\n\n")
         f.write(f"**Score:** {score}/{total} ({readiness_percentage:.1f}%)\n\n")
         f.write("## Checks\n\n")
@@ -58,8 +62,8 @@ def generate_agent_readiness():
             icon = "✅" if data["status"] == "pass" else "❌"
             f.write(f"| {icon} | {label} | `{data['path']}` |\n")
 
-    print("Successfully generated agent-readiness.json")
-    print("Successfully generated agent-readiness.md")
+    print("Successfully generated docs/_generated/agent-readiness.json")
+    print("Successfully generated docs/_generated/agent-readiness.md")
 
 if __name__ == '__main__':
     generate_agent_readiness()
