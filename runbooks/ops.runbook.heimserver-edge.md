@@ -16,14 +16,14 @@ Der Server übernimmt folgende Rollen:
 
 * Edge-Gateway (Caddy)
 * Container-Host (Docker Compose)
-* DNS-Client (Pi-hole)
+* DNS Resolver / Local DNS Server (Pi-hole)
 * Weltgewebe-API-Host
 
 Ziel ist eine reproduzierbare Dokumentation der Infrastruktur.
 
 ---
 
-## Heimserver Überblick
+# Heimserver Überblick
 
 Hostname
 

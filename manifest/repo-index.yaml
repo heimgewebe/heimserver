@@ -21,8 +21,8 @@ zones:
       - 00-index.md
       - 05-adding-docs.md
       - ops.runbook.edge-caddy-port-conflict.md
-      - ops.runbook.heimserver-edge.md
       - ops.runbook.weltgewebe-stack.md
+      - ops.runbook.heimserver-edge.md
 
 checks:
   - ops/checks/preflight.sh
