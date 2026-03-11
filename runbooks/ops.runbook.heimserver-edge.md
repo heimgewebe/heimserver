@@ -23,7 +23,7 @@ Ziel ist eine reproduzierbare Dokumentation der Infrastruktur.
 
 ---
 
-# Heimserver Überblick
+## Heimserver Überblick
 
 Hostname
 
