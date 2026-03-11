@@ -27,13 +27,22 @@ http://weltgewebe.home.arpa {
 https://weltgewebe.home.arpa {
     tls internal
 
-    # Option A: Static UI (Default)
-    # Serve static files from mounted volume if present.
-    root * /srv/weltgewebe-web
-    try_files {path} {path}/ /index.html
-    file_server
+    # Reverse proxy for API under the main domain
+    redir /api /api/ 308
+    handle_path /api/* {
+        reverse_proxy weltgewebe-api:8080
+    }
 
-    # Option B: Upstream Container (Comment out Option A)
+    # Option A: Static UI (Default / Primary)
+    # Serve static files from mounted volume if present.
+    # Maps to /opt/weltgewebe/apps/web/build on the host
+    handle {
+        root * /srv/weltgewebe-web
+        try_files {path} {path}/ /index.html
+        file_server
+    }
+
+    # Option B: Upstream Container (Legacy/Secondary)
     # reverse_proxy weltgewebe-ui:80
 }
 

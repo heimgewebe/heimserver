@@ -12,19 +12,27 @@ depends_on:
 
 Scope: Kanonische Wahrheit und operative Checks für den Weltgewebe-Stack auf dem Heimserver.
 
-## 1. Architektur-Entscheidung: Vollwertiger Stack
+## 1. Architektur-Entscheidung: Vollwertiger Stack & Lokale UI
 
 **Vorheriger Drift:**
-Docs, Runbook und Health sprachen teilweise NATS an, der effektive Weltgewebe-Prod-Stack lief aber als API-/Proxy-Minimum ohne NATS.
+Docs, Runbook und Health sprachen teilweise NATS an, der effektive Weltgewebe-Prod-Stack lief aber als API-/Proxy-Minimum ohne NATS. UI-Requests wurden teilweise als primär über Cloudflare Pages beschrieben.
 
 **Neue kanonische Wahrheit:**
 Weltgewebe auf dem Heimserver ist ein vollwertiger Stack mit:
 - Service `api`
 - Service `nats` (JetStream)
 - Service `db`
-- Edge/Proxy-Integration wie bisher
+- Edge/Proxy-Integration wie bisher, wobei der **Heimserver die primäre Frontdoor für die UI ist**.
 
 NATS ist nicht optionaler Alttext, sondern Teil der beabsichtigten Betriebsrealität.
+
+Die statische UI wird lokal aus dem Build-Pfad (`/opt/weltgewebe/apps/web/build`) über den Edge-Caddy ausgeliefert.
+Cloudflare Pages fungiert, wenn überhaupt, nur noch als sekundärer Spiegel.
+
+Die URLs verhalten sich wie folgt:
+- `https://weltgewebe.home.arpa`: Liefert die statische UI.
+- `https://weltgewebe.home.arpa/api/*`: Proxied zur Weltgewebe-API.
+- `https://api.weltgewebe.home.arpa`: Optionaler, separater API-Endpunkt.
 
 **Ziel:**
 Contract (Weltgewebe-Repo), Deploy, Health und operative Doku wieder deckungsgleich machen. Heimgewebe und Weltgewebe bleiben strikt getrennt. Das Heimserver-Repo ist nur für Enforcement und Betrieb zuständig.
