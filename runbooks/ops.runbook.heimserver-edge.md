@@ -97,6 +97,26 @@ Caddy übernimmt:
 
 # Container-Stacks
 
+Die Infrastruktur ist in zwei getrennte Compose-Projekte aufgeteilt, um die Frontdoor sauber vom App-Stack zu isolieren.
+
+## Edge-Stack (Frontdoor)
+
+Docker Compose Projekt
+
+```
+edge
+```
+
+Container:
+
+| Service    | Port     | Funktion             |
+| ---------- | -------- | -------------------- |
+| edge-caddy | 80 / 443 | Gateway, TLS, Reverse Proxy |
+
+Das Routing läuft über den Edge-Stack als zentrales Gateway zum dahinterliegenden Weltgewebe-App-Stack.
+
+## Weltgewebe-Stack (App-Stack)
+
 Docker Compose Projekt
 
 ```
@@ -110,9 +130,8 @@ Container:
 | api        | 8080     | Weltgewebe API |
 | db         | 5432     | PostgreSQL     |
 | nats       | 4222     | Messaging      |
-| edge-caddy | 80 / 443 | Gateway        |
 
-*(Hinweis: NATS, DB und API binden **keine** Host-Ports. Siehe `architecture/networking/port-matrix.md`)*
+*(Hinweis: Die Container des Weltgewebe-Stacks (`api`, `db`, `nats`) binden **keine** Host-Ports. Siehe `architecture/networking/port-matrix.md`)*
 
 ---
 
@@ -231,9 +250,24 @@ ss -tulpn
 
 ## Container
 
+Für den **Edge-Stack**:
+
 ```bash
 cd /opt/heimgewebe/edge
+docker compose ps
+```
+
+Für den **Weltgewebe-Stack**:
+
+```bash
+cd /opt/weltgewebe
 docker compose -p weltgewebe ps
+```
+
+Schneller Reality-Check (Gateway):
+
+```bash
+docker ps | grep caddy
 ```
 
 ## Gateway Test
