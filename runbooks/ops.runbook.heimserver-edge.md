@@ -304,11 +304,11 @@ Portfreigabe 80 / 443 prüfen
 
 ---
 
-## Hairpin NAT
+## Hairpin NAT / Host-Header Fallstrick
 
 Symptom
 
-lokale Tests schlagen fehl.
+Lokale Tests gegen die Public IP schlagen fehl.
 
 Beispiel
 
@@ -316,13 +316,24 @@ Beispiel
 curl http://149.xxx.xxx.xxx
 ```
 
-Lösung
+Wichtiger Hinweis:
+Dieser Test kann aus zwei Gründen fehlschlagen:
+1. **Hairpin NAT / NAT-Loopback** im Router funktioniert nicht.
+2. **vHost-Mismatch:** Caddy erwartet als Host-Header `weltgewebe.net` oder `api.weltgewebe.net` und nicht die nackte IP. Ein lokaler Request gegen die IP beweist also nicht zwingend eine kaputte Portfreigabe.
 
+Korrekte Gegenproben:
+
+Domain testen:
 ```bash
-curl weltgewebe.net
+curl -I http://weltgewebe.net
 ```
 
-oder extern testen.
+Host-Header explizit setzen:
+```bash
+curl -H "Host: weltgewebe.net" http://149.xxx.xxx.xxx
+```
+
+Am aussagekräftigsten ist es immer, **extern** (z. B. über das Mobilfunknetz) zu testen.
 
 ---
 
