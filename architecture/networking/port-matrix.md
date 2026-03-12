@@ -1,7 +1,11 @@
 ---
 id: port-matrix
 role: norm
-status: canonical
+status: active
+canonicality: canonical
+doc_type: architecture
+title: Port Matrix
+summary: Formal port ownership specification
 last_reviewed: 2026-02-25
 depends_on:
   - architecture/network.md

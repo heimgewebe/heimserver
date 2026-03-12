@@ -7,6 +7,7 @@ zones:
       - naming.md
       - network.md
       - networking/port-matrix.md
+      - glossary.md
   reality:
     path: runtime/
     canonical_docs:
@@ -23,9 +24,17 @@ zones:
       - ops.runbook.edge-caddy-port-conflict.md
       - ops.runbook.weltgewebe-stack.md
       - ops.runbook.heimserver-edge.md
+  decisions:
+    path: docs/decisions/
+    canonical_docs:
+      - 0001-adopt-agentic-blueprint.md
+  docs:
+    path: docs/
+    canonical_docs:
+      - index.md
 
 checks:
   - ops/checks/preflight.sh
   - scripts/ci/check-runbook-invariants.sh
-  - scripts/ci/check-repo-index-consistency.sh
+  - scripts/ci/check_repo_index_consistency.py
   - scripts/ci/check-doc-review-age.py

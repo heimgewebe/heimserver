@@ -1,0 +1,146 @@
+{
+  "nodes": [
+    {
+      "id": "constitution",
+      "path": "architecture/constitution.md",
+      "zone": "norm"
+    },
+    {
+      "id": "docmeta.schema",
+      "path": "architecture/docmeta.schema.md",
+      "zone": "norm"
+    },
+    {
+      "id": "naming",
+      "path": "architecture/naming.md",
+      "zone": "norm"
+    },
+    {
+      "id": "network",
+      "path": "architecture/network.md",
+      "zone": "norm"
+    },
+    {
+      "id": "port-matrix",
+      "path": "architecture/networking/port-matrix.md",
+      "zone": "norm"
+    },
+    {
+      "id": "glossary",
+      "path": "architecture/glossary.md",
+      "zone": "norm"
+    },
+    {
+      "id": "runtime",
+      "path": "runtime/runtime.md",
+      "zone": "reality"
+    },
+    {
+      "id": "operations",
+      "path": "operations/operations.md",
+      "zone": "action"
+    },
+    {
+      "id": "runbooks-index",
+      "path": "runbooks/00-index.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "runbook-adding-docs",
+      "path": "runbooks/05-adding-docs.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "ops.runbook.edge-caddy-port-conflict",
+      "path": "runbooks/ops.runbook.edge-caddy-port-conflict.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "ops-runbook-weltgewebe-stack",
+      "path": "runbooks/ops.runbook.weltgewebe-stack.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "ops-runbook-heimserver-edge",
+      "path": "runbooks/ops.runbook.heimserver-edge.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "docs.decisions.0001",
+      "path": "docs/decisions/0001-adopt-agentic-blueprint.md",
+      "zone": "decisions"
+    },
+    {
+      "id": "docs.index",
+      "path": "docs/index.md",
+      "zone": "docs"
+    }
+  ],
+  "edges": [
+    {
+      "source": "port-matrix",
+      "target": "network",
+      "type": "depends_on"
+    },
+    {
+      "source": "glossary",
+      "target": "constitution",
+      "type": "depends_on"
+    },
+    {
+      "source": "runtime",
+      "target": "constitution",
+      "type": "depends_on"
+    },
+    {
+      "source": "runtime",
+      "target": "network",
+      "type": "depends_on"
+    },
+    {
+      "source": "operations",
+      "target": "runtime",
+      "type": "depends_on"
+    },
+    {
+      "source": "ops.runbook.edge-caddy-port-conflict",
+      "target": "port-matrix",
+      "type": "depends_on"
+    },
+    {
+      "source": "ops.runbook.edge-caddy-port-conflict",
+      "target": "runbooks-index",
+      "type": "depends_on"
+    },
+    {
+      "source": "ops-runbook-weltgewebe-stack",
+      "target": "naming",
+      "type": "depends_on"
+    },
+    {
+      "source": "ops-runbook-weltgewebe-stack",
+      "target": "port-matrix",
+      "type": "depends_on"
+    },
+    {
+      "source": "ops-runbook-heimserver-edge",
+      "target": "network",
+      "type": "depends_on"
+    },
+    {
+      "source": "ops-runbook-heimserver-edge",
+      "target": "port-matrix",
+      "type": "depends_on"
+    },
+    {
+      "source": "docs.decisions.0001",
+      "target": "docmeta.schema",
+      "type": "depends_on"
+    },
+    {
+      "source": "docs.decisions.0001",
+      "target": "glossary",
+      "type": "depends_on"
+    }
+  ]
+}

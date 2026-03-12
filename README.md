@@ -1,8 +1,20 @@
 # heimserver
 
-Kanonischer Kontext liegt in [`architecture/constitution.md`](architecture/constitution.md).
+Dieses Repo ist das operative Rückgrat (Ops-Orakel) für den Heimserver.
 
-Primärer Einstieg für Agents: [`AGENTS.md`](AGENTS.md).
+## Einstiegspunkte
+
+Die Orientierung in diesem Repository ist in drei Ebenen strukturiert:
+
+1. **Dokumentations-Einstieg (für Menschen):**
+   [`docs/index.md`](docs/index.md) - Die vollständige Übersicht aller Architekturen, Entscheidungen und Runbooks.
+
+2. **Agentischer Einstieg (für Agents):**
+   [`AGENTS.md`](AGENTS.md) - Arbeitsgrenzen, Policies und kanonische Wahrheitsquellen für autonome Systeme.
+
+3. **Maschinenlesbare Repo-Metadaten:**
+   - `repo.meta.yaml` - Die strikte Repo-Identität und Strukturwahrheit.
+   - `agent-policy.yaml` - Maschinenlesbare Änderungsgrenzen und Guards.
 
 ## Struktur & Hierarchie
 

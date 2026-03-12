@@ -1,7 +1,11 @@
 ---
 id: constitution
 role: norm
-status: canonical
+status: active
+canonicality: canonical
+doc_type: architecture
+title: Heimserver Constitution
+summary: Canonical rules and context for Heimserver
 last_reviewed: 2026-02-13
 depends_on: []
 verifies_with:

@@ -1,6 +1,6 @@
 # AGENTS.md — Heimserver Ops Repo (Entry Point)
 
-Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agents.
+Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agents. Es enthält explizite Policy-Regeln in `agent-policy.yaml` und Repo-Metadaten in `repo.meta.yaml`.
 
 ## Kanon (was ist „wahr“?)
 
@@ -58,6 +58,7 @@ Repo enthält nur:
 - Keine Secrets in Git (Keys, CA private keys, WireGuard private keys, .env)
 - Keine Audit-Snapshots in Git (nur Referenz-Pfade)
 - Keine produktiven Overrides (`docker-compose.override.yml`) in Git
+- Kanonische Dokumente benötigen zwingend YAML Frontmatter (`check_repo_index_consistency.py` erzwingt dies).
 
 ## Common Paths (Konventionen)
 
@@ -66,6 +67,7 @@ Repo enthält nur:
 - Templates: `security/templates/`
 - Runbooks: `runbooks/`
 - Manifest: `manifest/`
+- Generierte Übersichten (nicht manuell editieren): `SYSTEM_MAP.md`, `docs/_generated/`
 
 ## Drift-Trigger (immer Preflight)
 

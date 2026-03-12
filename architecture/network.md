@@ -1,7 +1,11 @@
 ---
 id: network
 role: norm
-status: canonical
+status: active
+canonicality: canonical
+doc_type: architecture
+title: Network Architecture
+summary: Canonical network rules and layout
 last_reviewed: 2026-02-13
 depends_on: []
 verifies_with:

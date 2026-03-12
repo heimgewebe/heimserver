@@ -1,7 +1,11 @@
 ---
 id: runbooks-index
 role: runbooks
-status: canonical
+status: active
+canonicality: canonical
+doc_type: reference
+title: Runbooks Index
+summary: Entrypoint for execution guides
 last_reviewed: 2026-02-13
 depends_on: []
 verifies_with:

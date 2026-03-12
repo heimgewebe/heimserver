@@ -1,7 +1,11 @@
 ---
 id: naming
 role: norm
-status: canonical
+status: active
+canonicality: canonical
+doc_type: architecture
+title: Naming Architecture
+summary: Canonical naming conventions
 last_reviewed: 2026-02-13
 depends_on: []
 verifies_with:

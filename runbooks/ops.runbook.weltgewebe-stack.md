@@ -1,7 +1,11 @@
 ---
 id: ops-runbook-weltgewebe-stack
 role: runbooks
-status: canonical
+status: active
+canonicality: canonical
+doc_type: runbook
+title: Weltgewebe Stack Runbook
+summary: Operations for Weltgewebe app stack
 last_reviewed: 2026-03-07
 depends_on:
   - architecture/naming.md

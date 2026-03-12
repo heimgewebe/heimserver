@@ -4,8 +4,10 @@ import os
 import re
 
 MANIFEST_PATH = 'manifest/repo-index.yaml'
-ALLOWED_ROLES = {"norm", "reality", "action", "runbooks"}
-ALLOWED_STATUS = {"canonical", "draft", "deprecated"}
+ALLOWED_ROLES = {"norm", "reality", "action", "runbooks", "docs", "decisions"}
+ALLOWED_STATUS = {"active", "deprecated", "experimental", "archived"}
+ALLOWED_CANONICALITY = {"canonical", "derived", "explanatory"}
+ALLOWED_DOC_TYPES = {"identity", "architecture", "decision", "runbook", "guide", "reference", "policy", "status", "generated", "archive", "experimental"}
 
 def _unquote(val):
     """Removes surrounding quotes from a string."""

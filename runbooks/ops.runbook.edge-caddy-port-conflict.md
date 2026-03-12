@@ -1,7 +1,11 @@
 ---
 id: ops.runbook.edge-caddy-port-conflict
 role: runbooks
-status: canonical
+status: active
+canonicality: canonical
+doc_type: runbook
+title: Caddy Port Conflict Runbook
+summary: Steps to resolve Caddy port conflicts
 last_reviewed: 2026-02-25
 depends_on:
   - architecture/networking/port-matrix.md
