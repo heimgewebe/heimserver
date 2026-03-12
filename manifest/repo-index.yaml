@@ -19,8 +19,8 @@ zones:
   runbooks:
     path: runbooks/
     canonical_docs:
-      - 00-index.md
-      - 05-adding-docs.md
+      - index.md
+      - adding-docs.md
       - ops.runbook.edge-caddy-port-conflict.md
       - ops.runbook.weltgewebe-stack.md
       - ops.runbook.heimserver-edge.md

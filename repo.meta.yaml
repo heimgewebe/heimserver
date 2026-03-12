@@ -35,6 +35,7 @@ discovery_roots:
 
 generated_artifacts:
   - SYSTEM_MAP.md
+  - docs/_generated/doc-index.md
   - docs/_generated/relations.json
   - docs/_generated/backlinks.md
   - docs/_generated/orphans.md
@@ -63,6 +64,7 @@ guarded_write_paths:
   - manifest/repo-index.yaml
   - ops/checks/
   - scripts/
+  - docs/
 
 forbidden_write_paths:
   - docs/_generated/
@@ -76,6 +78,7 @@ required_checks:
   - bash ops/checks/preflight.sh
   - scripts/ci/check_repo_index_consistency.py
   - python3 scripts/ci/check-doc-review-age.py
+  - bash scripts/ci/check-runbook-invariants.sh
 
 indexing:
   enabled: true

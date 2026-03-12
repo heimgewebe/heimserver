@@ -12,7 +12,7 @@ verifies_with:
   - scripts/ci/check_repo_index_consistency.py
 ---
 
-# 05-adding-docs.md
+# Adding Docs Guide
 
 **Goal:** Correctly add a new canonical document to the Heimserver repository.
 
@@ -59,7 +59,7 @@ zones:
 Run the consistency check to ensure the frontmatter is valid and the file is registered correctly.
 
 ```bash
-bash scripts/ci/check_repo_index_consistency.py
+python3 scripts/ci/check_repo_index_consistency.py
 ```
 
 ## 4. Update System Map

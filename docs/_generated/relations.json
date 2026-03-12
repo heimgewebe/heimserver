@@ -42,12 +42,12 @@
     },
     {
       "id": "runbooks-index",
-      "path": "runbooks/00-index.md",
+      "path": "runbooks/index.md",
       "zone": "runbooks"
     },
     {
       "id": "runbook-adding-docs",
-      "path": "runbooks/05-adding-docs.md",
+      "path": "runbooks/adding-docs.md",
       "zone": "runbooks"
     },
     {

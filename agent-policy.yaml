@@ -25,6 +25,7 @@ guarded_write_paths:
   - runtime/
   - runbooks/
   - manifest/repo-index.yaml
+  - docs/
 
 forbidden_write_paths:
   - ops/audit/snapshots/
@@ -45,9 +46,11 @@ required_checks_before_patch:
   - python3 scripts/ci/check_repo_index_consistency.py
   - bash ops/checks/preflight.sh
   - python3 scripts/ci/check-doc-review-age.py
+  - bash scripts/ci/check-runbook-invariants.sh
 
 artifact_refresh_steps:
   - python3 scripts/generate-relations.py
+  - python3 scripts/generate-system-map.py
   - python3 scripts/docmeta/generate-architecture-drift.py
   - python3 scripts/docmeta/generate-doc-coverage.py
   - python3 scripts/docmeta/generate-knowledge-gaps.py
