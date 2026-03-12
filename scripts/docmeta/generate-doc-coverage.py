@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from scripts.lib.docmeta import load_repo_index, MANIFEST_PATH
 
 def parse_impl_registry():
     impl_registry_path = 'audit/impl-registry.yaml'
@@ -43,6 +47,16 @@ def parse_impl_registry():
 
 def generate_doc_coverage():
     implementations = parse_impl_registry()
+    manifest = load_repo_index(MANIFEST_PATH) if os.path.exists(MANIFEST_PATH) else {}
+    zones = manifest.get('zones', {})
+
+    # Build list of all valid canonical document paths
+    canonical_doc_paths = set()
+    for zone_name, zone_data in zones.items():
+        base_path = zone_data.get('path', '')
+        for doc in zone_data.get('canonical_docs', []):
+            filepath = os.path.join(base_path, doc).replace('\\', '/')
+            canonical_doc_paths.add(filepath)
 
     os.makedirs('docs/_generated', exist_ok=True)
     with open('docs/_generated/doc-coverage.md', 'w', encoding='utf-8') as f:
@@ -61,9 +75,23 @@ def generate_doc_coverage():
                 status = "⚠ Undocumented"
                 docs_str = "-"
             else:
-                # Basic heuristic: if it has docs, it's considered covered for now.
-                status = "✅ Fully Documented"
-                docs_str = ", ".join([f"`{d}`" for d in docs])
+                invalid_docs = []
+                valid_docs = []
+                for doc in docs:
+                    # Check existence
+                    if not os.path.exists(doc):
+                        invalid_docs.append(f"{doc} (Missing File)")
+                    elif doc.replace('\\', '/') not in canonical_doc_paths:
+                        invalid_docs.append(f"{doc} (Not Canonical/Unregistered)")
+                    else:
+                        valid_docs.append(doc)
+
+                if invalid_docs:
+                    status = "❌ Invalid Coverage"
+                    docs_str = ", ".join([f"`{d}`" for d in valid_docs] + [f"`{d}`" for d in invalid_docs])
+                else:
+                    status = "✅ Fully Documented"
+                    docs_str = ", ".join([f"`{d}`" for d in valid_docs])
 
             f.write(f"| `{impl_id}` | {impl_type} | {docs_str} | {status} |\n")
 

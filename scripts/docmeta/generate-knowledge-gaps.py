@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import os
+import sys
 
-# Re-use parser
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PATH
+
 def parse_impl_registry():
     impl_registry_path = 'audit/impl-registry.yaml'
     implementations = []
@@ -44,7 +47,8 @@ def generate_knowledge_gaps():
 
     gaps = {
         "operational_gaps": [],
-        "terminology_gaps": []
+        "terminology_gaps": [],
+        "epistemic_gaps": []
     }
 
     for impl in implementations:
@@ -52,9 +56,61 @@ def generate_knowledge_gaps():
         if not docs:
             gaps["operational_gaps"].append(f"Critical implementation `{impl.get('id')}` (`{impl.get('path')}`) has no documentation linkage.")
 
-    # Extremely basic heuristic: if glossary exists, it's a good start. We aren't doing full NLP here yet.
     if not os.path.exists('architecture/glossary.md'):
          gaps["terminology_gaps"].append("No canonical `architecture/glossary.md` found to govern terms.")
+
+    # Canonical Drift Analysis
+    if os.path.exists(MANIFEST_PATH):
+        manifest = load_repo_index(MANIFEST_PATH)
+        zones = manifest.get('zones', {})
+
+        all_docs = {}
+        for zone_name, zone_data in zones.items():
+            base_path = zone_data.get('path', '')
+            for doc in zone_data.get('canonical_docs', []):
+                filepath = os.path.join(base_path, doc).replace('\\', '/')
+                fm = parse_frontmatter(filepath)
+                if fm and 'id' in fm:
+                    all_docs[fm['id']] = {
+                        'filepath': filepath,
+                        'canonicality': fm.get('canonicality'),
+                        'depends_on': fm.get('depends_on', [])
+                    }
+
+        # Find orphans (nobody depends on them) and missing sources
+        all_dependencies = set()
+        for doc_id, meta in all_docs.items():
+            deps = meta['depends_on']
+            if isinstance(deps, str):
+                deps = [deps]
+            for dep in deps:
+                all_dependencies.add(dep)
+
+        for doc_id, meta in all_docs.items():
+            canonicality = meta['canonicality']
+            deps = meta['depends_on']
+
+            # Orphaned canonical document
+            if canonicality == 'canonical':
+                is_referenced = False
+                for other_doc_id, other_meta in all_docs.items():
+                    if other_doc_id != doc_id:
+                        other_deps = other_meta['depends_on']
+                        if isinstance(other_deps, str):
+                            other_deps = [other_deps]
+
+                        # Match by doc_id or filepath
+                        if doc_id in other_deps or meta['filepath'] in other_deps or os.path.basename(meta['filepath']) in other_deps:
+                            is_referenced = True
+                            break
+
+                if not is_referenced and doc_id != 'docs.index':
+                    gaps["epistemic_gaps"].append(f"Canonical Drift: `{doc_id}` (`{meta['filepath']}`) is marked as canonical but is entirely orphaned (no incoming links). Is it truly canonical?")
+
+            # Derived document missing source
+            elif canonicality == 'derived':
+                if not deps or len(deps) == 0:
+                    gaps["epistemic_gaps"].append(f"Role Validation: `{doc_id}` (`{meta['filepath']}`) is marked as derived but fails to reference its canonical source via `depends_on`.")
 
     os.makedirs('docs/_generated', exist_ok=True)
     with open('docs/_generated/knowledge-gaps.md', 'w', encoding='utf-8') as f:
@@ -74,6 +130,13 @@ def generate_knowledge_gaps():
                 f.write(f"- {gap}\n")
         else:
             f.write("_No major terminology gaps detected (Glossary is present)._\n")
+
+        f.write("\n## Epistemic Gaps (Canonical Drift)\n")
+        if gaps["epistemic_gaps"]:
+            for gap in gaps["epistemic_gaps"]:
+                f.write(f"- {gap}\n")
+        else:
+            f.write("_No semantic inflation or canonical drift detected._\n")
 
     print("Successfully generated docs/_generated/knowledge-gaps.md")
 
