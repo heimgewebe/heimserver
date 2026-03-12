@@ -23,6 +23,7 @@ canonical_sources:
   - architecture/
   - runtime/
   - ops/checks/preflight.sh
+  - docs/index.md
 
 discovery_roots:
   - architecture/

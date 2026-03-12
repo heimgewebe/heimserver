@@ -15,7 +15,7 @@ Dieses Dokument bildet den zentralen Einstieg in die strukturierte Dokumentation
 
 ## 🧭 Generierte Orientierung
 
-Diese maschinell generierten Übersichten bilden die aktuelle Realität des Repositories ab:
+Diese maschinell generierten Übersichten bilden strukturierte Sichtweisen auf das Repository ab:
 - **[System Map](../SYSTEM_MAP.md):** Die kanonische Übersicht über alle Zonen und verifizierten Dokumente.
 - **[Document Index](_generated/doc-index.md):** Eine tabellarische Übersicht aller gefundenen Dokumente im Repo.
 - **[Implementations Index](_generated/impl-index.md):** Liste der kritischen Skripte und Checks.
