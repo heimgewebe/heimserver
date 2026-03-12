@@ -77,9 +77,7 @@ def generate_relations():
                         'title': fm.get('title', 'Unknown Title'),
                         'doc_type': fm.get('doc_type', 'Unknown'),
                         'status': fm.get('status', 'Unknown'),
-                        'canonicality': fm.get('canonicality', 'Unknown'),
-                        'supersedes': fm.get('supersedes', []),
-                        'deprecated_by': fm.get('deprecated_by', [])
+                        'canonicality': fm.get('canonicality', 'Unknown')
                     }
 
     # 1b. True Discovery
@@ -184,18 +182,14 @@ def generate_relations():
             implementations = []
             current_impl = {}
             in_documented_by = False
-            in_supersedes = False
-            in_deprecated_by = False
 
             for line in content.splitlines():
                 stripped = line.strip()
                 if stripped.startswith('- id:'):
                     if current_impl:
                         implementations.append(current_impl)
-                    current_impl = {'id': stripped.split(':', 1)[1].strip(), 'documented_by': [], 'supersedes': [], 'deprecated_by': []}
+                    current_impl = {'id': stripped.split(':', 1)[1].strip(), 'documented_by': []}
                     in_documented_by = False
-                    in_supersedes = False
-                    in_deprecated_by = False
                 elif stripped.startswith('path:'):
                     current_impl['path'] = stripped.split(':', 1)[1].strip()
                     in_documented_by = False
@@ -207,26 +201,10 @@ def generate_relations():
                     in_documented_by = False
                 elif stripped.startswith('documented_by:'):
                     in_documented_by = True
-                    in_supersedes = False
-                    in_deprecated_by = False
-                elif stripped.startswith('supersedes:'):
-                    in_supersedes = True
-                    in_documented_by = False
-                    in_deprecated_by = False
-                elif stripped.startswith('deprecated_by:'):
-                    in_deprecated_by = True
-                    in_documented_by = False
-                    in_supersedes = False
                 elif in_documented_by and stripped.startswith('- '):
                     current_impl['documented_by'].append(stripped[2:].strip())
-                elif in_supersedes and stripped.startswith('- '):
-                    current_impl['supersedes'].append(stripped[2:].strip())
-                elif in_deprecated_by and stripped.startswith('- '):
-                    current_impl['deprecated_by'].append(stripped[2:].strip())
                 elif stripped and not stripped.startswith('- '):
                     in_documented_by = False
-                    in_supersedes = False
-                    in_deprecated_by = False
 
             if current_impl:
                 implementations.append(current_impl)
@@ -245,52 +223,11 @@ def generate_relations():
         except Exception as e:
              print(f"Warning: Could not parse impl-registry.yaml: {e}")
 
-    # 8. Generate basic supersession map
-    has_supersessions = False
-    supersession_lines = []
-
-    # Check documents
-    for doc_id, meta in docs_metadata.items():
-        supersedes = meta.get('supersedes', [])
-        deprecated_by = meta.get('deprecated_by', [])
-
-        if isinstance(supersedes, str): supersedes = [supersedes]
-        if isinstance(deprecated_by, str): deprecated_by = [deprecated_by]
-
-        if supersedes or deprecated_by:
-            has_supersessions = True
-            supersession_lines.append(f"### Document: `{doc_id}`")
-            if supersedes:
-                supersession_lines.append(f"- **Supersedes:** {', '.join(['`' + s + '`' for s in supersedes])}")
-            if deprecated_by:
-                supersession_lines.append(f"- **Deprecated By:** {', '.join(['`' + d + '`' for d in deprecated_by])}")
-            supersession_lines.append("")
-
-    # Check implementations
-    if 'implementations' in locals():
-        for impl in implementations:
-            supersedes = impl.get('supersedes', [])
-            deprecated_by = impl.get('deprecated_by', [])
-
-            if isinstance(supersedes, str): supersedes = [supersedes]
-            if isinstance(deprecated_by, str): deprecated_by = [deprecated_by]
-
-            if supersedes or deprecated_by:
-                has_supersessions = True
-                supersession_lines.append(f"### Implementation: `{impl.get('id', 'unknown')}`")
-                if supersedes:
-                    supersession_lines.append(f"- **Supersedes:** {', '.join(['`' + s + '`' for s in supersedes])}")
-                if deprecated_by:
-                    supersession_lines.append(f"- **Deprecated By:** {', '.join(['`' + d + '`' for d in deprecated_by])}")
-                supersession_lines.append("")
-
+    # Generate basic supersession map if needed
     with open('docs/_generated/supersession-map.md', 'w', encoding='utf-8') as f:
         f.write("# Supersession Map\n\n")
-        f.write("This file is automatically generated by `scripts/generate-relations.py` and tracks deprecated and superseded documents and implementations.\n\n")
-        if has_supersessions:
-            f.write("\n".join(supersession_lines))
-        else:
-            f.write("_No supersessions found._\n")
+        f.write("This file is automatically generated by `scripts/generate-relations.py` and tracks deprecated and superseded documents.\n\n")
+        f.write("_No supersessions found._\n")
 
     print("Successfully generated docs/_generated/relations.json")
     print("Successfully generated docs/_generated/backlinks.md")

@@ -2,7 +2,7 @@
 
 ## Purpose
 Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agents. Es enthält explizite Policy-Regeln in `agent-policy.yaml` und Repo-Metadaten in `repo.meta.yaml`.
-Dieses Repo ist das operative Rückgrat (Ops-Orakel) für den Heimserver und managed die Infrastruktur des Weltgewebe Application Stacks.
+Dieses Repo ist das operative Rückgrat (Ops-Orakel) für den Heimserver und verwaltet die Infrastruktur des Weltgewebe Application Stacks.
 
 ## Read This First
 Dieses Repo folgt einer strikten Trennung zwischen Norm (Soll) und Realität (Ist).

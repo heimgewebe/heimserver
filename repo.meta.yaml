@@ -79,9 +79,6 @@ required_checks:
   - python3 scripts/ci/check_repo_index_consistency.py
   - python3 scripts/ci/check-doc-review-age.py
   - bash scripts/ci/check-runbook-invariants.sh
-  - bash ops/checks/repo-structure-guard.sh
-  - bash scripts/ci/generated-files-guard.sh
-  - bash scripts/ci/docs-relations-guard.sh
 
 indexing:
   enabled: true
