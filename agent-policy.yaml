@@ -41,7 +41,7 @@ requires_target_proof_for:
   - ops/checks/
 
 required_checks_before_patch:
-  - scripts/ci/check_repo_index_consistency.py
+  - python3 scripts/ci/check_repo_index_consistency.py
   - bash ops/checks/preflight.sh
   - python3 scripts/ci/check-doc-review-age.py
 
