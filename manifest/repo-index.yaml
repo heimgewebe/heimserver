@@ -29,3 +29,4 @@ checks:
   - scripts/ci/check-runbook-invariants.sh
   - scripts/ci/check-repo-index-consistency.sh
   - scripts/ci/check-doc-review-age.py
+  - ops/checks/repo-structure-guard.sh

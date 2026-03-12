@@ -1,0 +1,40 @@
+safe_read_paths:
+  - README.md
+  - AGENTS.md
+  - docs/
+  - architecture/
+  - manifest/
+  - runtime/
+  - operations/
+  - runbooks/
+
+guarded_write_paths:
+  - docs/
+  - architecture/
+  - manifest/
+  - operations/
+  - runbooks/
+  - ops/
+  - scripts/
+
+forbidden_write_paths:
+  - docs/_generated/
+  - ops/audit/snapshots/
+  - security/templates/wireguard/
+
+requires_target_proof_for:
+  - ops/
+  - scripts/
+
+required_checks_before_patch:
+  - ops/checks/preflight.sh
+  - scripts/ci/check-runbook-invariants.sh
+  - scripts/ci/check-repo-index-consistency.sh
+  - scripts/ci/check-doc-review-age.py
+  - ops/checks/repo-structure-guard.sh
+
+human_review_required_for:
+  - security/
+  - Caddyfile.example
+  - rules.v4.example
+  - rules.v6.example

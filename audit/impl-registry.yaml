@@ -1,0 +1,29 @@
+implementations:
+  - id: impl.check.preflight
+    path: ops/checks/preflight.sh
+    impl_type: script
+    status: active
+    documented_by:
+      - architecture/constitution.md
+    verified_by:
+      - ops/checks/preflight.sh
+    supersedes: []
+    deprecated_by: []
+
+  - id: impl.check.repo_index
+    path: scripts/ci/check-repo-index-consistency.sh
+    impl_type: script
+    status: active
+    documented_by:
+      - architecture/docmeta.schema.md
+    verified_by:
+      - scripts/ci/check-repo-index-consistency.sh
+
+  - id: impl.check.runbooks
+    path: scripts/ci/check-runbook-invariants.sh
+    impl_type: script
+    status: active
+    documented_by:
+      - runbooks/00-index.md
+    verified_by:
+      - scripts/ci/check-runbook-invariants.sh

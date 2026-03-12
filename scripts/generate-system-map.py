@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PATH
 
-OUTPUT_FILE = 'SYSTEM_MAP.md'
+OUTPUT_FILE = 'docs/_generated/system-map.md'
 
 def generate_system_map(manifest):
     lines = []

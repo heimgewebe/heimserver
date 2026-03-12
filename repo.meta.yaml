@@ -1,0 +1,81 @@
+repo_name: heimserver
+repo_type: core
+role: infrastructure-node
+status: active
+summary: >
+  Heimserver Ops Repo. Das kanonische Repository für die Infrastruktur des Heimservers.
+
+owners:
+  - heimgewebe-ops
+
+primary_languages:
+  - bash
+  - python
+  - markdown
+  - yaml
+
+entrypoints:
+  - README.md
+  - AGENTS.md
+  - docs/index.md
+
+canonical_sources:
+  - repo.meta.yaml
+  - AGENTS.md
+  - docs/index.md
+  - manifest/repo-index.yaml
+
+discovery_roots:
+  - architecture/
+  - runtime/
+  - operations/
+  - runbooks/
+  - ops/
+  - scripts/
+  - docs/
+
+generated_artifacts:
+  - docs/_generated/doc-index.md
+  - docs/_generated/system-map.md
+  - docs/_generated/orphans.md
+  - docs/_generated/impl-index.md
+
+safe_read_paths:
+  - README.md
+  - AGENTS.md
+  - docs/
+  - architecture/
+  - manifest/
+
+guarded_write_paths:
+  - docs/
+  - scripts/
+  - ops/
+  - architecture/
+
+forbidden_write_paths:
+  - docs/_generated/
+  - ops/audit/snapshots/
+
+required_checks:
+  - ops/checks/preflight.sh
+  - scripts/ci/check-runbook-invariants.sh
+  - scripts/ci/check-repo-index-consistency.sh
+  - scripts/ci/check-doc-review-age.py
+  - ops/checks/repo-structure-guard.sh
+
+indexing:
+  enabled: true
+  require_frontmatter_for_docs: true
+  require_registry_for_critical_impl: true
+  fail_on_untyped_docs: true
+  fail_on_missing_doc_index: true
+  fail_on_orphans: false
+  fail_on_unmapped_critical_impl: false
+
+related_repos: []
+
+keywords:
+  - docs
+  - agent-ready
+  - ops

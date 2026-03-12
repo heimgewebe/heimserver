@@ -1,8 +1,8 @@
 # heimserver
 
-Kanonischer Kontext liegt in [`architecture/constitution.md`](architecture/constitution.md).
+Kanonischer Einstieg in die Wahrheitsschichten: [`docs/index.md`](docs/index.md)
 
-Primärer Einstieg für Agents: [`AGENTS.md`](AGENTS.md).
+Agentischer Einstieg und Arbeitsgrenzen: [`AGENTS.md`](AGENTS.md) und [`agent-policy.yaml`](agent-policy.yaml).
 
 ## Struktur & Hierarchie
 
@@ -24,17 +24,18 @@ Zusätzlich:
 
 ## Declarative Repo Structure
 
-The repository structure is declared in:
+The repository identity and overarching policies are declared in [`repo.meta.yaml`](repo.meta.yaml).
+
+The documentation zone structure is declared in:
 `manifest/repo-index.yaml`
 
 Only canonical docs should be listed in `manifest/repo-index.yaml`.
 
 A human-readable system overview is generated in:
-[`SYSTEM_MAP.md`](SYSTEM_MAP.md)
+[`docs/_generated/system-map.md`](docs/_generated/system-map.md)
 
-Do not edit SYSTEM_MAP.md manually.
-Regenerate via:
-`python3 scripts/generate-system-map.py`
+Do not edit generated files manually.
+Regenerate via the scripts in `scripts/docmeta/` and `scripts/generate-system-map.py`.
 
 ## Safety Checks (vor jedem Push)
 
