@@ -47,6 +47,10 @@ required_checks_before_patch:
 
 artifact_refresh_steps:
   - python3 scripts/generate-relations.py
+  - python3 scripts/docmeta/generate-architecture-drift.py
+  - python3 scripts/docmeta/generate-doc-coverage.py
+  - python3 scripts/docmeta/generate-knowledge-gaps.py
+  - python3 scripts/docmeta/generate-agent-readiness.py
 
 human_review_required_for:
   - architecture/networking/
