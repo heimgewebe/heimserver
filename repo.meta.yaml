@@ -76,7 +76,7 @@ external_sensitive_paths:
 
 required_checks:
   - bash ops/checks/preflight.sh
-  - scripts/ci/check_repo_index_consistency.py
+  - python3 scripts/ci/check_repo_index_consistency.py
   - python3 scripts/ci/check-doc-review-age.py
   - bash scripts/ci/check-runbook-invariants.sh
 

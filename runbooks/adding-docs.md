@@ -28,8 +28,8 @@ role: norm
 status: active
 canonicality: canonical
 doc_type: guide
-title: Adding Docs Guide
-summary: How to add canonical documents
+title: My New Document
+summary: Short summary of what this document defines
 last_reviewed: 2026-02-18
 depends_on: []
 verifies_with: []
