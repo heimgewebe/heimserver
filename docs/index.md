@@ -13,6 +13,12 @@ summary: Zentrale Einstiegs- und Orientierungsseite für die gesamte Dokumentati
 
 Dieses Dokument bildet den zentralen Einstieg in die strukturierte Dokumentation des Repositories.
 
+## 📖 Lesereihenfolge
+1. **[Architektur & Norm](#architektur--norm)** - Verstehe die Regeln, Netzwerke und Kern-Konzepte.
+2. **[Runtime & Realität](#runtime--realität)** - Betrachte den aktuellen Systemzustand.
+3. **[Operationen & Runbooks](#operationen--runbooks)** - Lerne wie man eingreift und Handlungsabläufe ausführt.
+4. **[Entscheidungen (Decisions)](#entscheidungen-decisions)** - Erfahre das "Warum" hinter Änderungen am System.
+
 ## 🧭 Generierte Orientierung
 
 Diese maschinell generierten Übersichten bilden strukturierte Sichtweisen auf das Repository ab:
@@ -53,3 +59,6 @@ Hier steht, wie wir eingreifen, wenn das System drifftet oder Updates braucht.
 ### Entscheidungen (Decisions)
 Wenn wir das System grundlegend ändern, dokumentieren wir hier warum.
 - [0001: Adopt Agentic Blueprint](decisions/0001-adopt-agentic-blueprint.md)
+
+### Archiv-/Historisierungslogik
+Überholte Dokumente bleiben erhalten, werden als `deprecated` oder `archived` markiert und referenzieren mithilfe von `supersedes` oder `deprecated_by` ihre Vorgänger und Nachfolger. Veraltete Implementierungen werden ebenfalls historisiert, anstatt gelöscht zu werden. Dies stellt sicher, dass historische Begründungen verstanden werden können. Details dazu finden sich in der generierten [Supersession Map](_generated/supersession-map.md).
