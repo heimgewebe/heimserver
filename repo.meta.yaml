@@ -15,6 +15,7 @@ entrypoints:
   - README.md
   - AGENTS.md
   - SYSTEM_MAP.md
+  - docs/index.md
 
 canonical_sources:
   - repo.meta.yaml
@@ -50,6 +51,7 @@ safe_read_paths:
   - runtime/
   - runbooks/
   - manifest/
+  - docs/
   - repo.meta.yaml
   - SYSTEM_MAP.md
 

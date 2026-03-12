@@ -25,7 +25,7 @@ Diese maschinell generierten Übersichten bilden die aktuelle Realität des Repo
 
 ## 🔭 Repo Observatorium
 
-Das Observatorium diagnostiziert kontinuierlich den agentischen Gesundheitszustand und die Wahrheitstreue dieses Repositories:
+Das Observatorium liefert generierte Übersichten zum agentischen Gesundheitszustand und zur Wahrheitstreue dieses Repositories:
 - **[Architecture Drift](_generated/architecture-drift.md):** Zeigt, wo die reale Pfadstruktur von der dokumentierten abweicht.
 - **[Doc Coverage](_generated/doc-coverage.md):** Zeigt, welche kritischen Implementierungen unzureichend dokumentiert sind.
 - **[Knowledge Gaps](_generated/knowledge-gaps.md):** Legt implizite Leerstellen in Operationen und Terminologie offen.

@@ -67,7 +67,7 @@ Repo enthält nur:
 - Templates: `security/templates/`
 - Runbooks: `runbooks/`
 - Manifest: `manifest/`
-- Generierte Übersichten (nicht manuell editieren): `docs/_generated/`
+- Generierte Übersichten (nicht manuell editieren): `SYSTEM_MAP.md`, `docs/_generated/`
 
 ## Drift-Trigger (immer Preflight)
 

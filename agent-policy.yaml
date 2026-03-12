@@ -15,6 +15,7 @@ safe_read_paths:
   - runtime/
   - runbooks/
   - manifest/
+  - docs/
   - AGENTS.md
   - repo.meta.yaml
   - SYSTEM_MAP.md

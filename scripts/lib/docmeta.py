@@ -5,7 +5,7 @@ import re
 
 MANIFEST_PATH = 'manifest/repo-index.yaml'
 ALLOWED_ROLES = {"norm", "reality", "action", "runbooks", "docs", "decisions"}
-ALLOWED_STATUS = {"active", "deprecated", "experimental", "archived", "draft"}
+ALLOWED_STATUS = {"active", "deprecated", "experimental", "archived"}
 ALLOWED_CANONICALITY = {"canonical", "derived", "explanatory"}
 ALLOWED_DOC_TYPES = {"identity", "architecture", "decision", "runbook", "guide", "reference", "policy", "status", "generated", "archive", "experimental"}
 
