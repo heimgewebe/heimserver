@@ -34,8 +34,8 @@
 
 | Document | ID | Status | Reviewed | Verifies With |
 |---|---|---|---|---|
-| [00-index.md](runbooks/00-index.md) | `runbooks-index` | active | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
-| [05-adding-docs.md](runbooks/05-adding-docs.md) | `runbook-adding-docs` | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
+| [index.md](runbooks/index.md) | `runbooks-index` | active | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
+| [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
 | [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | active | 2026-02-25 | `ops/checks/preflight.sh` |
 | [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | active | 2026-03-07 | - |
 | [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | active | 2026-03-11 | - |
@@ -47,7 +47,7 @@ Documents that depend on others:
 - **glossary.md** depends on: `constitution`
 - **runtime.md** depends on: `architecture/constitution.md`, `architecture/network.md`
 - **operations.md** depends on: `runtime/runtime.md`
-- **ops.runbook.edge-caddy-port-conflict.md** depends on: `architecture/networking/port-matrix.md`, `runbooks/00-index.md`
+- **ops.runbook.edge-caddy-port-conflict.md** depends on: `architecture/networking/port-matrix.md`, `runbooks/index.md`
 - **ops.runbook.weltgewebe-stack.md** depends on: `architecture/naming.md`, `architecture/networking/port-matrix.md`
 - **ops.runbook.heimserver-edge.md** depends on: `architecture/network.md`, `architecture/networking/port-matrix.md`
 

@@ -48,7 +48,7 @@ Hier dokumentieren wir in Snapshots, wie der Server *tatsächlich* gerade läuft
 ### Operationen & Runbooks
 Hier steht, wie wir eingreifen, wenn das System drifftet oder Updates braucht.
 - [Operations Policy](../operations/operations.md)
-- [Runbooks Index](../runbooks/00-index.md)
+- [Runbooks Index](../runbooks/index.md)
 
 ### Entscheidungen (Decisions)
 Wenn wir das System grundlegend ändern, dokumentieren wir hier warum.

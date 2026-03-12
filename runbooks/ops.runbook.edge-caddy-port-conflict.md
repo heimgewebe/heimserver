@@ -9,7 +9,7 @@ summary: Steps to resolve Caddy port conflicts
 last_reviewed: 2026-02-25
 depends_on:
   - architecture/networking/port-matrix.md
-  - runbooks/00-index.md
+  - runbooks/index.md
 verifies_with:
   - ops/checks/preflight.sh
 ---
