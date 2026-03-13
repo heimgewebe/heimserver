@@ -9,4 +9,4 @@ _No explicit operational knowledge gaps detected._
 _No major terminology gaps detected (Glossary is present)._
 
 ## Reference Review Signals
-- Reference Review Signal: canonical document `operations` (`operations/operations.md`) currently has no detected incoming references. This may be intentional for entry or operational documents.
+- Reference Review Signal: canonical document `operations` (`operations/operations.md`) currently has no detected incoming references. This may still be intentional for certain standalone or operational documents.

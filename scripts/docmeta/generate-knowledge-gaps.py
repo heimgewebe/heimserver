@@ -104,7 +104,7 @@ def generate_knowledge_gaps():
                 )
 
                 if not is_referenced and not is_entry_doc:
-                    gaps["epistemic_gaps"].append(f"Reference Review Signal: canonical document `{doc_id}` (`{meta['filepath']}`) currently has no detected incoming references. This may be intentional for entry or operational documents.")
+                    gaps["epistemic_gaps"].append(f"Reference Review Signal: canonical document `{doc_id}` (`{meta['filepath']}`) currently has no detected incoming references. This may still be intentional for certain standalone or operational documents.")
 
             # Derived document missing source
             elif canonicality == 'derived':
