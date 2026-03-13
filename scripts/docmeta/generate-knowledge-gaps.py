@@ -78,14 +78,6 @@ def generate_knowledge_gaps():
                     }
 
         # Find orphans (nobody depends on them) and missing sources
-        all_dependencies = set()
-        for doc_id, meta in all_docs.items():
-            deps = meta['depends_on']
-            if isinstance(deps, str):
-                deps = [deps]
-            for dep in deps:
-                all_dependencies.add(dep)
-
         for doc_id, meta in all_docs.items():
             canonicality = meta['canonicality']
             deps = meta['depends_on']
@@ -105,12 +97,12 @@ def generate_knowledge_gaps():
                             break
 
                 if not is_referenced and doc_id != 'docs.index':
-                    gaps["epistemic_gaps"].append(f"Canonical Drift: `{doc_id}` (`{meta['filepath']}`) is marked as canonical but is entirely orphaned (no incoming links). Is it truly canonical?")
+                    gaps["epistemic_gaps"].append(f"Reference Sparsity: canonical document `{doc_id}` (`{meta['filepath']}`) currently has no incoming references. Review whether this is intentional.")
 
             # Derived document missing source
             elif canonicality == 'derived':
                 if not deps or len(deps) == 0:
-                    gaps["epistemic_gaps"].append(f"Role Validation: `{doc_id}` (`{meta['filepath']}`) is marked as derived but fails to reference its canonical source via `depends_on`.")
+                    gaps["epistemic_gaps"].append(f"Source Traceability Gap: `{doc_id}` (`{meta['filepath']}`) is marked as derived but does not reference a canonical source via `depends_on`.")
 
     os.makedirs('docs/_generated', exist_ok=True)
     with open('docs/_generated/knowledge-gaps.md', 'w', encoding='utf-8') as f:

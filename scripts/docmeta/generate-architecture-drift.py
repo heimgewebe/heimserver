@@ -43,7 +43,7 @@ def parse_impl_registry():
             if current_impl:
                 implementations.append(current_impl)
         except Exception as e:
-            pass
+            print(f"Warning: failed to parse implementation registry '{impl_registry_path}': {e}", file=sys.stderr)
     return implementations
 
 def extract_makefile_scripts():
@@ -110,7 +110,7 @@ def generate_architecture_drift():
         f.write("\n## Implicit Dependencies (Infrastructure Coupling)\n")
         if unregistered_scripts:
             f.write("**Severity:** `warn`\n\n")
-            f.write("The following scripts are actively executed by `Makefile` or reside in `scripts/ci/`, but are NOT formally registered in `audit/impl-registry.yaml`:\n")
+            f.write("The following scripts were discovered via `Makefile` references or by scanning the `scripts/ci/` directory but are not registered in `audit/impl-registry.yaml`:\n")
             for script in unregistered_scripts:
                 f.write(f"- `{script}`\n")
             f.write("\n_Recommendation: Register these scripts to ensure they are formally tracked and documented._\n")

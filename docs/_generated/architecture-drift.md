@@ -14,7 +14,7 @@ The following top-level paths exist but are not tracked as canonical zones or di
 ## Implicit Dependencies (Infrastructure Coupling)
 **Severity:** `warn`
 
-The following scripts are actively executed by `Makefile` or reside in `scripts/ci/`, but are NOT formally registered in `audit/impl-registry.yaml`:
+The following scripts were discovered via `Makefile` references or by scanning the `scripts/ci/` directory but are not registered in `audit/impl-registry.yaml`:
 - `ops/checks/redact_snapshot.sh`
 - `ops/checks/snapshot.sh`
 - `ops/init-secrets-path.sh`

@@ -82,7 +82,7 @@ def generate_doc_coverage():
                     if not os.path.exists(doc):
                         invalid_docs.append(f"{doc} (Missing File)")
                     elif doc.replace('\\', '/') not in canonical_doc_paths:
-                        invalid_docs.append(f"{doc} (Not Canonical/Unregistered)")
+                        invalid_docs.append(f"{doc} (Not Canonical / Not Registered)")
                     else:
                         valid_docs.append(doc)
 
