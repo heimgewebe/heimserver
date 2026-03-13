@@ -96,8 +96,15 @@ def generate_knowledge_gaps():
                             is_referenced = True
                             break
 
-                if not is_referenced and doc_id != 'docs.index':
-                    gaps["epistemic_gaps"].append(f"Reference Sparsity: canonical document `{doc_id}` (`{meta['filepath']}`) currently has no incoming references. Review whether this is intentional.")
+                is_entry_doc = (
+                    doc_id.endswith('.index') or
+                    'index' in os.path.basename(meta['filepath']).lower() or
+                    'runbooks/' in meta['filepath'] or
+                    'decisions/' in meta['filepath']
+                )
+
+                if not is_referenced and not is_entry_doc:
+                    gaps["epistemic_gaps"].append(f"Reference Review Signal: canonical document `{doc_id}` (`{meta['filepath']}`) currently has no detected incoming references. This may still be intentional for certain standalone or operational documents.")
 
             # Derived document missing source
             elif canonicality == 'derived':
@@ -123,7 +130,7 @@ def generate_knowledge_gaps():
         else:
             f.write("_No major terminology gaps detected (Glossary is present)._\n")
 
-        f.write("\n## Epistemic Gaps (Canonical Drift)\n")
+        f.write("\n## Reference Review Signals\n")
         if gaps["epistemic_gaps"]:
             for gap in gaps["epistemic_gaps"]:
                 f.write(f"- {gap}\n")
