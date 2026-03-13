@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import re
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from scripts.lib.docmeta import load_repo_index, MANIFEST_PATH
@@ -21,6 +22,51 @@ def get_discovery_roots():
                 in_roots = False
     return roots
 
+def parse_impl_registry():
+    impl_registry_path = 'audit/impl-registry.yaml'
+    implementations = []
+    if os.path.exists(impl_registry_path):
+        try:
+            with open(impl_registry_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            current_impl = {}
+            for line in content.splitlines():
+                stripped = line.strip()
+                if stripped.startswith('- id:'):
+                    if current_impl:
+                        implementations.append(current_impl)
+                    current_impl = {'id': stripped.split(':', 1)[1].strip()}
+                elif stripped.startswith('path:'):
+                    current_impl['path'] = stripped.split(':', 1)[1].strip()
+
+            if current_impl:
+                implementations.append(current_impl)
+        except Exception as e:
+            print(f"Warning: failed to parse implementation registry '{impl_registry_path}': {e}", file=sys.stderr)
+    return implementations
+
+def extract_makefile_scripts():
+    scripts = set()
+    if os.path.exists('Makefile'):
+        with open('Makefile', 'r', encoding='utf-8') as f:
+            for line in f:
+                # Naive matching of bash/python3 commands
+                match = re.search(r'(?:bash|python3)\s+([^\s"\'&|;]+)', line)
+                if match:
+                    script_path = match.group(1)
+                    scripts.add(script_path)
+    return scripts
+
+def get_all_ci_scripts():
+    scripts = set()
+    ci_dir = 'scripts/ci'
+    if os.path.exists(ci_dir) and os.path.isdir(ci_dir):
+        for filename in os.listdir(ci_dir):
+            if filename.endswith('.py') or filename.endswith('.sh'):
+                scripts.add(os.path.join(ci_dir, filename).replace('\\', '/'))
+    return scripts
+
 def generate_architecture_drift():
     manifest = load_repo_index(MANIFEST_PATH) if os.path.exists(MANIFEST_PATH) else {}
     zones = manifest.get('zones', {})
@@ -36,6 +82,16 @@ def generate_architecture_drift():
         if d not in documented_zones and d not in discovery_roots:
             undocumented_paths.append(d)
 
+    # Implicit Infrastructure Coupling
+    registered_impls = parse_impl_registry()
+    registered_paths = {impl.get('path') for impl in registered_impls if impl.get('path')}
+
+    makefile_scripts = extract_makefile_scripts()
+    ci_scripts = get_all_ci_scripts()
+
+    all_discovered_scripts = makefile_scripts.union(ci_scripts)
+    unregistered_scripts = sorted(list(all_discovered_scripts - registered_paths))
+
     os.makedirs('docs/_generated', exist_ok=True)
     with open('docs/_generated/architecture-drift.md', 'w', encoding='utf-8') as f:
         f.write("# Architecture Drift Report\n\n")
@@ -50,6 +106,17 @@ def generate_architecture_drift():
         else:
             f.write("**Severity:** `info`\n\n")
             f.write("All major top-level paths appear to be tracked in `manifest/repo-index.yaml` or `repo.meta.yaml`.\n")
+
+        f.write("\n## Implicit Dependencies (Infrastructure Coupling)\n")
+        if unregistered_scripts:
+            f.write("**Severity:** `warn`\n\n")
+            f.write("The following scripts were discovered via `Makefile` references or by scanning the `scripts/ci/` directory but are not registered in `audit/impl-registry.yaml`:\n")
+            for script in unregistered_scripts:
+                f.write(f"- `{script}`\n")
+            f.write("\n_Recommendation: Register these scripts to ensure they are formally tracked and documented._\n")
+        else:
+            f.write("**Severity:** `info`\n\n")
+            f.write("No implicit infrastructure scripts detected. All discovered scripts are registered.\n")
 
     print("Successfully generated docs/_generated/architecture-drift.md")
 
