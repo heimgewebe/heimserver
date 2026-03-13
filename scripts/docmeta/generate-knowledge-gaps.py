@@ -74,12 +74,14 @@ def generate_knowledge_gaps():
                     all_docs[fm['id']] = {
                         'filepath': filepath,
                         'canonicality': fm.get('canonicality'),
+                        'doc_type': fm.get('doc_type'),
                         'depends_on': fm.get('depends_on', [])
                     }
 
         # Find orphans (nobody depends on them) and missing sources
         for doc_id, meta in all_docs.items():
             canonicality = meta['canonicality']
+            doc_type = meta.get('doc_type')
             deps = meta['depends_on']
 
             # Orphaned canonical document
@@ -96,8 +98,11 @@ def generate_knowledge_gaps():
                             is_referenced = True
                             break
 
-                if not is_referenced and doc_id != 'docs.index':
-                    gaps["epistemic_gaps"].append(f"Reference Sparsity: canonical document `{doc_id}` (`{meta['filepath']}`) currently has no incoming references. Review whether this is intentional.")
+                # Exclude expected leaf/entry nodes like runbooks, decisions, indices
+                if not is_referenced:
+                    if doc_id not in ['docs.index', 'runbooks.index', 'runbooks-index']:
+                        if doc_type not in ['decision', 'runbook', 'action', 'operations']:
+                            gaps["epistemic_gaps"].append(f"Reference Sparsity: canonical document `{doc_id}` (`{meta['filepath']}`) currently has no incoming references. Review whether this is intentional.")
 
             # Derived document missing source
             elif canonicality == 'derived':
@@ -123,12 +128,12 @@ def generate_knowledge_gaps():
         else:
             f.write("_No major terminology gaps detected (Glossary is present)._\n")
 
-        f.write("\n## Epistemic Gaps (Canonical Drift)\n")
+        f.write("\n## Reference Review Signals\n")
         if gaps["epistemic_gaps"]:
             for gap in gaps["epistemic_gaps"]:
                 f.write(f"- {gap}\n")
         else:
-            f.write("_No semantic inflation or canonical drift detected._\n")
+            f.write("_No reference sparsity or source traceability gaps detected._\n")
 
     print("Successfully generated docs/_generated/knowledge-gaps.md")
 
