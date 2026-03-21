@@ -110,10 +110,10 @@ Woran man erkennt, dass das PMTiles-Artefakt nicht korrekt bereitgestellt oder a
 
 **Diagnose:**
 
-1. **Mount-Pfad ermitteln:** Prüfe in der deployten Compose-Konfiguration des Weltgewebe-Stacks, welcher Host-Pfad für das PMTiles-Artefakt definiert ist.
+1. **Mount-Pfad ermitteln:** Prüfe in der aktiv deployten Compose-Konfiguration des Weltgewebe-Stacks (z.B. via `docker compose config`), welcher Host-Pfad für das PMTiles-Artefakt definiert ist.
 2. **Artefakt-Prüfung:** Prüfe, ob die Datei im dort definierten Host-Pfad tatsächlich vorhanden ist (z.B. via `ls -la <ermittelter-Pfad>`).
-3. **Serving-Pfad ermitteln:** Prüfe in der Caddy-Konfiguration des Weltgewebe-Deployments, unter welcher Route das Artefakt ausgeliefert wird.
-4. **Caddy-Auslieferung testen:** Führe einen Abruf gegen diesen expliziten Pfad durch (inklusive konkretem Dateinamen):
+3. **Serving-Pfad ermitteln:** Prüfe in der aktiven Caddy-Konfiguration des Weltgewebe-Deployments, unter welcher genauen Route und mit welchem Dateinamen das Artefakt ausgeliefert wird.
+4. **Caddy-Auslieferung testen:** Führe einen Abruf gegen diesen exakten Pfad durch:
 ```bash
 curl -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://weltgewebe.home.arpa/<ermittelte-Route-inklusive-Dateiname>
 ```
