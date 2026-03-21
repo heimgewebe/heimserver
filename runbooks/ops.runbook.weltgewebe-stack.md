@@ -43,9 +43,9 @@ Contract (Weltgewebe-Repo), Deploy, Health und operative Doku wieder deckungsgle
 
 ## 1.1 Basemap / PMTiles Bereitstellung (Hosting)
 
-Die Bereitstellung des Basemap-Artefakts (`.pmtiles`) erfolgt deployment-abhängig über die Weltgewebe-Compose- und Caddy-Konfiguration. Der Heimserver stellt den Betriebs-/Serve-Kontext bereit; der konkrete Artefaktpfad auf dem Host ergibt sich aus dem aktuell deployten Weltgewebe-Stand.
+Der Heimserver stellt den Betriebs-/Serve-Kontext für Basemap-Artefakte (`.pmtiles`) bereit. Der konkrete Artefaktpfad ergibt sich ausschließlich aus dem aktuell deployten Weltgewebe-Stand.
 
-**Wichtig:** Dies bedeutet *nicht*, dass der Weltgewebe-Client in Produktion bereits standardmäßig darauf zurückgreift (die client-seitige Standardschaltung `local-sovereign` bleibt getrennt im Weltgewebe-Repo). Dies belegt lediglich, dass die Hosting-Bereitschaft auf Infrastruktur-Ebene gegeben ist. Die tatsächliche Betriebsreife/E2E-Nachweis der lokalen Basemap-Nutzung ist weiterhin offen.
+**Wichtig:** Die clientseitige Standardschaltung (`local-sovereign`) bleibt getrennt im Weltgewebe-Repo. Die tatsächliche Betriebsreife/E2E-Nachweis der lokalen Basemap-Nutzung ist weiterhin offen.
 
 ## 2. Minimaler Gesundheitscheck (Health/Smoke)
 
@@ -110,11 +110,11 @@ Woran man erkennt, dass das PMTiles-Artefakt nicht korrekt bereitgestellt oder a
 
 **Diagnose:**
 
-1. **Mount-Pfad ermitteln:** Prüfe in der `docker-compose.yml` (bzw. in den definierten Volumes/Mounts) des Weltgewebe-Deployments, welcher Host-Pfad für das PMTiles-Artefakt verwendet wird.
-2. **Artefakt-Prüfung:** Prüfe, ob die `.pmtiles`-Datei im dort definierten Host-Pfad tatsächlich vorhanden ist (z.B. via `ls -la <ermittelter-Pfad>`).
+1. **Mount-Pfad ermitteln:** Prüfe in der deployten Compose-Konfiguration des Weltgewebe-Stacks, welcher Host-Pfad für das PMTiles-Artefakt definiert ist.
+2. **Artefakt-Prüfung:** Prüfe, ob die Datei im dort definierten Host-Pfad tatsächlich vorhanden ist (z.B. via `ls -la <ermittelter-Pfad>`).
 3. **Serving-Pfad ermitteln:** Prüfe in der Caddy-Konfiguration des Weltgewebe-Deployments, unter welcher Route das Artefakt ausgeliefert wird.
 4. **Caddy-Auslieferung testen:** Führe einen Abruf gegen diesen expliziten Pfad durch (inklusive konkretem Dateinamen):
 ```bash
-curl -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://weltgewebe.home.arpa/<ermittelter-Caddy-Pfad-inklusive-Dateiname>
+curl -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://weltgewebe.home.arpa/<ermittelte-Route-inklusive-Dateiname>
 ```
 *(Hinweis: Erwartet wird ein HTTP 200 OK)*
