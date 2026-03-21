@@ -43,7 +43,7 @@ Contract (Weltgewebe-Repo), Deploy, Health und operative Doku wieder deckungsgle
 
 ## 1.1 Basemap / PMTiles Bereitstellung (Hosting)
 
-Auf Infra-Ebene ist die Bereitstellung des Basemap-Artefakts (`.pmtiles`) vorgesehen bzw. vorbereitet. Die tatsächliche Auslieferung und der genaue Dateipfad auf dem Host (ob im Web-Build-Verzeichnis oder via separatem Mount) ergeben sich ausschließlich aus der jeweiligen Weltgewebe-Deployment- und Caddy-Konfiguration.
+Die Bereitstellung des Basemap-Artefakts (`.pmtiles`) erfolgt deployment-abhängig über die Weltgewebe-Compose- und Caddy-Konfiguration. Der Heimserver stellt den Betriebs-/Serve-Kontext bereit; der konkrete Artefaktpfad auf dem Host ergibt sich aus dem aktuell deployten Weltgewebe-Stand.
 
 **Wichtig:** Dies bedeutet *nicht*, dass der Weltgewebe-Client in Produktion bereits standardmäßig darauf zurückgreift (die client-seitige Standardschaltung `local-sovereign` bleibt getrennt im Weltgewebe-Repo). Dies belegt lediglich, dass die Hosting-Bereitschaft auf Infrastruktur-Ebene gegeben ist. Die tatsächliche Betriebsreife/E2E-Nachweis der lokalen Basemap-Nutzung ist weiterhin offen.
 
@@ -102,9 +102,9 @@ Woran man erkennt, dass NATS fehlt oder nicht korrekt läuft:
 **Lösung:**
 Sicherstellen, dass im Weltgewebe-Repo (Contract) der `nats` Service definiert und provisioniert ist und beim Deployment auf dem Heimserver mit hochgefahren wird.
 
-## 4. Symptome bei fehlendem Basemap-Artefakt (PMTiles)
+## 4. Symptome bei fehlender oder fehlerhafter Basemap-/PMTiles-Bereitstellung
 
-Woran man erkennt, dass das PMTiles-Artefakt nicht korrekt bereitgestellt wird:
+Woran man erkennt, dass das PMTiles-Artefakt nicht korrekt bereitgestellt oder ausgeliefert wird:
 - **Client-Fehler:** Die Karte lädt keine Hintergrundkacheln, im Netzwerk-Tab des Browsers erscheinen 404-Fehler für `.pmtiles`-Requests.
 - **Fehlendes Artefakt:** Die Datei existiert nicht im gemounteten Host-Pfad.
 
@@ -112,9 +112,9 @@ Woran man erkennt, dass das PMTiles-Artefakt nicht korrekt bereitgestellt wird:
 
 1. **Mount-Pfad ermitteln:** Prüfe in der `docker-compose.yml` (bzw. in den definierten Volumes/Mounts) des Weltgewebe-Deployments, welcher Host-Pfad für das PMTiles-Artefakt verwendet wird.
 2. **Artefakt-Prüfung:** Prüfe, ob die `.pmtiles`-Datei im dort definierten Host-Pfad tatsächlich vorhanden ist (z.B. via `ls -la <ermittelter-Pfad>`).
-3. **Serving-Pfad ermitteln:** Prüfe in der Caddy-Konfiguration, unter welcher Route das Artefakt ausgeliefert wird.
-4. **Caddy-Auslieferung testen:** Führe einen Abruf gegen diesen expliziten Pfad durch:
+3. **Serving-Pfad ermitteln:** Prüfe in der Caddy-Konfiguration des Weltgewebe-Deployments, unter welcher Route das Artefakt ausgeliefert wird.
+4. **Caddy-Auslieferung testen:** Führe einen Abruf gegen diesen expliziten Pfad durch (inklusive konkretem Dateinamen):
 ```bash
-curl -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://weltgewebe.home.arpa/<ermittelter-Caddy-Pfad>
+curl -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://weltgewebe.home.arpa/<ermittelter-Caddy-Pfad-inklusive-Dateiname>
 ```
 *(Hinweis: Erwartet wird ein HTTP 200 OK)*
