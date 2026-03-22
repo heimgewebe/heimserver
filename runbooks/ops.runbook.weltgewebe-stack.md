@@ -45,7 +45,7 @@ Contract (Weltgewebe-Repo), Deploy, Health und operative Doku wieder deckungsgle
 
 Der Heimserver stellt den Betriebs-/Serve-Kontext für Basemap-Artefakte (`.pmtiles`) bereit. Der konkrete Pfad und die Serving-Route ergeben sich aus der aktiv deployten Weltgewebe-Compose-/Caddy-Konfiguration.
 
-**Wichtig:** Die clientseitige Standardschaltung (`local-sovereign`) bleibt getrennt im Weltgewebe-Repo. Die tatsächliche Betriebsreife/E2E-Nachweis der lokalen Basemap-Nutzung ist weiterhin offen.
+**Wichtig:** Die clientseitige Standardschaltung (`local-sovereign`) bleibt getrennt im Weltgewebe-Repo. Die tatsächliche Betriebsreife und der E2E-Nachweis der lokalen Basemap-Nutzung bleiben weiterhin offen.
 
 ## 2. Minimaler Gesundheitscheck (Health/Smoke)
 
@@ -110,7 +110,7 @@ Woran man erkennt, dass das PMTiles-Artefakt nicht korrekt bereitgestellt oder a
 
 **Diagnose:**
 
-1. **Mount-Pfad ermitteln:** Prüfe im Compose-Projektkontext des aktiv deployten Weltgewebe-Stacks (z.B. via `docker compose config`), welcher Host-Pfad für das PMTiles-Artefakt definiert ist.
+1. **Mount-Pfad ermitteln:** Prüfe im Compose-Projektkontext des aktiv deployten Weltgewebe-Stacks die gerenderte Konfiguration (z. B. via `docker compose config`), um zu ermitteln, welcher Host-Pfad für das PMTiles-Artefakt definiert ist.
 2. **Artefakt-Prüfung:** Prüfe, ob die Datei im dort definierten Host-Pfad tatsächlich vorhanden ist (z.B. via `ls -la <ermittelter-Pfad>`).
 3. **Serving-Pfad ermitteln:** Prüfe in der aktiven Caddy-Konfiguration des Weltgewebe-Deployments, unter welcher genauen Route und mit welchem Dateinamen das Artefakt ausgeliefert wird.
 4. **Caddy-Auslieferung testen:** Führe einen Abruf gegen diesen exakten Pfad durch:
