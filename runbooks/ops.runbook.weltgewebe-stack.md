@@ -41,6 +41,12 @@ Die URLs verhalten sich wie folgt:
 **Ziel:**
 Contract (Weltgewebe-Repo), Deploy, Health und operative Doku wieder deckungsgleich machen. Heimgewebe und Weltgewebe bleiben strikt getrennt. Das Heimserver-Repo ist nur für Enforcement und Betrieb zuständig.
 
+## 1.1 Basemap / PMTiles Bereitstellung (Hosting)
+
+Der Heimserver stellt den Betriebs-/Serve-Kontext für Basemap-Artefakte (`.pmtiles`) bereit. Der konkrete Pfad und die Serving-Route ergeben sich aus der aktiv deployten Weltgewebe-Compose-/Caddy-Konfiguration.
+
+**Wichtig:** Die clientseitige Standardschaltung (`local-sovereign`) bleibt getrennt im Weltgewebe-Repo. Die tatsächliche Betriebsreife und der E2E-Nachweis der lokalen Basemap-Nutzung bleiben weiterhin offen.
+
 ## 2. Minimaler Gesundheitscheck (Health/Smoke)
 
 Der Stack muss vollständig laufen.
@@ -95,3 +101,20 @@ Woran man erkennt, dass NATS fehlt oder nicht korrekt läuft:
 
 **Lösung:**
 Sicherstellen, dass im Weltgewebe-Repo (Contract) der `nats` Service definiert und provisioniert ist und beim Deployment auf dem Heimserver mit hochgefahren wird.
+
+## 4. Symptome bei fehlender oder fehlerhafter Basemap-/PMTiles-Bereitstellung
+
+Woran man erkennt, dass das PMTiles-Artefakt nicht korrekt bereitgestellt oder ausgeliefert wird:
+- **Client-Fehler:** Die Karte lädt keine Hintergrundkacheln, im Netzwerk-Tab des Browsers erscheinen 404-Fehler für `.pmtiles`-Requests.
+- **Fehlendes Artefakt:** Die Datei existiert nicht im gemounteten Host-Pfad.
+
+**Diagnose:**
+
+1. **Mount-Pfad ermitteln:** Prüfe im Compose-Projektkontext des aktiv deployten Weltgewebe-Stacks die gerenderte Konfiguration (z. B. via `docker compose config`), um zu ermitteln, welcher Host-Pfad für das PMTiles-Artefakt definiert ist.
+2. **Artefakt-Prüfung:** Prüfe, ob die Datei im dort definierten Host-Pfad tatsächlich vorhanden ist (z.B. via `ls -la <ermittelter-Pfad>`).
+3. **Serving-Pfad ermitteln:** Prüfe in der aktiven Caddy-Konfiguration des Weltgewebe-Deployments, unter welcher genauen Route und mit welchem Dateinamen das Artefakt ausgeliefert wird.
+4. **Caddy-Auslieferung testen:** Führe einen Abruf gegen diesen exakten Pfad durch:
+```bash
+curl -fsS -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://weltgewebe.home.arpa/<ermittelte-Route-inklusive-Dateiname>
+```
+*(Hinweis: Erwartet wird ein HTTP 200 OK)*
