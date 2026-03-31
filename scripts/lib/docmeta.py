@@ -163,6 +163,7 @@ def get_discovery_roots(meta_path='repo.meta.yaml'):
                 in_roots = True
                 continue
             if in_roots and line.startswith('  - '):
+                # strip whitespace, remove '- ' prefix, strip again, remove trailing '/'
                 roots.append(line.strip()[2:].strip().rstrip('/'))
             elif in_roots and line.strip() and not line.startswith(' '):
                 in_roots = False

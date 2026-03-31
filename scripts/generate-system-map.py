@@ -93,7 +93,7 @@ def generate_system_map(manifest):
                 if isinstance(deps, str):
                     deps = [deps]
 
-                if isinstance(deps, list) and deps:
+                if deps:
                     deps_str = ", ".join([f"`{d}`" for d in deps])
                     deps_list.append(f"- **{doc}** depends on: {deps_str}")
 
