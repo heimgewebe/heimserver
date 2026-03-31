@@ -2,8 +2,10 @@
 
 import os
 import re
+import sys
 
 MANIFEST_PATH = 'manifest/repo-index.yaml'
+IMPL_REGISTRY_PATH = 'audit/impl-registry.yaml'
 ALLOWED_ROLES = {"norm", "reality", "action", "runbooks", "docs", "decisions"}
 ALLOWED_STATUS = {"active", "deprecated", "experimental", "archived"}
 ALLOWED_CANONICALITY = {"canonical", "derived", "explanatory"}
@@ -148,3 +150,63 @@ def parse_frontmatter(filepath):
                 current_list_key = None
 
     return data
+
+def get_discovery_roots(meta_path='repo.meta.yaml'):
+    """Parses discovery_roots from repo.meta.yaml (line-based)."""
+    roots = []
+    if os.path.exists(meta_path):
+        with open(meta_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        in_roots = False
+        for line in lines:
+            if line.startswith('discovery_roots:'):
+                in_roots = True
+                continue
+            if in_roots and line.startswith('  - '):
+                roots.append(line.strip()[2:].strip().rstrip('/'))
+            elif in_roots and line.strip() and not line.startswith(' '):
+                in_roots = False
+    return roots
+
+def parse_impl_registry(registry_path=IMPL_REGISTRY_PATH):
+    """Parses audit/impl-registry.yaml manually. Returns list of implementation dicts."""
+    implementations = []
+    if not os.path.exists(registry_path):
+        return implementations
+
+    try:
+        with open(registry_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        current_impl = {}
+        in_documented_by = False
+
+        for line in content.splitlines():
+            stripped = line.strip()
+            if stripped.startswith('- id:'):
+                if current_impl:
+                    implementations.append(current_impl)
+                current_impl = {'id': stripped.split(':', 1)[1].strip(), 'documented_by': []}
+                in_documented_by = False
+            elif stripped.startswith('path:'):
+                current_impl['path'] = stripped.split(':', 1)[1].strip()
+                in_documented_by = False
+            elif stripped.startswith('impl_type:'):
+                current_impl['impl_type'] = stripped.split(':', 1)[1].strip()
+                in_documented_by = False
+            elif stripped.startswith('status:'):
+                current_impl['status'] = stripped.split(':', 1)[1].strip()
+                in_documented_by = False
+            elif stripped.startswith('documented_by:'):
+                in_documented_by = True
+            elif in_documented_by and stripped.startswith('- '):
+                current_impl['documented_by'].append(stripped[2:].strip())
+            elif stripped and not stripped.startswith('- '):
+                in_documented_by = False
+
+        if current_impl:
+            implementations.append(current_impl)
+    except Exception as e:
+        print(f"Warning: Could not parse impl-registry.yaml: {e}", file=sys.stderr)
+
+    return implementations

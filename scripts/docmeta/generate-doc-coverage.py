@@ -3,47 +3,7 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from scripts.lib.docmeta import load_repo_index, MANIFEST_PATH
-
-def parse_impl_registry():
-    impl_registry_path = 'audit/impl-registry.yaml'
-    implementations = []
-    if os.path.exists(impl_registry_path):
-        try:
-            with open(impl_registry_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-            current_impl = {}
-            in_documented_by = False
-
-            for line in content.splitlines():
-                stripped = line.strip()
-                if stripped.startswith('- id:'):
-                    if current_impl:
-                        implementations.append(current_impl)
-                    current_impl = {'id': stripped.split(':', 1)[1].strip(), 'documented_by': []}
-                    in_documented_by = False
-                elif stripped.startswith('path:'):
-                    current_impl['path'] = stripped.split(':', 1)[1].strip()
-                    in_documented_by = False
-                elif stripped.startswith('impl_type:'):
-                    current_impl['impl_type'] = stripped.split(':', 1)[1].strip()
-                    in_documented_by = False
-                elif stripped.startswith('status:'):
-                    current_impl['status'] = stripped.split(':', 1)[1].strip()
-                    in_documented_by = False
-                elif stripped.startswith('documented_by:'):
-                    in_documented_by = True
-                elif in_documented_by and stripped.startswith('- '):
-                    current_impl['documented_by'].append(stripped[2:].strip())
-                elif stripped and not stripped.startswith('- '):
-                    in_documented_by = False
-
-            if current_impl:
-                implementations.append(current_impl)
-        except Exception as e:
-            print(f"Warning: Could not parse impl-registry.yaml: {e}")
-    return implementations
+from scripts.lib.docmeta import load_repo_index, parse_impl_registry, MANIFEST_PATH
 
 def generate_doc_coverage():
     implementations = parse_impl_registry()

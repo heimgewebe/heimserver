@@ -40,6 +40,20 @@
 | [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | active | 2026-03-07 | - |
 | [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | active | 2026-03-11 | - |
 
+## Zone: DECISIONS
+**Path:** `docs/decisions/`
+
+| Document | ID | Status | Reviewed | Verifies With |
+|---|---|---|---|---|
+| [0001-adopt-agentic-blueprint.md](docs/decisions/0001-adopt-agentic-blueprint.md) | `docs.decisions.0001` | active | 2026-03-11 | - |
+
+## Zone: DOCS
+**Path:** `docs/`
+
+| Document | ID | Status | Reviewed | Verifies With |
+|---|---|---|---|---|
+| [index.md](docs/index.md) | `docs.index` | active | 2026-03-11 | - |
+
 ## Dependencies
 Documents that depend on others:
 
@@ -50,6 +64,7 @@ Documents that depend on others:
 - **ops.runbook.edge-caddy-port-conflict.md** depends on: `architecture/networking/port-matrix.md`, `runbooks/index.md`
 - **ops.runbook.weltgewebe-stack.md** depends on: `architecture/naming.md`, `architecture/networking/port-matrix.md`
 - **ops.runbook.heimserver-edge.md** depends on: `architecture/network.md`, `architecture/networking/port-matrix.md`
+- **0001-adopt-agentic-blueprint.md** depends on: `docmeta.schema`, `glossary`
 
 ## Automated Checks
 - [`ops/checks/preflight.sh`](ops/checks/preflight.sh)

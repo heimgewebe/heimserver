@@ -4,47 +4,8 @@ import sys
 import re
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from scripts.lib.docmeta import load_repo_index, MANIFEST_PATH
+from scripts.lib.docmeta import load_repo_index, get_discovery_roots, parse_impl_registry, MANIFEST_PATH
 
-def get_discovery_roots():
-    roots = []
-    if os.path.exists('repo.meta.yaml'):
-        with open('repo.meta.yaml', 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-        in_roots = False
-        for line in lines:
-            if line.startswith('discovery_roots:'):
-                in_roots = True
-                continue
-            if in_roots and line.startswith('  - '):
-                roots.append(line.strip()[2:].strip().rstrip('/'))
-            elif in_roots and line.strip() and not line.startswith(' '):
-                in_roots = False
-    return roots
-
-def parse_impl_registry():
-    impl_registry_path = 'audit/impl-registry.yaml'
-    implementations = []
-    if os.path.exists(impl_registry_path):
-        try:
-            with open(impl_registry_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-            current_impl = {}
-            for line in content.splitlines():
-                stripped = line.strip()
-                if stripped.startswith('- id:'):
-                    if current_impl:
-                        implementations.append(current_impl)
-                    current_impl = {'id': stripped.split(':', 1)[1].strip()}
-                elif stripped.startswith('path:'):
-                    current_impl['path'] = stripped.split(':', 1)[1].strip()
-
-            if current_impl:
-                implementations.append(current_impl)
-        except Exception as e:
-            print(f"Warning: failed to parse implementation registry '{impl_registry_path}': {e}", file=sys.stderr)
-    return implementations
 
 def extract_makefile_scripts():
     scripts = set()

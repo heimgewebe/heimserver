@@ -19,8 +19,8 @@ def generate_system_map(manifest):
 
     zones = manifest.get('zones', {})
 
-    # Define order
-    zone_order = ['norm', 'reality', 'action', 'runbooks']
+    # Define order (must include all zones from manifest/repo-index.yaml)
+    zone_order = ['norm', 'reality', 'action', 'runbooks', 'decisions', 'docs']
 
     for zone_key in zone_order:
         if zone_key not in zones:
@@ -90,17 +90,11 @@ def generate_system_map(manifest):
             if fm and fm.get('depends_on'):
                 deps = fm.get('depends_on')
 
-                deps_arr = []
-                if isinstance(deps, list):
-                    deps_arr = deps
-                elif isinstance(deps, str):
-                    if deps.startswith('[') and deps.endswith(']'):
-                         pass
-                    else:
-                         deps_arr = [deps]
+                if isinstance(deps, str):
+                    deps = [deps]
 
-                if deps_arr:
-                    deps_str = ", ".join([f"`{d}`" for d in deps_arr])
+                if isinstance(deps, list) and deps:
+                    deps_str = ", ".join([f"`{d}`" for d in deps])
                     deps_list.append(f"- **{doc}** depends on: {deps_str}")
 
     if deps_list:
