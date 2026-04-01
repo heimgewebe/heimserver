@@ -71,7 +71,7 @@ def generate_system_map(manifest):
 
                 lines.append(f"| {file_link} | `{doc_id}` | {doc_role} | {status} | {reviewed} | {verifies_str} |")
             else:
-                 lines.append(f"| [{doc}]({link_path}) | ❌ Error | - | - | - | - |")
+                 lines.append(f"| [{doc}]({link_path}) | ❌ Parse Error | N/A | N/A | N/A | N/A |")
 
         lines.append("")
 

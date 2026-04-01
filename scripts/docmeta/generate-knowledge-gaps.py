@@ -52,6 +52,7 @@ def generate_knowledge_gaps():
                 if fm and 'id' in fm:
                     all_docs[fm['id']] = {
                         'filepath': filepath,
+                        'basename': os.path.basename(filepath),
                         'canonicality': fm.get('canonicality'),
                         'depends_on': fm.get('depends_on', []),
                         'doc_role': fm.get('doc_role', 'leaf'),
@@ -76,7 +77,7 @@ def generate_knowledge_gaps():
                         # Match by doc_id, full filepath, or basename
                         if (doc_id in other_deps
                                 or meta['filepath'] in other_deps
-                                or os.path.basename(meta['filepath']) in other_deps):
+                                or meta['basename'] in other_deps):
                             is_referenced = True
                             break
 
@@ -92,7 +93,7 @@ def generate_knowledge_gaps():
                     else:  # optional
                         gaps["review_signals"].append(
                             f"Reference review signal: {msg} "
-                            f"(doc_role={meta['doc_role'] or 'leaf'} → intentional isolation permitted)"
+                            f"(doc_role={meta['doc_role']} → intentional isolation permitted)"
                         )
 
             # Derived document: must declare its source
