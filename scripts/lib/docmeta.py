@@ -10,6 +10,16 @@ ALLOWED_ROLES = {"norm", "reality", "action", "runbooks", "docs", "decisions"}
 ALLOWED_STATUS = {"active", "deprecated", "experimental", "archived"}
 ALLOWED_CANONICALITY = {"canonical", "derived", "explanatory"}
 ALLOWED_DOC_TYPES = {"identity", "architecture", "decision", "runbook", "guide", "reference", "policy", "status", "generated", "archive", "experimental"}
+# Optional doc_role field: controls reference-expectation semantics.
+#   entry  → top-level hub, not expected to have incoming references (default policy: optional)
+#   leaf   → content document that should be referenced from elsewhere (default policy: required)
+#   bridge → connector document linking two conceptual areas (default policy: required)
+ALLOWED_DOC_ROLES = {"entry", "leaf", "bridge"}
+# Optional reference_policy field: explicit override for the reference check.
+#   required → unreferenced status is reported as a Gap (action required)
+#   optional → unreferenced status is reported as a Review Signal (contextual)
+#   none     → reference check suppressed entirely
+ALLOWED_REFERENCE_POLICIES = {"required", "optional", "none"}
 
 def _unquote(val):
     """Removes surrounding quotes from a string."""

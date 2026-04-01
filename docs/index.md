@@ -3,6 +3,7 @@ id: docs.index
 title: Canonical Documentation Index
 doc_type: reference
 role: docs
+doc_role: entry
 status: active
 canonicality: canonical
 last_reviewed: 2026-03-11

@@ -37,8 +37,8 @@ def generate_system_map(manifest):
             lines.append("_No documents listed._\n")
             continue
 
-        lines.append("| Document | ID | Status | Reviewed | Verifies With |")
-        lines.append("|---|---|---|---|---|")
+        lines.append("| Document | ID | Role | Status | Reviewed | Verifies With |")
+        lines.append("|---|---|---|---|---|---|")
 
         for doc in canonical_docs:
             # Use os.path.join for file system check
@@ -52,6 +52,7 @@ def generate_system_map(manifest):
 
             if fm:
                 doc_id = fm.get('id', 'N/A')
+                doc_role = fm.get('doc_role', '-')
                 status = fm.get('status', 'N/A')
                 reviewed = fm.get('last_reviewed', 'N/A')
                 verifies = fm.get('verifies_with', [])
@@ -68,9 +69,9 @@ def generate_system_map(manifest):
 
                 file_link = f"[{doc}]({link_path})"
 
-                lines.append(f"| {file_link} | `{doc_id}` | {status} | {reviewed} | {verifies_str} |")
+                lines.append(f"| {file_link} | `{doc_id}` | {doc_role} | {status} | {reviewed} | {verifies_str} |")
             else:
-                 lines.append(f"| [{doc}]({link_path}) | ❌ Error | - | - | - |")
+                 lines.append(f"| [{doc}]({link_path}) | ❌ Error | - | - | - | - |")
 
         lines.append("")
 

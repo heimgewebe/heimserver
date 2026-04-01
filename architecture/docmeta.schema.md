@@ -37,6 +37,8 @@ Every canonical document must start with a YAML frontmatter block containing the
 | `verifies_with` | list | No | List of scripts that verify this document's truth. |
 | `supersedes` | list | No | IDs of documents this document replaces. |
 | `deprecated_by` | list | No | IDs of documents replacing this one. |
+| `doc_role` | enum | No | Reference-expectation role. Defaults to `leaf`. See below. |
+| `reference_policy` | enum | No | Explicit override for the reference check. See below. |
 
 ### Allowed Values
 
@@ -61,6 +63,16 @@ Every canonical document must start with a YAML frontmatter block containing the
 
 **Doc Type:**
 - `identity`, `architecture`, `decision`, `runbook`, `guide`, `reference`, `policy`, `status`, `generated`, `archive`, `experimental`.
+
+**Doc Role** (optional, defaults to `leaf`):
+- `entry`: Top-level hub or index document. Not expected to have incoming references. Default `reference_policy`: `optional`.
+- `leaf`: Content document that should be reachable from other documents. Default `reference_policy`: `required`.
+- `bridge`: Connector document linking two conceptual areas. Default `reference_policy`: `required`.
+
+**Reference Policy** (optional, explicit override):
+- `required`: An unreferenced document is reported as an **Epistemic Gap** (action required).
+- `optional`: An unreferenced document is reported as a **Review Signal** (contextual, may be intentional).
+- `none`: The reference check is suppressed entirely.
 
 ## 2. Repo Index (`manifest/repo-index.yaml`)
 
