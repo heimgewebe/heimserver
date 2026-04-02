@@ -73,7 +73,9 @@ def generate_knowledge_gaps():
                     if other_doc_id != doc_id:
                         other_deps = other_meta['depends_on']
                         if isinstance(other_deps, str):
-                            other_deps = [other_deps]
+                            other_deps = {other_deps}
+                        else:
+                            other_deps = set(other_deps)
                         # Match by doc_id, full filepath, or basename
                         if (doc_id in other_deps
                                 or meta['filepath'] in other_deps
