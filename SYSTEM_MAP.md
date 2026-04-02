@@ -6,7 +6,7 @@
 ## Zone: NORM
 **Path:** `architecture/`
 
-| Document | ID | Role | Status | Reviewed | Verifies With |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
 | [constitution.md](architecture/constitution.md) | `constitution` | - | active | 2026-02-13 | `ops/checks/preflight.sh` |
 | [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
@@ -18,21 +18,21 @@
 ## Zone: REALITY
 **Path:** `runtime/`
 
-| Document | ID | Role | Status | Reviewed | Verifies With |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
 | [runtime.md](runtime/runtime.md) | `runtime` | - | active | 2026-02-18 | `ops/audit/collect.sh` |
 
 ## Zone: ACTION
 **Path:** `operations/`
 
-| Document | ID | Role | Status | Reviewed | Verifies With |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
 | [operations.md](operations/operations.md) | `operations` | - | active | 2026-02-13 | `ops/audit/collect.sh` |
 
 ## Zone: RUNBOOKS
 **Path:** `runbooks/`
 
-| Document | ID | Role | Status | Reviewed | Verifies With |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
 | [index.md](runbooks/index.md) | `runbooks-index` | entry | active | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
 | [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
@@ -43,14 +43,14 @@
 ## Zone: DECISIONS
 **Path:** `docs/decisions/`
 
-| Document | ID | Role | Status | Reviewed | Verifies With |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
 | [0001-adopt-agentic-blueprint.md](docs/decisions/0001-adopt-agentic-blueprint.md) | `docs.decisions.0001` | - | active | 2026-03-11 | - |
 
 ## Zone: DOCS
 **Path:** `docs/`
 
-| Document | ID | Role | Status | Reviewed | Verifies With |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
 | [index.md](docs/index.md) | `docs.index` | entry | active | 2026-03-11 | - |
 

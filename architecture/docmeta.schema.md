@@ -66,8 +66,13 @@ Every canonical document must start with a YAML frontmatter block containing the
 
 **Doc Role** (optional, defaults to `leaf`):
 - `entry`: Top-level hub or index document. Not expected to have incoming references. Default `reference_policy`: `optional`.
-- `leaf`: Content document that should be reachable from other documents. Default `reference_policy`: `required`.
-- `bridge`: Connector document linking two conceptual areas. Default `reference_policy`: `required`.
+- `leaf`: Content document. Default `reference_policy`: `optional`.
+- `bridge`: Connector document linking two conceptual areas. Default `reference_policy`: `optional`.
+
+Note: Without an explicit `reference_policy`, all doc roles default to `optional`.  
+Only a deliberate `reference_policy: required` in frontmatter opts a document into the  
+hard "Action Required" gap check. `depends_on` links are dependency metadata, not a  
+complete navigability or canonicality graph.
 
 **Reference Policy** (optional, explicit override):
 - `required`: An unreferenced document is reported as an **Epistemic Gap** (action required).

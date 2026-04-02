@@ -41,7 +41,7 @@ def generate_system_map(manifest):
             lines.append("_No documents listed._\n")
             continue
 
-        lines.append("| Document | ID | Role | Status | Reviewed | Verifies With |")
+        lines.append("| Document | ID | Doc Role | Status | Reviewed | Verifies With |")
         lines.append("|---|---|---|---|---|---|")
 
         for doc in canonical_docs:

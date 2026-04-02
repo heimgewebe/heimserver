@@ -12,8 +12,11 @@ ALLOWED_CANONICALITY = {"canonical", "derived", "explanatory"}
 ALLOWED_DOC_TYPES = {"identity", "architecture", "decision", "runbook", "guide", "reference", "policy", "status", "generated", "archive", "experimental"}
 # Optional doc_role field: controls reference-expectation semantics.
 #   entry  → top-level hub, not expected to have incoming references (default policy: optional)
-#   leaf   → content document that should be referenced from elsewhere (default policy: required)
-#   bridge → connector document linking two conceptual areas (default policy: required)
+#   leaf   → content document (default policy: optional)
+#   bridge → connector document linking two conceptual areas (default policy: optional)
+# Without an explicit reference_policy, all doc_roles default to 'optional'.
+# Use reference_policy: required in frontmatter to opt a document into the
+# hard "Action Required" gap check.
 ALLOWED_DOC_ROLES = {"entry", "leaf", "bridge"}
 # Optional reference_policy field: explicit override for the reference check.
 #   required → unreferenced status is reported as a Gap (action required)

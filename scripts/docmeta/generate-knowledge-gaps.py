@@ -9,16 +9,17 @@ def _resolve_reference_policy(doc_role, reference_policy_raw):
     """Derive the effective reference policy for a document.
 
     Explicit reference_policy in frontmatter always wins.
-    Otherwise the default is determined by doc_role:
-      entry  → optional  (entry points are intentionally unreferenced)
-      leaf   → required  (content docs should be reachable)
-      bridge → required  (connector docs should be reachable)
-    Default doc_role when absent is 'leaf'.
+    Without an explicit value the policy defaults to 'optional' for all
+    doc_roles.  Only a deliberate reference_policy: required causes an
+    unreferenced document to appear as an Epistemic Gap (Action Required).
     """
     if reference_policy_raw in ('required', 'optional', 'none'):
         return reference_policy_raw
-    role = doc_role if doc_role in ('entry', 'leaf', 'bridge') else 'leaf'
-    return 'optional' if role == 'entry' else 'required'
+    # Without an explicit reference_policy, all doc_roles default to 'optional'.
+    # Only an explicit reference_policy: required in frontmatter triggers the
+    # "Action Required" level — inferring hard gaps from missing depends_on
+    # links alone over-extends the semantics of that dependency field.
+    return 'optional'
 
 def generate_knowledge_gaps():
     implementations = parse_impl_registry()
