@@ -6,39 +6,53 @@
 ## Zone: NORM
 **Path:** `architecture/`
 
-| Document | ID | Status | Reviewed | Verifies With |
-|---|---|---|---|---|
-| [constitution.md](architecture/constitution.md) | `constitution` | active | 2026-02-13 | `ops/checks/preflight.sh` |
-| [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
-| [naming.md](architecture/naming.md) | `naming` | active | 2026-02-13 | `ops/checks/preflight.sh` |
-| [network.md](architecture/network.md) | `network` | active | 2026-02-13 | `ops/checks/preflight.sh` |
-| [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | active | 2026-02-25 | `ops/checks/preflight.sh` |
-| [glossary.md](architecture/glossary.md) | `glossary` | active | 2026-03-11 | - |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
+|---|---|---|---|---|---|
+| [constitution.md](architecture/constitution.md) | `constitution` | - | active | 2026-02-13 | `ops/checks/preflight.sh` |
+| [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
+| [naming.md](architecture/naming.md) | `naming` | - | active | 2026-02-13 | `ops/checks/preflight.sh` |
+| [network.md](architecture/network.md) | `network` | - | active | 2026-02-13 | `ops/checks/preflight.sh` |
+| [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
+| [glossary.md](architecture/glossary.md) | `glossary` | - | active | 2026-03-11 | - |
 
 ## Zone: REALITY
 **Path:** `runtime/`
 
-| Document | ID | Status | Reviewed | Verifies With |
-|---|---|---|---|---|
-| [runtime.md](runtime/runtime.md) | `runtime` | active | 2026-02-18 | `ops/audit/collect.sh` |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
+|---|---|---|---|---|---|
+| [runtime.md](runtime/runtime.md) | `runtime` | - | active | 2026-02-18 | `ops/audit/collect.sh` |
 
 ## Zone: ACTION
 **Path:** `operations/`
 
-| Document | ID | Status | Reviewed | Verifies With |
-|---|---|---|---|---|
-| [operations.md](operations/operations.md) | `operations` | active | 2026-02-13 | `ops/audit/collect.sh` |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
+|---|---|---|---|---|---|
+| [operations.md](operations/operations.md) | `operations` | - | active | 2026-02-13 | `ops/audit/collect.sh` |
 
 ## Zone: RUNBOOKS
 **Path:** `runbooks/`
 
-| Document | ID | Status | Reviewed | Verifies With |
-|---|---|---|---|---|
-| [index.md](runbooks/index.md) | `runbooks-index` | active | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
-| [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
-| [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | active | 2026-02-25 | `ops/checks/preflight.sh` |
-| [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | active | 2026-03-07 | - |
-| [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | active | 2026-03-11 | - |
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
+|---|---|---|---|---|---|
+| [index.md](runbooks/index.md) | `runbooks-index` | entry | active | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
+| [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
+| [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
+| [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | - | active | 2026-03-07 | - |
+| [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | - | active | 2026-03-11 | - |
+
+## Zone: DECISIONS
+**Path:** `docs/decisions/`
+
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
+|---|---|---|---|---|---|
+| [0001-adopt-agentic-blueprint.md](docs/decisions/0001-adopt-agentic-blueprint.md) | `docs.decisions.0001` | - | active | 2026-03-11 | - |
+
+## Zone: DOCS
+**Path:** `docs/`
+
+| Document | ID | Doc Role | Status | Reviewed | Verifies With |
+|---|---|---|---|---|---|
+| [index.md](docs/index.md) | `docs.index` | entry | active | 2026-03-11 | - |
 
 ## Dependencies
 Documents that depend on others:
@@ -50,6 +64,7 @@ Documents that depend on others:
 - **ops.runbook.edge-caddy-port-conflict.md** depends on: `architecture/networking/port-matrix.md`, `runbooks/index.md`
 - **ops.runbook.weltgewebe-stack.md** depends on: `architecture/naming.md`, `architecture/networking/port-matrix.md`
 - **ops.runbook.heimserver-edge.md** depends on: `architecture/network.md`, `architecture/networking/port-matrix.md`
+- **0001-adopt-agentic-blueprint.md** depends on: `docmeta.schema`, `glossary`
 
 ## Automated Checks
 - [`ops/checks/preflight.sh`](ops/checks/preflight.sh)

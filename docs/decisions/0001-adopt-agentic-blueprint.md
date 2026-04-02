@@ -5,6 +5,7 @@ doc_type: decision
 role: decisions
 status: active
 canonicality: canonical
+reference_policy: optional
 last_reviewed: 2026-03-11
 summary: Architectural decision to restructure the repository according to the ideal blueprint for agent-ready repositories.
 depends_on:

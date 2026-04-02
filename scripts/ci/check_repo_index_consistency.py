@@ -6,7 +6,7 @@ import re
 # Ensure we can import from scripts/lib
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from scripts.lib.docmeta import load_repo_index, parse_frontmatter, normalize_path, validate_repo_relative_path, MANIFEST_PATH, ALLOWED_ROLES, ALLOWED_STATUS, ALLOWED_CANONICALITY, ALLOWED_DOC_TYPES
+from scripts.lib.docmeta import load_repo_index, parse_frontmatter, normalize_path, validate_repo_relative_path, MANIFEST_PATH, ALLOWED_ROLES, ALLOWED_STATUS, ALLOWED_CANONICALITY, ALLOWED_DOC_TYPES, ALLOWED_DOC_ROLES, ALLOWED_REFERENCE_POLICIES
 
 def main():
     print("Starting Repo Index Consistency Check...")
@@ -131,6 +131,16 @@ def main():
                  errors.append(f"Missing 'role' in frontmatter: {filepath}")
             elif role not in ALLOWED_ROLES:
                  errors.append(f"Invalid 'role' '{role}': {filepath} (Allowed: {ALLOWED_ROLES})")
+
+            # 5a. Check optional doc_role (only if present)
+            doc_role = fm.get('doc_role')
+            if doc_role is not None and doc_role not in ALLOWED_DOC_ROLES:
+                errors.append(f"Invalid doc_role '{doc_role}' in frontmatter: {filepath} (Allowed: {ALLOWED_DOC_ROLES})")
+
+            # 5b. Check optional reference_policy (only if present)
+            reference_policy = fm.get('reference_policy')
+            if reference_policy is not None and reference_policy not in ALLOWED_REFERENCE_POLICIES:
+                errors.append(f"Invalid reference_policy '{reference_policy}' in frontmatter: {filepath} (Allowed: {ALLOWED_REFERENCE_POLICIES})")
 
             # 6. Check last_reviewed format
             reviewed = fm.get('last_reviewed')

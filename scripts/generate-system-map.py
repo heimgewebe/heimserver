@@ -19,8 +19,12 @@ def generate_system_map(manifest):
 
     zones = manifest.get('zones', {})
 
-    # Define order
-    zone_order = ['norm', 'reality', 'action', 'runbooks']
+    # Preferred display order for known zones; any zone not in this list is
+    # appended afterwards in stable (insertion) order so new zones are never
+    # silently dropped from the map.
+    preferred_zone_order = ['norm', 'reality', 'action', 'runbooks', 'decisions', 'docs']
+    extra_zones = [z for z in zones if z not in preferred_zone_order]
+    zone_order = preferred_zone_order + extra_zones
 
     for zone_key in zone_order:
         if zone_key not in zones:
@@ -37,8 +41,8 @@ def generate_system_map(manifest):
             lines.append("_No documents listed._\n")
             continue
 
-        lines.append("| Document | ID | Status | Reviewed | Verifies With |")
-        lines.append("|---|---|---|---|---|")
+        lines.append("| Document | ID | Doc Role | Status | Reviewed | Verifies With |")
+        lines.append("|---|---|---|---|---|---|")
 
         for doc in canonical_docs:
             # Use os.path.join for file system check
@@ -52,6 +56,7 @@ def generate_system_map(manifest):
 
             if fm:
                 doc_id = fm.get('id', 'N/A')
+                doc_role = fm.get('doc_role', '-')
                 status = fm.get('status', 'N/A')
                 reviewed = fm.get('last_reviewed', 'N/A')
                 verifies = fm.get('verifies_with', [])
@@ -68,9 +73,9 @@ def generate_system_map(manifest):
 
                 file_link = f"[{doc}]({link_path})"
 
-                lines.append(f"| {file_link} | `{doc_id}` | {status} | {reviewed} | {verifies_str} |")
+                lines.append(f"| {file_link} | `{doc_id}` | {doc_role} | {status} | {reviewed} | {verifies_str} |")
             else:
-                 lines.append(f"| [{doc}]({link_path}) | ❌ Error | - | - | - |")
+                 lines.append(f"| [{doc}]({link_path}) | ❌ Parse Error | N/A | N/A | N/A | N/A |")
 
         lines.append("")
 
@@ -90,17 +95,11 @@ def generate_system_map(manifest):
             if fm and fm.get('depends_on'):
                 deps = fm.get('depends_on')
 
-                deps_arr = []
-                if isinstance(deps, list):
-                    deps_arr = deps
-                elif isinstance(deps, str):
-                    if deps.startswith('[') and deps.endswith(']'):
-                         pass
-                    else:
-                         deps_arr = [deps]
+                if isinstance(deps, str):
+                    deps = [deps]
 
-                if deps_arr:
-                    deps_str = ", ".join([f"`{d}`" for d in deps_arr])
+                if deps:
+                    deps_str = ", ".join([f"`{d}`" for d in deps])
                     deps_list.append(f"- **{doc}** depends on: {deps_str}")
 
     if deps_list:

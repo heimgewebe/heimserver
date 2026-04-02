@@ -2,12 +2,27 @@
 
 import os
 import re
+import sys
 
 MANIFEST_PATH = 'manifest/repo-index.yaml'
+IMPL_REGISTRY_PATH = 'audit/impl-registry.yaml'
 ALLOWED_ROLES = {"norm", "reality", "action", "runbooks", "docs", "decisions"}
 ALLOWED_STATUS = {"active", "deprecated", "experimental", "archived"}
 ALLOWED_CANONICALITY = {"canonical", "derived", "explanatory"}
 ALLOWED_DOC_TYPES = {"identity", "architecture", "decision", "runbook", "guide", "reference", "policy", "status", "generated", "archive", "experimental"}
+# Optional doc_role field: controls reference-expectation semantics.
+#   entry  → top-level hub, not expected to have incoming references (default policy: optional)
+#   leaf   → content document (default policy: optional)
+#   bridge → connector document linking two conceptual areas (default policy: optional)
+# Without an explicit reference_policy, all doc_roles default to 'optional'.
+# Use reference_policy: required in frontmatter to opt a document into the
+# hard "Action Required" gap check.
+ALLOWED_DOC_ROLES = {"entry", "leaf", "bridge"}
+# Optional reference_policy field: explicit override for the reference check.
+#   required → unreferenced status is reported as a Gap (action required)
+#   optional → unreferenced status is reported as a Review Signal (contextual)
+#   none     → reference check suppressed entirely
+ALLOWED_REFERENCE_POLICIES = {"required", "optional", "none"}
 
 def _unquote(val):
     """Removes surrounding quotes from a string."""
@@ -148,3 +163,80 @@ def parse_frontmatter(filepath):
                 current_list_key = None
 
     return data
+
+def get_discovery_roots(meta_path='repo.meta.yaml'):
+    """Parses discovery_roots from repo.meta.yaml (line-based)."""
+    roots = []
+    if os.path.exists(meta_path):
+        with open(meta_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        in_roots = False
+        for line in lines:
+            if line.startswith('discovery_roots:'):
+                in_roots = True
+                continue
+            if in_roots and line.startswith('  - '):
+                roots.append(line.strip()[2:].strip().rstrip('/'))
+            elif in_roots and line.strip() and not line.startswith(' '):
+                in_roots = False
+    return roots
+
+def parse_impl_registry(registry_path=IMPL_REGISTRY_PATH):
+    """Parses audit/impl-registry.yaml manually. Returns list of implementation dicts."""
+    implementations = []
+    if not os.path.exists(registry_path):
+        return implementations
+
+    # List fields that are parsed the same way as documented_by
+    _list_fields = {'documented_by', 'verified_by', 'supersedes', 'deprecated_by'}
+
+    try:
+        with open(registry_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        current_impl = {}
+        current_list_field = None
+
+        for line in content.splitlines():
+            stripped = line.strip()
+            if stripped.startswith('- id:'):
+                if current_impl:
+                    implementations.append(current_impl)
+                current_impl = {
+                    'id': stripped.split(':', 1)[1].strip(),
+                    'documented_by': [],
+                    'verified_by': [],
+                    'supersedes': [],
+                    'deprecated_by': [],
+                }
+                current_list_field = None
+            elif stripped.startswith('path:'):
+                current_impl['path'] = stripped.split(':', 1)[1].strip()
+                current_list_field = None
+            elif stripped.startswith('impl_type:'):
+                current_impl['impl_type'] = stripped.split(':', 1)[1].strip()
+                current_list_field = None
+            elif stripped.startswith('status:'):
+                current_impl['status'] = stripped.split(':', 1)[1].strip()
+                current_list_field = None
+            else:
+                # Check for any list-field header (e.g. "documented_by:", "verified_by:")
+                matched_list = False
+                for field in _list_fields:
+                    if stripped.startswith(f'{field}:'):
+                        current_list_field = field
+                        matched_list = True
+                        break
+
+                if not matched_list:
+                    if current_list_field and stripped.startswith('- '):
+                        current_impl[current_list_field].append(stripped[2:].strip())
+                    elif stripped and not stripped.startswith('- '):
+                        current_list_field = None
+
+        if current_impl:
+            implementations.append(current_impl)
+    except Exception as e:
+        print(f"Warning: Could not parse impl-registry.yaml: {e}", file=sys.stderr)
+
+    return implementations

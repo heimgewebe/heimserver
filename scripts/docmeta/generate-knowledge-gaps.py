@@ -3,44 +3,23 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from scripts.lib.docmeta import load_repo_index, parse_frontmatter, MANIFEST_PATH
+from scripts.lib.docmeta import load_repo_index, parse_frontmatter, parse_impl_registry, MANIFEST_PATH
 
-def parse_impl_registry():
-    impl_registry_path = 'audit/impl-registry.yaml'
-    implementations = []
-    if os.path.exists(impl_registry_path):
-        try:
-            with open(impl_registry_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+def _resolve_reference_policy(doc_role, reference_policy_raw):
+    """Derive the effective reference policy for a document.
 
-            current_impl = {}
-            in_documented_by = False
-
-            for line in content.splitlines():
-                stripped = line.strip()
-                if stripped.startswith('- id:'):
-                    if current_impl:
-                        implementations.append(current_impl)
-                    current_impl = {'id': stripped.split(':', 1)[1].strip(), 'documented_by': []}
-                    in_documented_by = False
-                elif stripped.startswith('path:'):
-                    current_impl['path'] = stripped.split(':', 1)[1].strip()
-                    in_documented_by = False
-                elif stripped.startswith('impl_type:'):
-                    current_impl['impl_type'] = stripped.split(':', 1)[1].strip()
-                    in_documented_by = False
-                elif stripped.startswith('documented_by:'):
-                    in_documented_by = True
-                elif in_documented_by and stripped.startswith('- '):
-                    current_impl['documented_by'].append(stripped[2:].strip())
-                elif stripped and not stripped.startswith('- '):
-                    in_documented_by = False
-
-            if current_impl:
-                implementations.append(current_impl)
-        except Exception as e:
-            pass
-    return implementations
+    Explicit reference_policy in frontmatter always wins.
+    Without an explicit value the policy defaults to 'optional' for all
+    doc_roles.  Only a deliberate reference_policy: required causes an
+    unreferenced document to appear as an Epistemic Gap (Action Required).
+    """
+    if reference_policy_raw in ('required', 'optional', 'none'):
+        return reference_policy_raw
+    # Without an explicit reference_policy, all doc_roles default to 'optional'.
+    # Only an explicit reference_policy: required in frontmatter triggers the
+    # "Action Required" level — inferring hard gaps from missing depends_on
+    # links alone over-extends the semantics of that dependency field.
+    return 'optional'
 
 def generate_knowledge_gaps():
     implementations = parse_impl_registry()
@@ -48,7 +27,8 @@ def generate_knowledge_gaps():
     gaps = {
         "operational_gaps": [],
         "terminology_gaps": [],
-        "epistemic_gaps": []
+        "epistemic_gaps": [],
+        "review_signals": [],
     }
 
     for impl in implementations:
@@ -57,7 +37,7 @@ def generate_knowledge_gaps():
             gaps["operational_gaps"].append(f"Critical implementation `{impl.get('id')}` (`{impl.get('path')}`) has no documentation linkage.")
 
     if not os.path.exists('architecture/glossary.md'):
-         gaps["terminology_gaps"].append("No canonical `architecture/glossary.md` found to govern terms.")
+        gaps["terminology_gaps"].append("No canonical `architecture/glossary.md` found to govern terms.")
 
     # Canonical Drift Analysis
     if os.path.exists(MANIFEST_PATH):
@@ -73,43 +53,63 @@ def generate_knowledge_gaps():
                 if fm and 'id' in fm:
                     all_docs[fm['id']] = {
                         'filepath': filepath,
+                        'basename': os.path.basename(filepath),
                         'canonicality': fm.get('canonicality'),
-                        'depends_on': fm.get('depends_on', [])
+                        'depends_on': fm.get('depends_on', []),
+                        'doc_role': fm.get('doc_role', 'leaf'),
+                        'reference_policy': fm.get('reference_policy', ''),
                     }
 
-        # Find orphans (nobody depends on them) and missing sources
         for doc_id, meta in all_docs.items():
             canonicality = meta['canonicality']
             deps = meta['depends_on']
+            effective_policy = _resolve_reference_policy(
+                meta['doc_role'], meta['reference_policy']
+            )
 
-            # Orphaned canonical document
+            # Canonical document: check incoming references
             if canonicality == 'canonical':
                 is_referenced = False
                 for other_doc_id, other_meta in all_docs.items():
                     if other_doc_id != doc_id:
                         other_deps = other_meta['depends_on']
                         if isinstance(other_deps, str):
-                            other_deps = [other_deps]
-
-                        # Match by doc_id or filepath
-                        if doc_id in other_deps or meta['filepath'] in other_deps or os.path.basename(meta['filepath']) in other_deps:
+                            other_deps = {other_deps}
+                        else:
+                            other_deps = set(other_deps)
+                        # Match by doc_id, full filepath, or basename
+                        if (doc_id in other_deps
+                                or meta['filepath'] in other_deps
+                                or meta['basename'] in other_deps):
                             is_referenced = True
                             break
 
-                is_entry_doc = (
-                    doc_id.endswith('.index') or
-                    'index' in os.path.basename(meta['filepath']).lower() or
-                    'runbooks/' in meta['filepath'] or
-                    'decisions/' in meta['filepath']
-                )
+                if not is_referenced and effective_policy != 'none':
+                    msg = (
+                        f"`{doc_id}` (`{meta['filepath']}`) "
+                        f"has no detected incoming references."
+                    )
+                    if effective_policy == 'required':
+                        gaps["epistemic_gaps"].append(
+                            f"Unreferenced canonical document: {msg}"
+                        )
+                    else:  # optional
+                        # Explain why this is only a signal, not a gap
+                        if meta['reference_policy'] in ('optional', 'none'):
+                            reason = f"reference_policy={meta['reference_policy']} (explicitly set)"
+                        else:
+                            reason = f"doc_role={meta['doc_role']} (default policy: optional)"
+                        gaps["review_signals"].append(
+                            f"Reference review signal: {msg} ({reason})"
+                        )
 
-                if not is_referenced and not is_entry_doc:
-                    gaps["epistemic_gaps"].append(f"Reference Review Signal: canonical document `{doc_id}` (`{meta['filepath']}`) currently has no detected incoming references. This may still be intentional for certain standalone or operational documents.")
-
-            # Derived document missing source
+            # Derived document: must declare its source
             elif canonicality == 'derived':
-                if not deps or len(deps) == 0:
-                    gaps["epistemic_gaps"].append(f"Source Traceability Gap: `{doc_id}` (`{meta['filepath']}`) is marked as derived but does not reference a canonical source via `depends_on`.")
+                if not deps:
+                    gaps["epistemic_gaps"].append(
+                        f"Source Traceability Gap: `{doc_id}` (`{meta['filepath']}`) "
+                        f"is marked as derived but does not reference a canonical source via `depends_on`."
+                    )
 
     os.makedirs('docs/_generated', exist_ok=True)
     with open('docs/_generated/knowledge-gaps.md', 'w', encoding='utf-8') as f:
@@ -130,12 +130,19 @@ def generate_knowledge_gaps():
         else:
             f.write("_No major terminology gaps detected (Glossary is present)._\n")
 
-        f.write("\n## Reference Review Signals\n")
+        f.write("\n## Epistemic Gaps (Action Required)\n")
         if gaps["epistemic_gaps"]:
             for gap in gaps["epistemic_gaps"]:
                 f.write(f"- {gap}\n")
         else:
-            f.write("_No semantic inflation or canonical drift detected._\n")
+            f.write("_No actionable epistemic gaps detected._\n")
+
+        f.write("\n## Reference Review Signals (Contextual)\n")
+        if gaps["review_signals"]:
+            for signal in gaps["review_signals"]:
+                f.write(f"- {signal}\n")
+        else:
+            f.write("_No reference review signals._\n")
 
     print("Successfully generated docs/_generated/knowledge-gaps.md")
 

@@ -1,6 +1,7 @@
 ---
 id: operations
 role: action
+reference_policy: optional
 status: active
 canonicality: canonical
 doc_type: policy
