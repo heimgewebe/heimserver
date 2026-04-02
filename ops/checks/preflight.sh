@@ -253,13 +253,16 @@ if [ -d "$EDGE_DIR" ]; then
         fi
 
         # 8081: Pi-hole FTL (Owner Check)
-        if ss -lntup | grep -E ':8081\b' >/dev/null 2>&1; then
+        # Cache ss output once; use ([^0-9]|$) instead of \b because \b is not
+        # reliably defined in ERE (grep -E) across POSIX implementations.
+        ss_8081="$(ss -lntup 2>/dev/null | grep -E ':8081([^0-9]|$)' || true)"
+        if [ -n "$ss_8081" ]; then
             # We attempt to check the process name, but ss output varies.
-            if ss -lntup | grep -E ':8081\b' | grep -iE 'pihole-FTL|lighttpd' >/dev/null 2>&1; then
+            if printf '%s\n' "$ss_8081" | grep -iE 'pihole-FTL|lighttpd' >/dev/null 2>&1; then
                  ok "Port 8081 active (Pi-hole FTL/Lighttpd identified)"
             else
                  # Drift Detection: Warn if Weltgewebe/Java/Go seems to be using 8081
-                 if ss -lntup | grep -E ':8081\b' | grep -iE 'java|weltgewebe|go' >/dev/null 2>&1; then
+                 if printf '%s\n' "$ss_8081" | grep -iE 'java|weltgewebe|go' >/dev/null 2>&1; then
                      warn "Port 8081 stolen by App/Weltgewebe! (Violation: architecture/networking/port-matrix.md). 8081 belongs to Pi-hole."
                  else
                      warn "Port 8081 in use by unknown process! (Expected: Pi-hole FTL). Check Drift."
