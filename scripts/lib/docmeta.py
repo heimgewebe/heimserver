@@ -185,35 +185,52 @@ def parse_impl_registry(registry_path=IMPL_REGISTRY_PATH):
     if not os.path.exists(registry_path):
         return implementations
 
+    # List fields that are parsed the same way as documented_by
+    _list_fields = {'documented_by', 'verified_by', 'supersedes', 'deprecated_by'}
+
     try:
         with open(registry_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
         current_impl = {}
-        in_documented_by = False
+        current_list_field = None
 
         for line in content.splitlines():
             stripped = line.strip()
             if stripped.startswith('- id:'):
                 if current_impl:
                     implementations.append(current_impl)
-                current_impl = {'id': stripped.split(':', 1)[1].strip(), 'documented_by': []}
-                in_documented_by = False
+                current_impl = {
+                    'id': stripped.split(':', 1)[1].strip(),
+                    'documented_by': [],
+                    'verified_by': [],
+                    'supersedes': [],
+                    'deprecated_by': [],
+                }
+                current_list_field = None
             elif stripped.startswith('path:'):
                 current_impl['path'] = stripped.split(':', 1)[1].strip()
-                in_documented_by = False
+                current_list_field = None
             elif stripped.startswith('impl_type:'):
                 current_impl['impl_type'] = stripped.split(':', 1)[1].strip()
-                in_documented_by = False
+                current_list_field = None
             elif stripped.startswith('status:'):
                 current_impl['status'] = stripped.split(':', 1)[1].strip()
-                in_documented_by = False
-            elif stripped.startswith('documented_by:'):
-                in_documented_by = True
-            elif in_documented_by and stripped.startswith('- '):
-                current_impl['documented_by'].append(stripped[2:].strip())
-            elif stripped and not stripped.startswith('- '):
-                in_documented_by = False
+                current_list_field = None
+            else:
+                # Check for any list-field header (e.g. "documented_by:", "verified_by:")
+                matched_list = False
+                for field in _list_fields:
+                    if stripped.startswith(f'{field}:'):
+                        current_list_field = field
+                        matched_list = True
+                        break
+
+                if not matched_list:
+                    if current_list_field and stripped.startswith('- '):
+                        current_impl[current_list_field].append(stripped[2:].strip())
+                    elif stripped and not stripped.startswith('- '):
+                        current_list_field = None
 
         if current_impl:
             implementations.append(current_impl)

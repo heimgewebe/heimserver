@@ -19,8 +19,12 @@ def generate_system_map(manifest):
 
     zones = manifest.get('zones', {})
 
-    # Define order (must include all zones from manifest/repo-index.yaml)
-    zone_order = ['norm', 'reality', 'action', 'runbooks', 'decisions', 'docs']
+    # Preferred display order for known zones; any zone not in this list is
+    # appended afterwards in stable (insertion) order so new zones are never
+    # silently dropped from the map.
+    preferred_zone_order = ['norm', 'reality', 'action', 'runbooks', 'decisions', 'docs']
+    extra_zones = [z for z in zones if z not in preferred_zone_order]
+    zone_order = preferred_zone_order + extra_zones
 
     for zone_key in zone_order:
         if zone_key not in zones:

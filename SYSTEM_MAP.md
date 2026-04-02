@@ -34,7 +34,7 @@
 
 | Document | ID | Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [index.md](runbooks/index.md) | `runbooks-index` | - | active | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
+| [index.md](runbooks/index.md) | `runbooks-index` | entry | active | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
 | [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
 | [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
 | [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | - | active | 2026-03-07 | - |

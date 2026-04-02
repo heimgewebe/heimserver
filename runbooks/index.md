@@ -1,6 +1,7 @@
 ---
 id: runbooks-index
 role: runbooks
+doc_role: entry
 status: active
 canonicality: canonical
 doc_type: reference

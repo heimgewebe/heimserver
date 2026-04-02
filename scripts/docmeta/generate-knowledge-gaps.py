@@ -91,9 +91,13 @@ def generate_knowledge_gaps():
                             f"Unreferenced canonical document: {msg}"
                         )
                     else:  # optional
+                        # Explain why this is only a signal, not a gap
+                        if meta['reference_policy'] in ('optional', 'none'):
+                            reason = f"reference_policy={meta['reference_policy']} (explicitly set)"
+                        else:
+                            reason = f"doc_role={meta['doc_role']} (default policy: optional)"
                         gaps["review_signals"].append(
-                            f"Reference review signal: {msg} "
-                            f"(doc_role={meta['doc_role']} → intentional isolation permitted)"
+                            f"Reference review signal: {msg} ({reason})"
                         )
 
             # Derived document: must declare its source
