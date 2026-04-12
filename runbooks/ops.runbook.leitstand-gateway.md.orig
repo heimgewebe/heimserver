@@ -1,28 +1,12 @@
 # Ops Runbook: Leitstand Gateway
 
-Scope: Leitstand UI Gateway (API aktuell deaktiviert / kein Upstream aktiv)
-
-## Status
-
-Die Leitstand-API ist derzeit nicht Bestandteil des Gateway-Betriebs (kein Reverse Proxy Upstream definiert).
+Scope: Caddy Edge Proxy Konfiguration für Leitstand (UI) und API sowie DNS-Einträge.
 
 ## Architektur
 
 Ziel: **ein Gateway, aktuell nur UI (Leitstand)**.
+API ist deaktiviert (kein Upstream).
 Weltgewebe ist optional (erfordert Upstream + explizite Aktivierung).
-
-## Non-Goals
-
-- Kein direkter Containerzugriff
-- Kein öffentlicher Internetzugang
-- Kein API-Routing
-
-## Acceptance Criteria
-
-- HTTP → HTTPS Redirect (308)
-- HTTPS 200 auf /
-- HTTPS 200 auf /health
-- Kein Zugriff außerhalb LAN/WireGuard
 
 ## DNS Konfiguration
 
