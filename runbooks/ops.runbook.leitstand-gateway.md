@@ -1,6 +1,6 @@
 # Ops Runbook: Leitstand Gateway
 
-Scope: Leitstand UI Gateway (API aktuell deaktiviert / kein Upstream aktiv)
+Scope: Operativer Gateway-Betrieb für Leitstand-UI. API-Routing ist derzeit nicht aktiv.
 
 ## Status
 
@@ -19,10 +19,12 @@ Weltgewebe ist optional (erfordert Upstream + explizite Aktivierung).
 
 ## Acceptance Criteria
 
-- HTTP → HTTPS Redirect (308)
-- HTTPS 200 auf /
-- HTTPS 200 auf /health
-- Kein Zugriff außerhalb LAN/WireGuard
+Zur Verifikation der Gateway-Konfiguration (auszuführen von einem Client im LAN/WireGuard):
+
+1. **Redirect Check:** `curl -fsS -I http://leitstand.heimgewebe.home.arpa` → Muss `308 Permanent Redirect` auf HTTPS liefern.
+2. **UI Check:** `curl -fsS -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://leitstand.heimgewebe.home.arpa/` → Muss `200 OK` liefern.
+3. **Health Check:** `curl -fsS -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://leitstand.heimgewebe.home.arpa/health` → Muss `200 OK` liefern.
+4. **Public Exposure Guard:** Ein Aufruf über das öffentliche Internet darf die Domain nicht auflösen oder keine Verbindung herstellen können (LAN-only).
 
 ## DNS Konfiguration
 
