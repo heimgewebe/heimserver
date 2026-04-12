@@ -22,9 +22,9 @@ Weltgewebe ist optional (erfordert Upstream + explizite Aktivierung).
 Zur Verifikation der Gateway-Konfiguration (auszuführen von einem Client im LAN/WireGuard):
 
 1. **Redirect Check:** `curl -fsS -I http://leitstand.heimgewebe.home.arpa` → Muss `308 Permanent Redirect` auf HTTPS liefern.
-2. **UI Check:** `curl -fsS -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://leitstand.heimgewebe.home.arpa/` → Muss `200 OK` liefern.
-3. **Health Check:** `curl -fsS -I --cacert /opt/heimgewebe/edge/edge-ca.crt https://leitstand.heimgewebe.home.arpa/health` → Muss `200 OK` liefern.
-4. **Public Exposure Guard:** Ein Aufruf über das öffentliche Internet darf die Domain nicht auflösen oder keine Verbindung herstellen können (LAN-only).
+2. **UI Check:** `curl -fsS -I --cacert <EDGE_CA_PATH> https://leitstand.heimgewebe.home.arpa/` (z.B. `/opt/heimgewebe/edge/edge-ca.crt`) → Muss `200 OK` liefern.
+3. **Health Check:** `curl -fsS -I --cacert <EDGE_CA_PATH> https://leitstand.heimgewebe.home.arpa/health` → Muss `200 OK` liefern.
+4. **Public Exposure Guard:** Ein Aufruf über das öffentliche Internet darf nicht öffentlich auflösbar oder erreichbar sein (nur LAN/WireGuard).
 
 ## DNS Konfiguration
 
