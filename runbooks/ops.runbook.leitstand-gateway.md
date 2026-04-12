@@ -23,7 +23,7 @@ Zur Verifikation der Gateway-Konfiguration (auszuführen von einem Client im LAN
 
 1. **Redirect Check:** `curl -fsS -I http://leitstand.heimgewebe.home.arpa` → Muss `308 Permanent Redirect` auf HTTPS liefern.
 2. **UI Check:** `curl -fsS -I --cacert <EDGE_CA_PATH> https://leitstand.heimgewebe.home.arpa/` (z.B. `/opt/heimgewebe/edge/edge-ca.crt`) → Muss `200 OK` liefern.
-3. **Health Check:** `curl -fsS -I --cacert <EDGE_CA_PATH> https://leitstand.heimgewebe.home.arpa/health` → Muss `200 OK` liefern.
+3. **Optionaler Health Check (nur falls vom Leitstand-Service bereitgestellt):** `curl -fsS -I --cacert <EDGE_CA_PATH> https://leitstand.heimgewebe.home.arpa/health` → Erwartet `200 OK` (nicht-contractual, andernfalls ignorieren).
 4. **Public Exposure Guard:** Ein Aufruf über das öffentliche Internet darf nicht öffentlich auflösbar oder erreichbar sein (nur LAN/WireGuard).
 
 ## DNS Konfiguration
