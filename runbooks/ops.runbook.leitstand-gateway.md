@@ -6,6 +6,10 @@ Dieses Dokument ist die kanonische operative Quelle für das Leitstand Gateway a
 
 Abgeleitete Darstellungen (z. B. im Leitstand-Repository) dürfen keine eigenständigen operativen Details zum Gateway-Betrieb auf dem Heimserver enthalten und müssen auf dieses Runbook verweisen.
 
+## Synchronisation
+
+Änderungen an diesem Runbook gelten als führend. Abgeleitete Dokumente (wie im Leitstand-Repository) müssen zeitnah manuell oder automatisiert an den hier definierten operativen Stand angepasst werden, um Drift zu vermeiden.
+
 Scope: Operativer Gateway-Betrieb für Leitstand-UI. API-Routing ist derzeit nicht aktiv.
 
 ## Status
