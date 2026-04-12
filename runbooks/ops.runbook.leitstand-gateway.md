@@ -1,5 +1,11 @@
 # Ops Runbook: Leitstand Gateway
 
+## Canonicality
+
+Dieses Dokument ist die kanonische operative Quelle für das Leitstand Gateway auf dem Heimserver.
+
+Abgeleitete Darstellungen (z. B. im Leitstand-Repository) dürfen keine eigenständigen operativen Details zum Gateway-Betrieb auf dem Heimserver enthalten und müssen auf dieses Runbook verweisen.
+
 Scope: Operativer Gateway-Betrieb für Leitstand-UI. API-Routing ist derzeit nicht aktiv.
 
 ## Status
