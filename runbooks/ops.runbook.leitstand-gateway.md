@@ -8,7 +8,7 @@ Abgeleitete Darstellungen (z. B. im Leitstand-Repository) dürfen keine eigenst�
 
 ## Synchronisation
 
-Änderungen an diesem Runbook gelten als führend. Abgeleitete Dokumente (wie im Leitstand-Repository) müssen angepasst werden, bevor operative Änderungen am Gateway als vollständig abgeschlossen gelten. Im PR-Review-Prozess ist aktiv zu prüfen, ob ein Sync-PR im Leitstand-Repo erforderlich ist.
+Änderungen an diesem Runbook gelten als führend. Abgeleitete Dokumente (wie im Leitstand-Repository) müssen angepasst werden, bevor operative Änderungen am Gateway als vollständig abgeschlossen gelten. Im PR-Review-Prozess ist aktiv zu prüfen, ob ein Sync-PR im Leitstand-Repo erforderlich ist. Zukünftig können CI- oder Guard-Mechanismen (z.B. WGX) eingesetzt werden, um diesen strukturellen Drift maschinell zu erkennen und zu blockieren.
 
 Scope: Operativer Gateway-Betrieb für Leitstand-UI. API-Routing ist derzeit nicht aktiv.
 
