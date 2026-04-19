@@ -14,7 +14,7 @@
 | [network.md](architecture/network.md) | `network` | - | active | 2026-02-13 | `ops/checks/preflight.sh` |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
 | [glossary.md](architecture/glossary.md) | `glossary` | - | active | 2026-03-11 | - |
-| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | active | 2026-04-19 | `ops/checks/preflight.sh` |
+| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | active | 2026-04-19 | - |
 
 ## Zone: REALITY
 **Path:** `runtime/`

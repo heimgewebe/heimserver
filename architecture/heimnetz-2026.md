@@ -13,8 +13,7 @@ depends_on:
   - naming
   - port-matrix
 related_docs: []
-verifies_with:
-  - ops/checks/preflight.sh
+verifies_with: []
 ---
 # **Blaupause: Heimnetz 2026+ (Deterministische Layer-Architektur, gehärtet & durchsetzbar)**
 ---
@@ -39,6 +38,7 @@ verifies_with:
    Dieses System optimiert primär auf Erklärbarkeit und Kontrolle, nicht auf maximal unsichtbare Resilienz. Es bevorzugt sichtbare Fehler vor stiller Mehrdeutigkeit.
 ---
 ## 1. Geräte-Rollen (final, gehärtet)
+
 ### 1.1 Heimberry — **Truth Layer**
 **OS/Runtime:** Debian Bookworm Lite + Docker
 **Pflichtdienste:**
@@ -62,6 +62,7 @@ Die Rolle als einziger DNS-Knoten macht den Heimberry zu einem strukturellen SPO
 * **Recovery:** Automatischer Docker-Restart bei Crash; dokumentierte manuelle Restart-Prozedur für das OS. Striktes "Restore-from-zero" Zeitbudget: < 15 Minuten.
 * **Backup:** Tägliche Backups der Pi-hole-Konfiguration und Tailscale-State auf ein externes Ziel.
 ---
+
 ### 1.2 Heimserver — **Service Layer**
 **Runtime:** Docker + Compose
 **Pflichtdienste:**
@@ -79,6 +80,7 @@ Die Rolle als einziger DNS-Knoten macht den Heimberry zu einem strukturellen SPO
 * keine direkten Containerports
 * stellt Monitoring-Watchdog für Heimberry bereit
 ---
+
 ### 1.3 Heim-PC — **Interaction Layer**
 **Rolle:** Entwicklung + GPU + Zustandsträger
 **Pflichtdienste:**
@@ -93,6 +95,7 @@ Die Rolle als einziger DNS-Knoten macht den Heimberry zu einem strukturellen SPO
 * einziger kanonischer Dev-State
 * keine parallelen Arbeitskopien als Wahrheit
 ---
+
 ### 1.4 iPad — **Access Layer**
 **Rolle:** Zustandsloser Zugriff
 **Tools:**
@@ -104,11 +107,13 @@ Die Rolle als einziger DNS-Knoten macht den Heimberry zu einem strukturellen SPO
 * keine lokale Logik
 ---
 ## 2. Netzwerk-Topologie (präzisiert)
+
 ### 2.1 LAN
 * `192.168.178.0/24`
 * Heimberry: `192.168.178.2`
 * Heimserver: `192.168.178.46`
 * Heim-PC: `192.168.178.25`
+
 ### 2.2 Overlay
 * ausschließlich **Tailscale**
 Heimberry (Primärer Router/DNS):
@@ -117,6 +122,7 @@ tailscale up \
   --advertise-routes=192.168.178.0/24 \
   --accept-dns=false
 ```
+
 ### 2.3 Routing-Invarianten
 * kein Portforwarding
 * kein Dual-VPN
@@ -124,16 +130,20 @@ tailscale up \
 * kein Internet-Ingress
 ---
 ## 3. DNS-Architektur & Resilienz (erzwingbar gemacht)
+
 ### 3.1 Root
 * `home.arpa`
+
 ### 3.2 Zonen
 * `heimgewebe.home.arpa`
 * `weltgewebe.home.arpa`
+
 ### 3.3 Harte Regeln & Resilienz-Strategie
 * Primär: Heimberry = primärer Nameserver für alle Zonen. `home.arpa` bleibt exklusiv Heimberry-geführt.
 * Secondary/Fallback (Neu): Tailscale MagicDNS ist NICHT sekundäre Wahrheit für `home.arpa`. Es ist ein separater administrativer Notzugangspfad außerhalb des kanonischen Heimnetz-Namensraums für kritische Knoten-IPs, falls Heimberry ausfällt. Ein degradierter Betrieb bedeutet hier nicht, dass sich die DNS-Wahrheit verlagert, sondern nur, dass ein eingeschränkter Admin-Zugriff möglich bleibt.
 * Router DHCP Ziel: Kein konkurrierender zweiter Resolver im DHCP. Keine gleichrangigen DNS-Server verteilen. Notfallpfade laufen bewusst außerhalb von DHCP.
 * Tailscale DNS → Heimberry.
+
 ### 3.4 Enforcement (Konkretisiert)
 Clients müssen explizit konfiguriert werden.
 Klassifikation der Mechanismen:
@@ -151,7 +161,9 @@ Client-Realität und operative Grenzen:
 Determinismus ist im Netzwerk nur partiell erzwingbar. Realistisch problematische Klassen sind iOS/iPadOS (die oft eigene DNS-Wege bevorzugen), Browser mit integriertem DoH, sowie Smart Devices/IoT mit hartcodierten Resolvern. Maßnahmen: Bekannte DoH/DoT-Bootstrap-Server werden blockiert. Unkooperative Clients, die lokales DNS vollständig verweigern, werden isoliert (z.B. Gast-VLAN). Abweichungen sollen sichtbar gemacht, aber nicht um jeden Preis technisch (z.B. via SSL-Interception) verhindert werden.
 ---
 ## 4. DNS-Stack
+```
 Client → Pi-hole → Unbound → Root
+```
 **Invarianten**
 * kein externer Upstream im Pi-hole (immer Unbound)
 * keine zweite aktive vollwertige Resolverinstanz (MagicDNS ist nur Notnagel)
@@ -193,9 +205,13 @@ leitstand.heimgewebe.home.arpa {
 ---
 ## 7. Remote Development (präzisiert)
 **Primär**
+```
 iPad → Tailscale → Heim-PC → Moonlight → Dev
+```
 **Sekundär**
+```
 iPad → Heimserver → SSH/code-server
+```
 **Regeln**
 * Dev-State nur auf Heim-PC
 * keine Cloud als Primärsystem

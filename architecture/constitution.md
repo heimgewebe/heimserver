@@ -40,6 +40,7 @@ Die Wahrheit ist föderal organisiert:
 | Dokument | Zuständigkeit | Inhalt |
 |---|---|---|
 | [`constitution.md`](constitution.md) (dieses) | Verfassung | Zweck, Verbote, Drift-Trigger |
+| [`heimnetz-2026.md`](heimnetz-2026.md) | Zielarchitektur | Blueprint für Determinismus & Ebenentrennung |
 | [`runtime.md`](../runtime/runtime.md) | Realität | Aktuelle Ports, IPs, Container |
 | [`network.md`](network.md) | Transport | Routing, NAT, WireGuard, Firewall |
 | [`naming.md`](naming.md) | Semantik | DNS-Zonen, TLS, Hostnames |
