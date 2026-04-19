@@ -31,6 +31,11 @@
       "zone": "norm"
     },
     {
+      "id": "heimnetz-2026",
+      "path": "architecture/heimnetz-2026.md",
+      "zone": "norm"
+    },
+    {
       "id": "runtime",
       "path": "runtime/runtime.md",
       "zone": "reality"
@@ -85,6 +90,26 @@
     {
       "source": "glossary",
       "target": "constitution",
+      "type": "depends_on"
+    },
+    {
+      "source": "heimnetz-2026",
+      "target": "constitution",
+      "type": "depends_on"
+    },
+    {
+      "source": "heimnetz-2026",
+      "target": "network",
+      "type": "depends_on"
+    },
+    {
+      "source": "heimnetz-2026",
+      "target": "naming",
+      "type": "depends_on"
+    },
+    {
+      "source": "heimnetz-2026",
+      "target": "port-matrix",
       "type": "depends_on"
     },
     {

@@ -8,6 +8,7 @@ zones:
       - network.md
       - networking/port-matrix.md
       - glossary.md
+      - heimnetz-2026.md
   reality:
     path: runtime/
     canonical_docs:
