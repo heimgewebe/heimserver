@@ -37,6 +37,8 @@ Details befinden sich in den spezifischen Kanon-Dokumenten.
 
 Die Wahrheit ist föderal organisiert:
 
+*Hinweis: Siehe `heimnetz-2026.md` für die geplante Zielarchitektur.*
+
 | Dokument | Zuständigkeit | Inhalt |
 |---|---|---|
 | [`constitution.md`](constitution.md) (dieses) | Verfassung | Zweck, Verbote, Drift-Trigger |

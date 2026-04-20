@@ -16,6 +16,12 @@ related_docs: []
 verifies_with: []
 ---
 # **Blaupause: Heimnetz 2026+ (Deterministische Layer-Architektur, gehärtet & durchsetzbar)**
+
+> **Status-Hinweis:**
+> Dieses Dokument beschreibt die **Zielarchitektur (Blueprint)**.
+> Es ersetzt **nicht** die aktuell gültigen Invarianten in `constitution.md` und `network.md`,
+> sondern definiert den angestrebten Endzustand.
+
 ---
 ## 0. Leitprinzipien (kanonisch, präzisiert)
 1. **Single Source of Truth (SoT):**
@@ -184,6 +190,10 @@ leitstand.heimgewebe.home.arpa {
 ```
 **Enforcement (Konkretisiert)**
 * Docker Compose (Heimserver): App-Container binden Ports ausschließlich an `127.0.0.1` oder spezifisch an ein isoliertes Caddy-Netzwerk. Striktes Verbot von `ports: - "3000:3000"` ohne IP-Bindung für alle Dienste, außer Caddy selbst. Caddy verwaltet als einziger Dienst die Host-Ports 80/443.
+
+*Hinweis:*
+Dieses Modell (127.0.0.1-Bindung) ersetzt perspektivisch das aktuelle Firewall-basierte Exposure-Modell, ist aber noch nicht kanonisch durchgesetzt.
+
 * Host Firewall (UFW/iptables):
     * Heimberry: Erlaubt Port 53 (DNS) aus dem LAN und Tailnet sowie Tailscale-interne Ports. Pi-hole Webinterface ist strikt auf Tailnet-only (`tailscale0` interface) beschränkt.
     * Heimserver: Erlaubt Ports 80/443 (Caddy) aus dem LAN und Tailnet. Port 22 (SSH) als Admin-Zugang ist aus dem LAN und Tailnet erlaubt. Alle direkten App-Ports von außen sind strikt verboten.
@@ -191,7 +201,10 @@ leitstand.heimgewebe.home.arpa {
 ---
 ## 6. Access Layer (VPN, final)
 **Entscheidung**
+**Zielzustand:**
 * ausschließlich Tailscale
+**Übergang:**
+* bestehende WireGuard-Infrastruktur bleibt bis zur Migration bestehen
 **Funktionen**
 * Device Mesh
 * Subnet Routing
@@ -389,7 +402,10 @@ Das System hat Regeln; es benötigt zwingend Sichtbarkeit, um deren Einhaltung e
 * DNS-Metrik: Messung des Volumens an DNS-Queries am Heimberry pro Client. Unerklärliche Einbrüche weisen auf DoH-Aktivierung im Browser/OS hin.
 **Erkennung von Shadow-Configs:**
 * SSH-Logins und Caddy Access-Logs auswerten. Traffic auf inoffiziellen Ports identifizieren.
-* Nmap/Portscans aus dem Tailnet gegen Heimserver und Heimberry: Sind nur 80/443 und 22 offen?
+* Nmap/Portscans aus dem Tailnet: Sind nur die erwarteten Ports offen?
+  * Heimberry: erwartbar 53 plus definierte Admin-/Tailnet-Pfade
+  * Heimserver: erwartbar 80/443, 22
+  * Heim-PC: erwartbar Sunshine + 22 Tailnet-only
 **Ziel-Metrik:** > 95% aller legitimen DNS-Requests im LAN/Tailnet werden vom Heimberry beantwortet.
 ---
 ## 22. Operational Proof (Realitätscheck)
