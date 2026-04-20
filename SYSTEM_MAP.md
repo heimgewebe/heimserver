@@ -14,6 +14,7 @@
 | [network.md](architecture/network.md) | `network` | - | active | 2026-02-13 | `ops/checks/preflight.sh` |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
 | [glossary.md](architecture/glossary.md) | `glossary` | - | active | 2026-03-11 | - |
+| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | active | 2026-04-19 | - |
 
 ## Zone: REALITY
 **Path:** `runtime/`
@@ -59,6 +60,7 @@ Documents that depend on others:
 
 - **networking/port-matrix.md** depends on: `architecture/network.md`
 - **glossary.md** depends on: `constitution`
+- **heimnetz-2026.md** depends on: `constitution`, `network`, `naming`, `port-matrix`
 - **runtime.md** depends on: `architecture/constitution.md`, `architecture/network.md`
 - **operations.md** depends on: `runtime/runtime.md`
 - **ops.runbook.edge-caddy-port-conflict.md** depends on: `architecture/networking/port-matrix.md`, `runbooks/index.md`

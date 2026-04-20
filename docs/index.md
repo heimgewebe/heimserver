@@ -47,6 +47,7 @@ Hier stehen die Regeln, nach denen die Infrastruktur zu funktionieren hat. Lese 
 - [Network Layout](../architecture/network.md)
 - [Port Matrix](../architecture/networking/port-matrix.md)
 - [Glossary](../architecture/glossary.md)
+- [Heimnetz 2026+](../architecture/heimnetz-2026.md)
 
 ### Runtime & Realität
 Hier dokumentieren wir in Snapshots, wie der Server *tatsächlich* gerade läuft.
