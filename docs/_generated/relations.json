@@ -83,11 +83,6 @@
   ],
   "edges": [
     {
-      "source": "constitution",
-      "target": "heimnetz-2026",
-      "type": "depends_on"
-    },
-    {
       "source": "port-matrix",
       "target": "network",
       "type": "depends_on"

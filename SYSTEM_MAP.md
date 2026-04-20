@@ -58,7 +58,6 @@
 ## Dependencies
 Documents that depend on others:
 
-- **constitution.md** depends on: `heimnetz-2026`
 - **networking/port-matrix.md** depends on: `architecture/network.md`
 - **glossary.md** depends on: `constitution`
 - **heimnetz-2026.md** depends on: `constitution`, `network`, `naming`, `port-matrix`

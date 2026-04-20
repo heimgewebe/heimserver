@@ -12,6 +12,7 @@ _No major terminology gaps detected (Glossary is present)._
 _No actionable epistemic gaps detected._
 
 ## Reference Review Signals (Contextual)
+- Reference review signal: `heimnetz-2026` (`architecture/heimnetz-2026.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `operations` (`operations/operations.md`) has no detected incoming references. (reference_policy=optional (explicitly set))
 - Reference review signal: `runbook-adding-docs` (`runbooks/adding-docs.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `ops.runbook.edge-caddy-port-conflict` (`runbooks/ops.runbook.edge-caddy-port-conflict.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))

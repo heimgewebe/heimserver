@@ -20,7 +20,7 @@ _No incoming links._
 - `docs.decisions.0001`
 
 ## `heimnetz-2026`
-- `constitution`
+_No incoming links._
 
 ## `naming`
 - `heimnetz-2026`
