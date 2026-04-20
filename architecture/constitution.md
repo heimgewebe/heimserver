@@ -7,7 +7,8 @@ doc_type: architecture
 title: Heimserver Constitution
 summary: Canonical rules and context for Heimserver
 last_reviewed: 2026-02-13
-depends_on: []
+depends_on:
+  - heimnetz-2026
 verifies_with:
   - ops/checks/preflight.sh
 ---
