@@ -7,7 +7,7 @@
 > - `runbooks/heimberry-bootstrap.md`
 > - `runbooks/dns-migration.md`
 
-Status: PRODUKTIV
+Status: HISTORISCH / DEPRECATED
 Scope: Heimserver (192.168.178.46)
 System: Pi-hole (Docker)
 Namespace: heimgewebe.home.arpa

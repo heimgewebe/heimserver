@@ -60,7 +60,7 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [index.md](docs/index.md) | `docs.index` | entry | active | 2026-03-11 | - |
+| [index.md](docs/index.md) | `docs.index` | entry | active | 2026-04-28 | - |
 
 ## Dependencies
 Documents that depend on others:

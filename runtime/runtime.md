@@ -24,11 +24,11 @@ Scope: Aggregator für Laufzeit-Realität im Layer-Modell (nicht Architekturvisi
 - [`heimberry.md`](heimberry.md) — Truth-Layer Runtime-Draft (derived, experimental)
 - [`heimserver.md`](heimserver.md) — Service-Layer Runtime-Draft (derived, experimental)
 
-## Hinweis zum Altbestand
+## Legacy Snapshot: Monolithischer Heimserver-Zustand
 
-Die nachfolgenden Abschnitte dokumentieren den bisherigen monolithischen Heimserver-Zustand
-und gelten als **historical/migration-state**, bis die Runtime vollständig auf node-spezifische
-Dokumente überführt ist.
+Die folgenden Abschnitte dokumentieren ausschließlich den bisherigen
+monolithischen Heimserver-Zustand. Sie sind historische/migrationsbezogene
+Reality-Belege und dürfen nicht als Zielarchitektur gelesen werden.
 
 **Legende Status-Tags:**
 - **Observed:** Automatisch durch Audit (z.B. `ops/audit/collect.sh`) beobachtet.

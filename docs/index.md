@@ -6,7 +6,7 @@ role: docs
 doc_role: entry
 status: active
 canonicality: canonical
-last_reviewed: 2026-03-11
+last_reviewed: 2026-04-28
 summary: Zentrale Einstiegs- und Orientierungsseite für die gesamte Dokumentation.
 ---
 
