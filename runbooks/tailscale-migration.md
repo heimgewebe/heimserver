@@ -1,0 +1,30 @@
+---
+id: runbook-tailscale-migration
+role: runbooks
+status: active
+canonicality: canonical
+doc_type: runbook
+title: Tailscale Migration Runbook
+summary: Übergang vom WireGuard-Primärmodell auf Tailscale-Zielmodell
+last_reviewed: 2026-04-28
+depends_on:
+  - architecture/heimnetz-2026.md
+  - architecture/network.md
+verifies_with:
+  - ops/checks/preflight.sh
+---
+
+# Tailscale Migration (Primary Overlay)
+
+## Ziel
+Tailscale als primären Overlay-/Access-Pfad etablieren.
+
+## Minimalablauf
+1. Tailscale auf relevanten Knoten/Clients aktivieren.
+2. DNS-Integration auf Heimberry sicherstellen.
+3. WireGuard nur als historical/migration-state weiterführen.
+4. Nach Stabilisierung Legacy-WireGuard kontrolliert ausphasen.
+
+## Guardrails
+- Kein Dual-VPN als Dauerzustand.
+- Keine implizite Rückkehr zum WireGuard-Primärmodell.

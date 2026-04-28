@@ -4,9 +4,9 @@ role: norm
 status: active
 canonicality: canonical
 doc_type: architecture
-title: Naming Architecture
-summary: Canonical naming conventions
-last_reviewed: 2026-02-13
+title: Naming Architecture (Layer Model)
+summary: Canonical naming conventions for Heimnetz layer separation
+last_reviewed: 2026-04-28
 depends_on: []
 verifies_with:
   - ops/checks/preflight.sh
@@ -17,8 +17,8 @@ verifies_with:
 Kanonische Namens- und Adressierungsarchitektur
 ⛔️ ARCHITEKTURDOKUMENT · NICHT ÖFFENTLICH
 
-Stand: 2026-02-13
-Scope: Heimserver + Heimgewebe + Weltgewebe
+Stand: 2026-04-28
+Scope: Heimnetz + Heimgewebe + Weltgewebe
 
 ---
 
@@ -32,7 +32,13 @@ Destabilisierung:
 Das Problem war nicht „kein Zugriff“.
 Das Problem war „inkohärente Namensräume“.
 
-Wenn DNS, TLS, Caddy und WireGuard unterschiedliche Realitäten kennen, entsteht Splitbrain.
+Wenn DNS, TLS, Caddy und Overlay unterschiedliche Realitäten kennen, entsteht Splitbrain.
+
+## 1.1 Autorität (kanonisch)
+
+- Heimberry ist DNS-Truth-Layer für `home.arpa`.
+- Heimserver ist Service-Layer und darf keine primäre DNS-Autorität definieren.
+- Tailscale ist Ziel-Overlay; WireGuard bleibt nur historical/migration-state.
 
 ---
 

@@ -9,6 +9,10 @@ zones:
       - networking/port-matrix.md
       - glossary.md
       - heimnetz-2026.md
+      - nodes/heimberry.md
+      - nodes/heimserver.md
+      - nodes/heim-pc.md
+      - nodes/ipad.md
   reality:
     path: runtime/
     canonical_docs:
@@ -25,6 +29,9 @@ zones:
       - ops.runbook.edge-caddy-port-conflict.md
       - ops.runbook.weltgewebe-stack.md
       - ops.runbook.heimserver-edge.md
+      - heimberry-bootstrap.md
+      - dns-migration.md
+      - tailscale-migration.md
   decisions:
     path: docs/decisions/
     canonical_docs:

@@ -20,7 +20,13 @@ _No incoming links._
 - `docs.decisions.0001`
 
 ## `heimnetz-2026`
-_No incoming links._
+- `node-heim-pc`
+- `node-heimberry`
+- `node-heimserver`
+- `node-ipad`
+- `runbook-dns-migration`
+- `runbook-heimberry-bootstrap`
+- `runbook-tailscale-migration`
 
 ## `naming`
 - `heimnetz-2026`
@@ -30,7 +36,20 @@ _No incoming links._
 - `heimnetz-2026`
 - `ops-runbook-heimserver-edge`
 - `port-matrix`
+- `runbook-tailscale-migration`
 - `runtime`
+
+## `node-heim-pc`
+_No incoming links._
+
+## `node-heimberry`
+- `runbook-heimberry-bootstrap`
+
+## `node-heimserver`
+_No incoming links._
+
+## `node-ipad`
+_No incoming links._
 
 ## `operations`
 _No incoming links._
@@ -53,8 +72,18 @@ _No incoming links._
 ## `runbook-adding-docs`
 _No incoming links._
 
+## `runbook-dns-migration`
+_No incoming links._
+
+## `runbook-heimberry-bootstrap`
+_No incoming links._
+
+## `runbook-tailscale-migration`
+_No incoming links._
+
 ## `runbooks-index`
 - `ops.runbook.edge-caddy-port-conflict`
 
 ## `runtime`
 - `operations`
+- `runbook-dns-migration`

@@ -1,18 +1,30 @@
 ---
 id: ops-runbook-heimserver-edge
 role: runbooks
-status: active
+status: deprecated
 canonicality: canonical
 doc_type: runbook
 title: Heimserver Edge Runbook
 summary: Operations for Heimserver Edge gateway
-last_reviewed: 2026-03-11
+last_reviewed: 2026-04-28
 depends_on:
   - architecture/network.md
   - architecture/networking/port-matrix.md
+deprecated_by:
+  - runbook-heimberry-bootstrap
+  - runbook-dns-migration
+  - runbook-tailscale-migration
 ---
 
 # Heimserver-Edge-Dokumentation (Netzwerk, Gateway, Container)
+
+> **Status: superseded / historical**
+>
+> Dieses Runbook beschreibt den bisherigen monolithischen Heimserver-Zustand.
+> Für das Layer-Zielmodell gelten vorrangig:
+> - `runbooks/heimberry-bootstrap.md`
+> - `runbooks/dns-migration.md`
+> - `runbooks/tailscale-migration.md`
 
 Dieses Runbook dokumentiert die aktuelle **Heimserver-Architektur**, die als Edge-Knoten für das Weltgewebe dient.
 

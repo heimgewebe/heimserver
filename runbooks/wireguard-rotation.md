@@ -1,5 +1,11 @@
 # Runbook: WireGuard Rotation (ohne Keys in Git)
 
+> **Status: historical / migration-state**
+>
+> WireGuard ist im Zielmodell nicht mehr primäres Access-Modell.
+> Dieses Runbook bleibt als Legacy-/Rollback-Referenz bestehen.
+> Primärer Migrationspfad: `runbooks/tailscale-migration.md`.
+
 ## Ziel
 Keys rotieren, ohne dass Git jemals private Keys sieht.
 

@@ -36,6 +36,26 @@
       "zone": "norm"
     },
     {
+      "id": "node-heimberry",
+      "path": "architecture/nodes/heimberry.md",
+      "zone": "norm"
+    },
+    {
+      "id": "node-heimserver",
+      "path": "architecture/nodes/heimserver.md",
+      "zone": "norm"
+    },
+    {
+      "id": "node-heim-pc",
+      "path": "architecture/nodes/heim-pc.md",
+      "zone": "norm"
+    },
+    {
+      "id": "node-ipad",
+      "path": "architecture/nodes/ipad.md",
+      "zone": "norm"
+    },
+    {
       "id": "runtime",
       "path": "runtime/runtime.md",
       "zone": "reality"
@@ -68,6 +88,21 @@
     {
       "id": "ops-runbook-heimserver-edge",
       "path": "runbooks/ops.runbook.heimserver-edge.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "runbook-heimberry-bootstrap",
+      "path": "runbooks/heimberry-bootstrap.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "runbook-dns-migration",
+      "path": "runbooks/dns-migration.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "runbook-tailscale-migration",
+      "path": "runbooks/tailscale-migration.md",
       "zone": "runbooks"
     },
     {
@@ -113,6 +148,26 @@
       "type": "depends_on"
     },
     {
+      "source": "node-heimberry",
+      "target": "heimnetz-2026",
+      "type": "depends_on"
+    },
+    {
+      "source": "node-heimserver",
+      "target": "heimnetz-2026",
+      "type": "depends_on"
+    },
+    {
+      "source": "node-heim-pc",
+      "target": "heimnetz-2026",
+      "type": "depends_on"
+    },
+    {
+      "source": "node-ipad",
+      "target": "heimnetz-2026",
+      "type": "depends_on"
+    },
+    {
       "source": "runtime",
       "target": "constitution",
       "type": "depends_on"
@@ -155,6 +210,36 @@
     {
       "source": "ops-runbook-heimserver-edge",
       "target": "port-matrix",
+      "type": "depends_on"
+    },
+    {
+      "source": "runbook-heimberry-bootstrap",
+      "target": "heimnetz-2026",
+      "type": "depends_on"
+    },
+    {
+      "source": "runbook-heimberry-bootstrap",
+      "target": "node-heimberry",
+      "type": "depends_on"
+    },
+    {
+      "source": "runbook-dns-migration",
+      "target": "heimnetz-2026",
+      "type": "depends_on"
+    },
+    {
+      "source": "runbook-dns-migration",
+      "target": "runtime",
+      "type": "depends_on"
+    },
+    {
+      "source": "runbook-tailscale-migration",
+      "target": "heimnetz-2026",
+      "type": "depends_on"
+    },
+    {
+      "source": "runbook-tailscale-migration",
+      "target": "network",
       "type": "depends_on"
     },
     {

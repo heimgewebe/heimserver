@@ -4,9 +4,9 @@ role: reality
 status: active
 canonicality: canonical
 doc_type: status
-title: Runtime Status
-summary: Captured runtime state reality
-last_reviewed: 2026-02-18
+title: Runtime Index (Aggregator)
+summary: Aggregierter Runtime-Status über Heimnetz-Layer
+last_reviewed: 2026-04-28
 depends_on:
   - architecture/constitution.md
   - architecture/network.md
@@ -14,10 +14,21 @@ verifies_with:
   - ops/audit/collect.sh
 ---
 
-# runtime.md
+# runtime.md (Aggregator)
 
 Status: Operativ kanonisch
-Scope: Laufzeit-Realität des Heimservers (nicht Architekturvision)
+Scope: Aggregator für Laufzeit-Realität im Layer-Modell (nicht Architekturvision)
+
+## Runtime-Dokumente (Drafts / experimental)
+
+- [`heimberry.md`](heimberry.md) — Truth-Layer Runtime-Draft (derived, experimental)
+- [`heimserver.md`](heimserver.md) — Service-Layer Runtime-Draft (derived, experimental)
+
+## Hinweis zum Altbestand
+
+Die nachfolgenden Abschnitte dokumentieren den bisherigen monolithischen Heimserver-Zustand
+und gelten als **historical/migration-state**, bis die Runtime vollständig auf node-spezifische
+Dokumente überführt ist.
 
 **Legende Status-Tags:**
 - **Observed:** Automatisch durch Audit (z.B. `ops/audit/collect.sh`) beobachtet.

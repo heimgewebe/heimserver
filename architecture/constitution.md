@@ -4,9 +4,9 @@ role: norm
 status: active
 canonicality: canonical
 doc_type: architecture
-title: Heimserver Constitution
-summary: Canonical rules and context for Heimserver
-last_reviewed: 2026-02-13
+title: Heimnetz Constitution (Repo: heimserver)
+summary: Canonical rules and context for the Heimnetz layer model
+last_reviewed: 2026-04-28
 depends_on: []
 verifies_with:
   - ops/checks/preflight.sh
@@ -14,16 +14,21 @@ verifies_with:
 
 # constitution.md
 
-Version 4.0 · Konsolidierte Verfassung
-Stand: 2026-02-13
-Host: heimserver
+Version 4.1 · Layer-Modell-Konsolidierung
+Stand: 2026-04-28
+Repo: heimserver (historischer Name)
 Dokumentklasse: ARCHITEKTUR · KANONISCH
 
 ## 0. Identität & Zweck
 
-Der Heimserver ist der Trust-Pivot des Heimgewebes.
-Er ist kein öffentlicher Server, sondern ein kontrollierter Binnenraum.
-Er vereint Identität, Routing und Namensauflösung in einer kohärenten Runtime.
+Das Heimnetz folgt einem expliziten Layer-Modell:
+- Heimberry = Truth Layer
+- Heimserver = Service Layer
+- Heim-PC = Interaction Layer
+- iPad = Access Layer
+
+Der Heimserver ist **nicht** der DNS- oder VPN-Trust-Pivot.
+DNS-Truth liegt kanonisch auf Heimberry.
 
 Hinweis: Bestimmte Deployments (z.B. Weltgewebe/Leitstand/API) laufen aktuell nur für die Entwicklungs- und Integrationsphase auf diesem Heimserver und können später migrieren; die Sicherheits- und Kohärenzprinzipien bleiben unverändert.
 
@@ -54,7 +59,7 @@ Die Wahrheit ist föderal organisiert:
 
 1. **Kein Public Exposing**
    Dienste dürfen niemals direkt ins Internet exponiert werden (kein Port-Forwarding im Router).
-   Einziger Ingress ist WireGuard oder der Reverse Proxy (intern).
+   Einziger Ingress ist das authentifizierte Overlay (Tailscale) oder der Reverse Proxy (intern).
 
    *Architektur-Entscheidung:*
    Dienste (Docker/Caddy) dürfen auf 0.0.0.0 lauschen.
@@ -73,10 +78,10 @@ Die Wahrheit ist föderal organisiert:
 
 5. **DNS-Souveränität**
    Die Zone `home.arpa` wird niemals an externe Resolver (8.8.8.8 etc.) weitergeleitet.
-   Pi-hole ist die einzige Quelle der Wahrheit für interne Namen.
+   Heimberry (Pi-hole/Unbound) ist die einzige Quelle der Wahrheit für interne Namen.
 
 6. **Kein Splitbrain**
-   Ein Hostname hat im gesamten Heimgewebe (LAN + WireGuard) genau eine IP.
+   Ein Hostname hat im gesamten Heimgewebe (LAN + Tailnet) genau eine IP.
    Split-Horizon-DNS ist zu vermeiden.
 
 ---

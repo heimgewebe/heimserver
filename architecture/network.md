@@ -4,9 +4,9 @@ role: norm
 status: active
 canonicality: canonical
 doc_type: architecture
-title: Network Architecture
-summary: Canonical network rules and layout
-last_reviewed: 2026-02-13
+title: Network Architecture (Layer Model)
+summary: Canonical network rules and migration layout for Heimnetz layers
+last_reviewed: 2026-04-28
 depends_on: []
 verifies_with:
   - ops/checks/preflight.sh
@@ -18,8 +18,8 @@ Kanonische Netz- und Transportarchitektur
 ⛔️ ENTHÄLT SICHERHEITSRELEVANTE STRUKTUR
 ⛔️ NICHT VERÖFFENTLICHEN
 
-Stand: 2026-02-13
-Host: heimserver
+Stand: 2026-04-28
+Scope: Heimnetz (Layer-Modell)
 Dokumentklasse: ARCHITEKTUR · KANONISCH
 
 **Sicherheits-Policy (Repo-Status):**
@@ -30,17 +30,28 @@ Falls das Repo entgegen der Policy public wird (Security Incident), ist eine sof
 
 ## 1. Netzphilosophie
 
-These: Ein Heimserver ist nur so stabil wie sein Routing.
+These: Ein Heimnetz ist nur so stabil wie sein Routing.
 Antithese: Routing ist Nebensache, Dienste sind entscheidend.
 Synthese: Dienste ohne saubere Transportlogik erzeugen Geisterfehler.
 
 Destabilisierung:
 Das Problem war nie „DNS kaputt“.
-Das Problem war „Splitbrain durch falsche AllowedIPs“.
+Das Problem war „Splitbrain durch falsche AllowedIPs und duale DNS-Wahrheiten“.
+
+## 1.1 Rollenanker (kanonisch)
+
+- Heimberry = Truth Layer (DNS/Resolver)
+- Heimserver = Service Layer (Caddy, interne PKI, Apps)
+- Heim-PC = Interaction Layer
+- iPad = Access Layer
+
+Hard Rule:
+- Kein primäres DNS auf Heimserver
+- Kein VPN-Core auf Heimserver
 
 ---
 
-## 2. Netzsegmente (Ist-Zustand)
+## 2. Netzsegmente (Migrationszustand)
 
 ### 2.1 LAN
 
@@ -50,12 +61,15 @@ Server-IP: `192.168.178.46`
 
 Rolle:
 	•	Primärtransport für Heimgeräte
-	•	DNS-Ziel für Clients
+	•	DNS-Ziel für Clients (**historical/current migration-state**)
 	•	Reverse-Proxy-Entry
+
+Zielzustand:
+	•	DNS-Truth-Ziel für Clients = Heimberry (`192.168.178.2`)
 
 ---
 
-### 2.2 WireGuard (Remote-Zugang)
+### 2.2 WireGuard (historical / migration-state)
 
 Interface: `wg0`
 Server-IP: `10.7.0.1/24`
