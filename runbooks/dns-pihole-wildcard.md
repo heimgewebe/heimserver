@@ -1,6 +1,13 @@
 # ops.dns-pihole-wildcard-home-arpa
 
-Status: PRODUKTIV
+> **Status: superseded / historical**
+>
+> Dieses Runbook beschreibt DNS auf dem Heimserver (`192.168.178.46`) und gilt nur noch als Migrationsreferenz.
+> Aktuelle Zielpfade:
+> - `runbooks/heimberry-bootstrap.md`
+> - `runbooks/dns-migration.md`
+
+Status: HISTORISCH / DEPRECATED
 Scope: Heimserver (192.168.178.46)
 System: Pi-hole (Docker)
 Namespace: heimgewebe.home.arpa

@@ -1,6 +1,14 @@
 # heimserver
 
-Dieses Repo ist das operative Rückgrat (Ops-Orakel) für den Heimserver.
+Dieses Repo ist das operative Rückgrat (Ops-Orakel) für das Heimnetz.
+Der Repository-Name bleibt historisch `heimserver`, die Zielsemantik ist jedoch ein Layer-Modell:
+
+- **Heimberry = Truth Layer** (DNS/Resolver/Truth)
+- **Heimserver = Service Layer** (Caddy, interne PKI, App-Container)
+- **Heim-PC = Interaction Layer**
+- **iPad = Access Layer**
+
+Siehe kanonisch: [`architecture/heimnetz-2026.md`](architecture/heimnetz-2026.md).
 
 ## Einstiegspunkte
 

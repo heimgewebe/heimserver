@@ -8,20 +8,24 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [constitution.md](architecture/constitution.md) | `constitution` | - | active | 2026-02-13 | `ops/checks/preflight.sh` |
+| [constitution.md](architecture/constitution.md) | `constitution` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
 | [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
-| [naming.md](architecture/naming.md) | `naming` | - | active | 2026-02-13 | `ops/checks/preflight.sh` |
-| [network.md](architecture/network.md) | `network` | - | active | 2026-02-13 | `ops/checks/preflight.sh` |
+| [naming.md](architecture/naming.md) | `naming` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
+| [network.md](architecture/network.md) | `network` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
 | [glossary.md](architecture/glossary.md) | `glossary` | - | active | 2026-03-11 | - |
 | [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | active | 2026-04-19 | - |
+| [nodes/heimberry.md](architecture/nodes/heimberry.md) | `node-heimberry` | - | active | 2026-04-28 | - |
+| [nodes/heimserver.md](architecture/nodes/heimserver.md) | `node-heimserver` | - | active | 2026-04-28 | - |
+| [nodes/heim-pc.md](architecture/nodes/heim-pc.md) | `node-heim-pc` | - | active | 2026-04-28 | - |
+| [nodes/ipad.md](architecture/nodes/ipad.md) | `node-ipad` | - | active | 2026-04-28 | - |
 
 ## Zone: REALITY
 **Path:** `runtime/`
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [runtime.md](runtime/runtime.md) | `runtime` | - | active | 2026-02-18 | `ops/audit/collect.sh` |
+| [runtime.md](runtime/runtime.md) | `runtime` | - | active | 2026-04-28 | `ops/audit/collect.sh` |
 
 ## Zone: ACTION
 **Path:** `operations/`
@@ -35,11 +39,14 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [index.md](runbooks/index.md) | `runbooks-index` | entry | active | 2026-02-13 | `scripts/ci/check-runbook-invariants.sh` |
+| [index.md](runbooks/index.md) | `runbooks-index` | entry | active | 2026-04-28 | `scripts/ci/check-runbook-invariants.sh` |
 | [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
 | [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
 | [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | - | active | 2026-03-07 | - |
-| [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | - | active | 2026-03-11 | - |
+| [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | - | deprecated | 2026-04-28 | - |
+| [heimberry-bootstrap.md](runbooks/heimberry-bootstrap.md) | `runbook-heimberry-bootstrap` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
+| [dns-migration.md](runbooks/dns-migration.md) | `runbook-dns-migration` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
+| [tailscale-migration.md](runbooks/tailscale-migration.md) | `runbook-tailscale-migration` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
 
 ## Zone: DECISIONS
 **Path:** `docs/decisions/`
@@ -53,7 +60,7 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [index.md](docs/index.md) | `docs.index` | entry | active | 2026-03-11 | - |
+| [index.md](docs/index.md) | `docs.index` | entry | active | 2026-04-28 | - |
 
 ## Dependencies
 Documents that depend on others:
@@ -61,11 +68,18 @@ Documents that depend on others:
 - **networking/port-matrix.md** depends on: `architecture/network.md`
 - **glossary.md** depends on: `constitution`
 - **heimnetz-2026.md** depends on: `constitution`, `network`, `naming`, `port-matrix`
+- **nodes/heimberry.md** depends on: `heimnetz-2026`
+- **nodes/heimserver.md** depends on: `heimnetz-2026`
+- **nodes/heim-pc.md** depends on: `heimnetz-2026`
+- **nodes/ipad.md** depends on: `heimnetz-2026`
 - **runtime.md** depends on: `architecture/constitution.md`, `architecture/network.md`
 - **operations.md** depends on: `runtime/runtime.md`
 - **ops.runbook.edge-caddy-port-conflict.md** depends on: `architecture/networking/port-matrix.md`, `runbooks/index.md`
 - **ops.runbook.weltgewebe-stack.md** depends on: `architecture/naming.md`, `architecture/networking/port-matrix.md`
 - **ops.runbook.heimserver-edge.md** depends on: `architecture/network.md`, `architecture/networking/port-matrix.md`
+- **heimberry-bootstrap.md** depends on: `architecture/heimnetz-2026.md`, `architecture/nodes/heimberry.md`
+- **dns-migration.md** depends on: `architecture/heimnetz-2026.md`, `runtime/runtime.md`
+- **tailscale-migration.md** depends on: `architecture/heimnetz-2026.md`, `architecture/network.md`
 - **0001-adopt-agentic-blueprint.md** depends on: `docmeta.schema`, `glossary`
 
 ## Automated Checks

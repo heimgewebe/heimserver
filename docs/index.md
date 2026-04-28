@@ -6,11 +6,11 @@ role: docs
 doc_role: entry
 status: active
 canonicality: canonical
-last_reviewed: 2026-03-11
+last_reviewed: 2026-04-28
 summary: Zentrale Einstiegs- und Orientierungsseite für die gesamte Dokumentation.
 ---
 
-# Heimserver Documentation Index
+# Heimnetz Documentation Index (Repo: `heimserver`)
 
 Dieses Dokument bildet den zentralen Einstieg in die strukturierte Dokumentation des Repositories.
 
@@ -48,10 +48,16 @@ Hier stehen die Regeln, nach denen die Infrastruktur zu funktionieren hat. Lese 
 - [Port Matrix](../architecture/networking/port-matrix.md)
 - [Glossary](../architecture/glossary.md)
 - [Heimnetz 2026+](../architecture/heimnetz-2026.md)
+- [Node: Heimberry (Truth Layer)](../architecture/nodes/heimberry.md)
+- [Node: Heimserver (Service Layer)](../architecture/nodes/heimserver.md)
+- [Node: Heim-PC (Interaction Layer)](../architecture/nodes/heim-pc.md)
+- [Node: iPad (Access Layer)](../architecture/nodes/ipad.md)
 
 ### Runtime & Realität
-Hier dokumentieren wir in Snapshots, wie der Server *tatsächlich* gerade läuft.
+Hier dokumentieren wir in Snapshots, wie die Knoten *tatsächlich* laufen.
 - [Runtime Status](../runtime/runtime.md)
+- [Runtime Draft: Heimberry](../runtime/heimberry.md) *(derived/experimental, bis Snapshot-Belege vorliegen)*
+- [Runtime Draft: Heimserver](../runtime/heimserver.md) *(derived/experimental, bis Snapshot-Belege vorliegen)*
 
 ### Operationen & Runbooks
 Hier steht, wie wir eingreifen, wenn das System drifftet oder Updates braucht.
