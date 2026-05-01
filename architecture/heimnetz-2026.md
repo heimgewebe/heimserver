@@ -344,7 +344,7 @@ Fehler sind lokalisierbar, eindeutig und erlauben administrativen Notfallzugriff
 ---
 ## 14. Gehärteter Migrationsplan
 **Vor Phase 1:**
-- Auswahl OS-Version nach Validierungsmatrix
+- Auswahl OS-Version nach Validierungsmatrix (im Rahmen dieses Plans gepflegte Prüfliste: Hardware-/Architektur-Support, Kernel-/Treiber-Stabilität, Kompatibilität mit Container-/Netzwerk-Stack, Verfügbarkeit von Sicherheitsupdates sowie erfolgreich getestetes Backup/Restore).
 - Empfehlung: aktuelle stabile Raspberry Pi OS Lite Version
 **Optionaler Safepath:**
 - Erstinstallation auf älterer stabiler Basis (z.B. Bookworm)
