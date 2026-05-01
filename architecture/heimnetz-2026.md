@@ -43,7 +43,7 @@ verifies_with: []
 9. **Betriebsphilosophie:**
    Dieses System optimiert primär auf Erklärbarkeit und Kontrolle, nicht auf maximal unsichtbare Resilienz. Es bevorzugt sichtbare Fehler vor stiller Mehrdeutigkeit.
 ---
-## 0.5 OS-Versionierungsstrategie (neu)
+## 0.5 OS-Versionierungsstrategie
 ### Ziel
 Trennung von:
 - **Architektur-Invariante** (was das System ist)
