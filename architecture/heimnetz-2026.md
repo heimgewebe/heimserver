@@ -43,10 +43,38 @@ verifies_with: []
 9. **Betriebsphilosophie:**
    Dieses System optimiert primär auf Erklärbarkeit und Kontrolle, nicht auf maximal unsichtbare Resilienz. Es bevorzugt sichtbare Fehler vor stiller Mehrdeutigkeit.
 ---
+## 0.5 OS-Versionierungsstrategie
+### Ziel
+Trennung von:
+- **Architektur-Invariante** (was das System ist)
+- **Implementierungsbasis** (welche Debian-Version läuft)
+### Regeln
+1. OS = Raspberry Pi OS Lite (64-bit) ist invariant
+2. Debian-Version ist variabel (Bookworm, Trixie, …)
+3. Upgrade erfolgt nur nach erfolgreichem Realitätscheck
+### Validierung vor Upgrade
+- `dig` gegen Heimberry stabil
+- Pi-hole Query-Log ohne Anomalien
+- Tailscale DNS Override funktioniert
+- keine DoH-Leaks durch Regression
+### Rollback-Fähigkeit
+- Image-basierter Restore muss möglich sein
+- SD-Karten-Backup vor Upgrade verpflichtend
+### Prinzip
+„Stabilität wird gemessen, nicht angenommen.“
+---
 ## 1. Geräte-Rollen (final, gehärtet)
 
 ### 1.1 Heimberry — **Truth Layer**
-**OS/Runtime:** Debian Bookworm Lite + Docker
+**OS/Runtime:** Raspberry Pi OS Lite (64-bit) + Docker
+**Policy:**
+Die konkrete Debian-Basis (z.B. Bookworm, Trixie) ist **nicht kanonisch festgelegt**,
+sondern folgt dem Prinzip:
+→ „neueste stabile Version, sofern Validierung bestanden“
+Eine Version wird nur dann übernommen, wenn:
+- Pi-hole + Unbound stabil laufen
+- Tailscale DNS korrekt integriert ist
+- keine Resolver-Regressionen auftreten
 **Pflichtdienste:**
 * Pi-hole (DNS authoritative + filtering)
 * Unbound (rekursiver Resolver)
@@ -315,6 +343,13 @@ Heimserver (Proxy/Services) fällt aus.
 Fehler sind lokalisierbar, eindeutig und erlauben administrativen Notfallzugriff.
 ---
 ## 14. Gehärteter Migrationsplan
+**Vor Phase 1:**
+- Auswahl OS-Version nach Validierungsmatrix (im Rahmen dieses Plans gepflegte Prüfliste: Hardware-/Architektur-Support, Kernel-/Treiber-Stabilität, Kompatibilität mit Container-/Netzwerk-Stack, Verfügbarkeit von Sicherheitsupdates sowie erfolgreich getestetes Backup/Restore).
+- Empfehlung: aktuelle stabile Raspberry Pi OS Lite Version
+**Optionaler Safepath:**
+- Erstinstallation auf älterer stabiler Basis (z.B. Bookworm)
+- danach kontrolliertes Upgrade testen
+
 **Phase 1 — Truth (Risiko-Minimiert)**
 * Heimberry deployen & konfigurieren
 * Parallelbetrieb: Router DNS bleibt vorerst unverändert. Einzelne Clients (z.B. Admin-PC) manuell auf Heimberry umstellen.
@@ -382,6 +417,11 @@ Dieses System ist eine Entscheidung für Erklärbarkeit.
 **Ursachen:**
 * Reale Last des Heimberrys unter Volllast ist aktuell nur eine Annahme.
 * Das genaue Client-Verhalten bei MagicDNS-Fallback in echten Störungsszenarien muss erst in der Validierungsphase getestet werden.
+* Neue Unsicherheitsquelle:
+  - Unterschiedliches Verhalten zwischen Debian-Versionen
+    (insbesondere DNS-Resolver, systemd-resolved, nftables)
+* Mitigation:
+  - OS-Version wird als testpflichtige Variable behandelt
 **Interpolationsgrad:** 0.20
 **Annahmen:**
 * Die vollständige DNS-Disziplin ist operativ durchhaltbar, ohne dass der administrative Schmerz zu Shadow-IT führt.
