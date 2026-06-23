@@ -2,101 +2,136 @@
 set -euo pipefail
 
 # Scripts for atomic, drift-safe Caddyfile sync
-# Variables:
-#   EXPECTED_LIVE_SHA256
-#   LIVE_FILE (default: /opt/heimgewebe/edge/Caddyfile)
-#   CANDIDATE_FILE (default: edge/Caddyfile.template)
-#   CADDY_CONTAINER (default: edge-caddy)
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 
-LIVE_FILE="${LIVE_FILE:-/opt/heimgewebe/edge/Caddyfile}"
-CANDIDATE_FILE="${CANDIDATE_FILE:-edge/Caddyfile.template}"
-CADDY_CONTAINER="${CADDY_CONTAINER:-edge-caddy}"
+EDGE_DIR="${EDGE_DIR:-/opt/heimgewebe/edge}"
+COMPOSE_FILE="${COMPOSE_FILE:-$EDGE_DIR/docker-compose.yml}"
+CADDY_SERVICE="${CADDY_SERVICE:-edge-caddy}"
+LIVE_FILE="${LIVE_FILE:-$EDGE_DIR/Caddyfile}"
+CANDIDATE_FILE="${CANDIDATE_FILE:-$REPO_ROOT/edge/Caddyfile.template}"
+LOCK_FILE="${LOCK_FILE:-/run/lock/heimserver-edge-caddy-sync.lock}"
 
 : "${EXPECTED_LIVE_SHA256:?Set the reviewed current live Caddyfile hash}"
 
-if [ ! -f "$LIVE_FILE" ]; then
+# Exclusive lock
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+    echo "ERROR: another edge sync is active" >&2
+    exit 1
+fi
+
+if [[ ! -f "$LIVE_FILE" ]]; then
     echo "ERROR: live Caddyfile is missing" >&2
     exit 1
 fi
 
 CURRENT_LIVE_SHA256="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
-CANDIDATE_SHA256="$(sha256sum "$CANDIDATE_FILE" | awk '{print $1}')"
-
-if [ "$CURRENT_LIVE_SHA256" != "$EXPECTED_LIVE_SHA256" ]; then
+if [[ "$CURRENT_LIVE_SHA256" != "$EXPECTED_LIVE_SHA256" ]]; then
     echo "ERROR: Unexpected drift in live Caddyfile. Aborting." >&2
     exit 1
 fi
 
-if [ "$CURRENT_LIVE_SHA256" == "$CANDIDATE_SHA256" ]; then
+CANDIDATE_SHA256="$(sha256sum "$CANDIDATE_FILE" | awk '{print $1}')"
+if [[ "$CURRENT_LIVE_SHA256" == "$CANDIDATE_SHA256" ]]; then
     echo "No changes to sync."
     exit 0
+fi
+
+CURRENT_CONTAINER_SHA256="$(
+  docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" exec -T "$CADDY_SERVICE" \
+    sha256sum /etc/caddy/Caddyfile | awk '{print $1}'
+)"
+if [[ "$CURRENT_CONTAINER_SHA256" != "$CURRENT_LIVE_SHA256" ]]; then
+  echo "ERROR: host and container Caddyfiles already diverge" >&2
+  exit 1
 fi
 
 echo "Validating candidate with Caddy 2.8.4..."
 docker run --rm \
   --network none \
-  -v "$PWD:/repo:ro" \
+  -v "$REPO_ROOT:/repo:ro" \
   -w /repo \
   caddy:2.8.4 \
   caddy validate \
     --adapter caddyfile \
-    --config "$CANDIDATE_FILE"
+    --config "edge/Caddyfile.template"
 
-BACKUP_FILE="${LIVE_FILE}.bak.$(date -u +%Y%m%dT%H%M%SZ)"
+# TOCTOU check right before backup and write
+PRE_WRITE_LIVE_SHA256="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
+if [[ "$PRE_WRITE_LIVE_SHA256" != "$EXPECTED_LIVE_SHA256" ]]; then
+  echo "ERROR: live Caddyfile changed during candidate validation" >&2
+  exit 1
+fi
+
+BACKUP_FILE="${LIVE_FILE}.bak.$(date -u +%Y%m%dT%H%M%S%NZ)"
+if [[ -e "$BACKUP_FILE" ]]; then
+  echo "ERROR: backup path already exists" >&2
+  exit 1
+fi
+
 echo "Creating backup at $BACKUP_FILE"
 cp -a "$LIVE_FILE" "$BACKUP_FILE"
 
 # Trap for rollback
 rollback() {
     local exit_code=$?
-    if [ $exit_code -ne 0 ]; then
+    if [[ $exit_code -ne 0 ]]; then
         echo "ERROR DETECTED ($exit_code). Initiating rollback..." >&2
+        trap - EXIT
+        local rollback_ok=1
+
         cat "$BACKUP_FILE" > "$LIVE_FILE"
         echo "Rollback: Restored $LIVE_FILE from $BACKUP_FILE" >&2
         
         # Verify restored state
         RESTORED_HASH="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
-        if [ "$RESTORED_HASH" != "$CURRENT_LIVE_SHA256" ]; then
+        if [[ "$RESTORED_HASH" != "$CURRENT_LIVE_SHA256" ]]; then
             echo "CRITICAL: Host file failed to rollback correctly!" >&2
-        else
-            echo "Rollback: Host file verified." >&2
+            rollback_ok=0
         fi
         
-        CONTAINER_RESTORED_HASH="$(docker compose exec -T "$CADDY_CONTAINER" sha256sum /etc/caddy/Caddyfile | awk '{print $1}')"
-        if [ "$CONTAINER_RESTORED_HASH" != "$CURRENT_LIVE_SHA256" ]; then
+        CONTAINER_RESTORED_HASH="$(docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" exec -T "$CADDY_SERVICE" sha256sum /etc/caddy/Caddyfile | awk '{print $1}')"
+        if [[ "$CONTAINER_RESTORED_HASH" != "$CURRENT_LIVE_SHA256" ]]; then
             echo "CRITICAL: Container file failed to rollback correctly!" >&2
-        else
-            echo "Rollback: Container file verified." >&2
+            rollback_ok=0
         fi
         
-        docker compose exec -T "$CADDY_CONTAINER" caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile || true
-        echo "Rollback complete. Do not reload if validation above failed." >&2
+        if ! docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" exec -T "$CADDY_SERVICE" caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile; then
+            echo "CRITICAL: Rollback container validation failed!" >&2
+            rollback_ok=0
+        fi
+
+        if [[ "$rollback_ok" == 1 ]]; then
+            echo "Rollback verified." >&2
+        else
+            echo "CRITICAL: rollback could not be fully verified." >&2
+        fi
+        exit $exit_code
     fi
 }
-
 trap rollback EXIT
 
 echo "Performing in-place sync..."
 cat "$CANDIDATE_FILE" > "$LIVE_FILE"
 
 POST_SYNC_HOST_SHA256="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
-if [ "$POST_SYNC_HOST_SHA256" != "$CANDIDATE_SHA256" ]; then
+if [[ "$POST_SYNC_HOST_SHA256" != "$CANDIDATE_SHA256" ]]; then
     echo "ERROR: Host file write failed or altered!" >&2
     exit 1
 fi
 
 CONTAINER_SHA256="$(
-    docker compose exec -T "$CADDY_CONTAINER" \
-      sha256sum /etc/caddy/Caddyfile \
-      | awk '{print $1}'
+    docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" exec -T "$CADDY_SERVICE" \
+      sha256sum /etc/caddy/Caddyfile | awk '{print $1}'
 )"
-if [ "$CONTAINER_SHA256" != "$CANDIDATE_SHA256" ]; then
+if [[ "$CONTAINER_SHA256" != "$CANDIDATE_SHA256" ]]; then
     echo "ERROR: Container file hash does not match candidate." >&2
     exit 1
 fi
 
 echo "Pre-reload container validation..."
-docker compose exec -T "$CADDY_CONTAINER" \
+docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" exec -T "$CADDY_SERVICE" \
   caddy validate \
     --adapter caddyfile \
     --config /etc/caddy/Caddyfile
