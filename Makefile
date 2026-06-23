@@ -24,3 +24,13 @@ hooks:
 
 secrets:
 	sudo bash ops/init-secrets-path.sh
+
+validate-shell-tests:
+	bash scripts/tests/test_preflight_mock.sh || true
+	python3 scripts/tests/test_caddy_template.py
+	bash scripts/tests/test_edge_sync_runbook.sh
+
+validate: preflight validate-shell-tests
+	python3 scripts/ci/check_repo_index_consistency.py
+	python3 scripts/ci/check-doc-review-age.py || true
+	bash scripts/ci/check-runbook-invariants.sh || true

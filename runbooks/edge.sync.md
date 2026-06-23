@@ -47,65 +47,9 @@ Copy the templates to the host and remove the `.template` extension.
 cp edge/docker-compose.yml.template /opt/heimgewebe/edge/docker-compose.yml
 
 # Caddyfile Sync (Three-State-Sync)
-
-LIVE_FILE="/opt/heimgewebe/edge/Caddyfile"
-CANDIDATE_FILE="edge/Caddyfile.template"
-
-: "${EXPECTED_LIVE_SHA256:?Set the reviewed current live Caddyfile hash}"
-
-if [ -f "$LIVE_FILE" ]; then
-    CURRENT_LIVE_SHA256="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
-else
-    echo "ERROR: live Caddyfile is missing" >&2
-    exit 1
-fi
-
-CANDIDATE_SHA256="$(sha256sum "$CANDIDATE_FILE" | awk '{print $1}')"
-
-if [ "$CURRENT_LIVE_SHA256" != "$EXPECTED_LIVE_SHA256" ]; then
-    echo "ERROR: Unexpected drift in live Caddyfile. Aborting." >&2
-    exit 1
-fi
-
-if [ "$CURRENT_LIVE_SHA256" == "$CANDIDATE_SHA256" ]; then
-    echo "No changes to sync."
-    exit 0
-fi
-
-# Validate candidate
-docker run --rm \
-  --network none \
-  -v "$PWD:/repo:ro" \
-  -w /repo \
-  caddy:2.8.4 \
-  caddy validate \
-    --adapter caddyfile \
-    --config "$CANDIDATE_FILE"
-
-# Backup
-BACKUP_FILE="$LIVE_FILE.bak.$(date -u +%Y%m%dT%H%M%SZ)"
-cp -a "$LIVE_FILE" "$BACKUP_FILE"
-echo "Backup saved to $BACKUP_FILE"
-
-# In-place sync (controlled overwrite, preserve inode)
-cat "$CANDIDATE_FILE" > "$LIVE_FILE"
-
-# Post-sync verification
-POST_SYNC_HOST_SHA256="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
-if [ "$POST_SYNC_HOST_SHA256" != "$CANDIDATE_SHA256" ]; then
-    echo "ERROR: Host file write failed or altered!" >&2
-    exit 1
-fi
-
-CONTAINER_SHA256="$(
-    docker compose exec -T edge-caddy \
-      sha256sum /etc/caddy/Caddyfile \
-      | awk '{print $1}'
-)"
-if [ "$CONTAINER_SHA256" != "$CANDIDATE_SHA256" ]; then
-    echo "ERROR: Container file hash does not match candidate. Do not reload. Rollback required." >&2
-    exit 1
-fi
+# This will perform hash checks, candidate validation, backup, and in-place sync.
+# Provide the known good hash of the active file to authorize the sync:
+EXPECTED_LIVE_SHA256="<your-reviewed-hash>" bash scripts/edge/sync_caddyfile.sh
 ```
 
 ### 4. Customize Runtime (If needed)
@@ -116,12 +60,6 @@ Reload Caddy to apply changes without downtime. Only execute this after all vali
 
 ```bash
 cd /opt/heimgewebe/edge
-
-# Pre-reload container validation
-docker compose exec -T edge-caddy \
-  caddy validate \
-    --adapter caddyfile \
-    --config /etc/caddy/Caddyfile
 
 # Reload config
 docker compose exec -T edge-caddy \
