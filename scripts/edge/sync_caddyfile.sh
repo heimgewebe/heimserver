@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Scripts for atomic, drift-safe Caddyfile sync
+# Drift-safe in-place Caddyfile sync for a single-file bind mount
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 
@@ -48,14 +48,17 @@ if [[ "$CURRENT_CONTAINER_SHA256" != "$CURRENT_LIVE_SHA256" ]]; then
 fi
 
 echo "Validating candidate with Caddy 2.8.4..."
+CANDIDATE_DIR="$(dirname -- "$CANDIDATE_FILE")"
+CANDIDATE_NAME="$(basename -- "$CANDIDATE_FILE")"
+
 docker run --rm \
+  --pull=never \
   --network none \
-  -v "$REPO_ROOT:/repo:ro" \
-  -w /repo \
+  -v "$CANDIDATE_DIR:/candidate:ro" \
   caddy:2.8.4 \
   caddy validate \
     --adapter caddyfile \
-    --config "edge/Caddyfile.template"
+    --config "/candidate/$CANDIDATE_NAME"
 
 # TOCTOU check right before backup and write
 PRE_WRITE_LIVE_SHA256="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
@@ -81,17 +84,21 @@ rollback() {
         trap - EXIT
         local rollback_ok=1
 
-        cat "$BACKUP_FILE" > "$LIVE_FILE"
+        if ! cat "$BACKUP_FILE" > "$LIVE_FILE"; then
+            echo "CRITICAL: could not restore host file" >&2
+            rollback_ok=0
+        fi
+        
         echo "Rollback: Restored $LIVE_FILE from $BACKUP_FILE" >&2
         
         # Verify restored state
-        RESTORED_HASH="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
+        RESTORED_HASH="$(sha256sum "$LIVE_FILE" | awk '{print $1}' || true)"
         if [[ "$RESTORED_HASH" != "$CURRENT_LIVE_SHA256" ]]; then
             echo "CRITICAL: Host file failed to rollback correctly!" >&2
             rollback_ok=0
         fi
         
-        CONTAINER_RESTORED_HASH="$(docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" exec -T "$CADDY_SERVICE" sha256sum /etc/caddy/Caddyfile | awk '{print $1}')"
+        CONTAINER_RESTORED_HASH="$(docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" exec -T "$CADDY_SERVICE" sha256sum /etc/caddy/Caddyfile | awk '{print $1}' || true)"
         if [[ "$CONTAINER_RESTORED_HASH" != "$CURRENT_LIVE_SHA256" ]]; then
             echo "CRITICAL: Container file failed to rollback correctly!" >&2
             rollback_ok=0
@@ -104,10 +111,11 @@ rollback() {
 
         if [[ "$rollback_ok" == 1 ]]; then
             echo "Rollback verified." >&2
+            exit "$exit_code"
         else
             echo "CRITICAL: rollback could not be fully verified." >&2
+            exit 255
         fi
-        exit $exit_code
     fi
 }
 trap rollback EXIT

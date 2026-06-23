@@ -36,37 +36,31 @@ all_routes = []
 for srv in servers.values():
     all_routes.extend(srv.get("routes", []))
 
-def find_host_routes(expected_hosts, exact_match=False):
-    matched = []
-    found_hosts = set()
+def find_route_with_exact_hosts(expected_hosts: set):
     for route in all_routes:
-        matchers = route.get("match", [])
-        for m in matchers:
-            if "host" in m:
-                # Add found hosts to our set if they intersect
-                route_hosts = set(m["host"])
-                if set(expected_hosts).intersection(route_hosts):
-                    found_hosts.update(route_hosts)
-                    matched.append(route)
-    if exact_match and not set(expected_hosts).issubset(found_hosts):
-        return []
-    return matched
+        for matcher in route.get("match", []):
+            if set(matcher.get("host", [])) == expected_hosts:
+                return route
+    return None
 
-required_web_hosts = ["weltgewebe.net", "www.weltgewebe.net"]
-weltgewebe_routes = find_host_routes(required_web_hosts, exact_match=True)
+web_route = find_route_with_exact_hosts({
+    "weltgewebe.net",
+    "www.weltgewebe.net"
+})
 
-api_required_hosts = ["api.weltgewebe.net"]
-api_weltgewebe_routes = find_host_routes(api_required_hosts, exact_match=True)
+api_route = find_route_with_exact_hosts({
+    "api.weltgewebe.net"
+})
 
-if not weltgewebe_routes:
+if not web_route:
     print("❌ MISSING: exact host matches for weltgewebe.net and www.weltgewebe.net")
     sys.exit(1)
 
-if not api_weltgewebe_routes:
+if not api_route:
     print("❌ MISSING: exact host matches for api.weltgewebe.net")
     sys.exit(1)
 
-weltgewebe_str = json.dumps(weltgewebe_routes)
+weltgewebe_str = json.dumps(web_route)
 checks = {
     "Basemap": "/local-basemap/*",
     "API": "/api/*",
@@ -84,7 +78,7 @@ for desc, expected in checks.items():
     else:
         print(f"✅ FOUND in weltgewebe.net: {desc}")
 
-api_str = json.dumps(api_weltgewebe_routes)
+api_str = json.dumps(api_route)
 if "weltgewebe-api:8080" not in api_str:
     print("❌ MISSING in api.weltgewebe.net: API Upstream (weltgewebe-api:8080)")
     sys.exit(1)
