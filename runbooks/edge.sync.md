@@ -46,16 +46,65 @@ Copy the templates to the host and remove the `.template` extension.
 # Copy Docker Compose
 cp edge/docker-compose.yml.template /opt/heimgewebe/edge/docker-compose.yml
 
-# Copy Caddyfile (Check Drift!)
-# If a Caddyfile already exists, diff it first.
-if diff edge/Caddyfile.template /opt/heimgewebe/edge/Caddyfile >/dev/null; then
-    echo "No Caddyfile drift."
+# Caddyfile Sync (Three-State-Sync)
+
+LIVE_FILE="/opt/heimgewebe/edge/Caddyfile"
+CANDIDATE_FILE="edge/Caddyfile.template"
+
+: "${EXPECTED_LIVE_SHA256:?Set the reviewed current live Caddyfile hash}"
+
+if [ -f "$LIVE_FILE" ]; then
+    CURRENT_LIVE_SHA256="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
 else
-    echo "DRIFT DETECTED in Caddyfile!"
-    diff edge/Caddyfile.template /opt/heimgewebe/edge/Caddyfile
-    echo "Review diff. If intentional host-changes, backport to template."
-    echo "To force overwrite: cp edge/Caddyfile.template /opt/heimgewebe/edge/Caddyfile"
-    # exit 1 # Uncomment in CI/Strict mode
+    echo "ERROR: live Caddyfile is missing" >&2
+    exit 1
+fi
+
+CANDIDATE_SHA256="$(sha256sum "$CANDIDATE_FILE" | awk '{print $1}')"
+
+if [ "$CURRENT_LIVE_SHA256" != "$EXPECTED_LIVE_SHA256" ]; then
+    echo "ERROR: Unexpected drift in live Caddyfile. Aborting." >&2
+    exit 1
+fi
+
+if [ "$CURRENT_LIVE_SHA256" == "$CANDIDATE_SHA256" ]; then
+    echo "No changes to sync."
+    exit 0
+fi
+
+# Validate candidate
+docker run --rm \
+  --network none \
+  -v "$PWD:/repo:ro" \
+  -w /repo \
+  caddy:2.8.4 \
+  caddy validate \
+    --adapter caddyfile \
+    --config "$CANDIDATE_FILE"
+
+# Backup
+BACKUP_FILE="$LIVE_FILE.bak.$(date -u +%Y%m%dT%H%M%SZ)"
+cp -a "$LIVE_FILE" "$BACKUP_FILE"
+echo "Backup saved to $BACKUP_FILE"
+
+# In-place sync (controlled overwrite, preserve inode)
+cat "$CANDIDATE_FILE" > "$LIVE_FILE"
+
+# Post-sync verification
+POST_SYNC_HOST_SHA256="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
+if [ "$POST_SYNC_HOST_SHA256" != "$CANDIDATE_SHA256" ]; then
+    echo "ERROR: Host file write failed or altered!" >&2
+    exit 1
+fi
+
+CONTAINER_SHA256="$(
+    docker compose exec -T edge-caddy \
+      sha256sum /etc/caddy/Caddyfile \
+      | awk '{print $1}'
+)"
+if [ "$CONTAINER_SHA256" != "$CANDIDATE_SHA256" ]; then
+    echo "ERROR: Container file hash does not match candidate. Do not reload. Rollback required." >&2
+    exit 1
 fi
 ```
 
@@ -63,13 +112,22 @@ fi
 If the specific deployment requires modifications (e.g. specific volume mappings or environment variables), create a `docker-compose.override.yml` on the host. **Do not commit overrides to the repo.**
 
 ### 5. Apply Configuration
-Reload Caddy to apply changes without downtime.
+Reload Caddy to apply changes without downtime. Only execute this after all validation and hash checks pass.
 
 ```bash
 cd /opt/heimgewebe/edge
-docker compose up -d
-# Or just reload config if container is running:
-docker compose exec edge-caddy caddy reload --config /etc/caddy/Caddyfile
+
+# Pre-reload container validation
+docker compose exec -T edge-caddy \
+  caddy validate \
+    --adapter caddyfile \
+    --config /etc/caddy/Caddyfile
+
+# Reload config
+docker compose exec -T edge-caddy \
+  caddy reload \
+    --adapter caddyfile \
+    --config /etc/caddy/Caddyfile
 ```
 
 ### 6. Export Root CA (Post-Deployment)
@@ -115,10 +173,18 @@ docker compose exec edge-caddy cat /data/caddy/pki/authorities/local/root.crt > 
     ```
 
 ## Rollback
-If the new configuration fails:
-1.  Revert `Caddyfile` to the previous version (if backed up).
-2.  `docker compose exec edge-caddy caddy reload --config /etc/caddy/Caddyfile`
-3.  Check logs: `docker compose logs edge-caddy`
+If the new configuration fails or post-sync checks abort:
+1. Identify the backup file (e.g., `/opt/heimgewebe/edge/Caddyfile.bak.20260623T...`).
+2. Read the backup hash: `BACKUP_SHA256="$(sha256sum $BACKUP_FILE | awk '{print $1}')"`
+3. Restore the configuration into the existing file to preserve the bind-mount inode:
+   `cat "$BACKUP_FILE" > /opt/heimgewebe/edge/Caddyfile`
+4. Verify host file matches backup hash.
+5. Verify container file matches backup hash (`docker compose exec -T edge-caddy sha256sum /etc/caddy/Caddyfile`).
+6. Validate container configuration before reload:
+   `docker compose exec -T edge-caddy caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile`
+7. Reload Caddy:
+   `docker compose exec -T edge-caddy caddy reload --adapter caddyfile --config /etc/caddy/Caddyfile`
+8. Check logs and health status. Document the failure and the restored backup.
 
 ## Drift Management
 Any permanent change to the `Caddyfile` on the host MUST be backported to `edge/Caddyfile.template` in the repository, unless it contains secrets.
