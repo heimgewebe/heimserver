@@ -11,7 +11,8 @@ mkdir -p "$TEST_DIR/repo/edge"
 
 export EDGE_DIR="$TEST_DIR/opt/heimgewebe/edge"
 export COMPOSE_FILE="$EDGE_DIR/docker-compose.yml"
-export CADDY_SERVICE="caddy"
+unset CADDY_SERVICE
+EXPECTED_CADDY_SERVICE="caddy"
 export LIVE_FILE="$EDGE_DIR/Caddyfile"
 export CANDIDATE_FILE="$TEST_DIR/repo/edge/Caddyfile.template"
 export LOCK_FILE="$TEST_DIR/lock.lock"
@@ -197,7 +198,7 @@ else
     exit 1
 fi
 
-if ! grep -q "compose --project-directory $EDGE_DIR -f $COMPOSE_FILE exec -T $CADDY_SERVICE" "$DOCKER_CALL_LOG"; then
+if ! grep -Fq -- "compose --project-directory $EDGE_DIR -f $COMPOSE_FILE exec -T $EXPECTED_CADDY_SERVICE" "$DOCKER_CALL_LOG"; then
     echo "❌ Docker compose arguments were incorrect!"
     cat "$DOCKER_CALL_LOG"
     exit 1
