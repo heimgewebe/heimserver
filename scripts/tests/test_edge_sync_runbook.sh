@@ -46,6 +46,12 @@ if [[ "$*" == *"caddy validate"* ]]; then
     exit 0
 fi
 
+if [[ "$*" == *"caddy adapt"* ]]; then
+    # Produce minimal valid Caddy JSON for contract validator when called from sync
+    echo '{"apps":{"http":{"servers":{}}}}'
+    exit 0
+fi
+
 if [[ "$*" == *"sha256sum /etc/caddy/Caddyfile"* ]]; then
     HASH_COUNT=$(cat "$STATE_FILE.hash_count" 2>/dev/null || echo "0")
     HASH_COUNT=$((HASH_COUNT + 1))
@@ -90,6 +96,18 @@ fi
 exit 0
 MOCKGUARD
 chmod +x "$ADMIN_BOUNDARY_CHECK"
+
+# Mock contract validator — structural checks are covered by test_caddy_template.py
+export CADDY_CONTRACT_VALIDATOR="$TEST_DIR/mock_contract.py"
+cat << 'MOCKCONTRACT' > "$CADDY_CONTRACT_VALIDATOR"
+#!/usr/bin/env python3
+import sys
+if "--caddyfile" in sys.argv:
+    # Just exit 0 to pass; real checks are done by test_caddy_template.py
+    sys.exit(0)
+sys.exit(0)
+MOCKCONTRACT
+chmod +x "$CADDY_CONTRACT_VALIDATOR"
 
 run_sync() {
     local expected_hash=$1
