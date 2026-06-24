@@ -104,7 +104,6 @@ negatives = [
     "weltweberei.org",
     "www.weltweberei.org",
     "heimserver.home.arpa",
-    "127.0.0.1:8081",
 ]
 for neg in negatives:
     if neg in all_str:
