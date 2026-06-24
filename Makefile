@@ -33,8 +33,10 @@ validate-warnings:
 validate-shell-tests:
 	shellcheck scripts/edge/sync_caddyfile.sh
 	shellcheck scripts/tests/test_edge_sync_runbook.sh
+	shellcheck scripts/tests/test_edge_compose_contract.sh
 	python3 scripts/tests/test_caddy_template.py
 	bash scripts/tests/test_edge_sync_runbook.sh
+	bash scripts/tests/test_edge_compose_contract.sh
 
 validate: preflight validate-shell-tests
 	python3 scripts/ci/check_repo_index_consistency.py

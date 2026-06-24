@@ -1,5 +1,5 @@
 services:
-  edge-caddy:
+  caddy:
     image: caddy:2.8.4
     container_name: edge-caddy
     restart: unless-stopped
@@ -18,8 +18,8 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       # CA persistence via named volume (best practice)
       # Root CA export is a manual step (see runbooks/edge.sync.md)
-      - edge_caddy_data:/data
-      - edge_caddy_config:/config
+      - caddy_data:/data
+      - caddy_config:/config
       # Primary Static UI build path from Weltgewebe deployment
       # WARNING: This path MUST exist with proper ownership before starting edge-caddy.
       # If missing, Docker daemon will auto-create it as root:root, breaking subsequent Weltgewebe deployments.
@@ -36,5 +36,8 @@ networks:
     external: true
 
 volumes:
-  edge_caddy_data:
-  edge_caddy_config:
+  # Preserve the currently deployed Caddy PKI and configuration state.
+  caddy_data:
+    name: edge_caddy_data
+  caddy_config:
+    name: edge_caddy_config

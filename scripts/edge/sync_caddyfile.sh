@@ -7,7 +7,7 @@ REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 
 EDGE_DIR="${EDGE_DIR:-/opt/heimgewebe/edge}"
 COMPOSE_FILE="${COMPOSE_FILE:-$EDGE_DIR/docker-compose.yml}"
-CADDY_SERVICE="${CADDY_SERVICE:-edge-caddy}"
+CADDY_SERVICE="${CADDY_SERVICE:-caddy}"
 LIVE_FILE="${LIVE_FILE:-$EDGE_DIR/Caddyfile}"
 CANDIDATE_FILE="${CANDIDATE_FILE:-$REPO_ROOT/edge/Caddyfile.template}"
 LOCK_FILE="${LOCK_FILE:-/run/lock/heimserver-edge-caddy-sync.lock}"
