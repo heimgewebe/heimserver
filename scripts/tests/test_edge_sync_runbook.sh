@@ -68,12 +68,40 @@ MOCKDOCKER
 chmod +x "$TEST_DIR/bin/docker"
 export PATH="$TEST_DIR/bin:$PATH"
 
+export ADMIN_BOUNDARY_CHECK="$TEST_DIR/mock_guard.sh"
+cat << 'MOCKGUARD' > "$ADMIN_BOUNDARY_CHECK"
+#!/bin/bash
+GUARD_COUNT=$(cat "$STATE_FILE.guard_count" 2>/dev/null || echo "0")
+GUARD_COUNT=$((GUARD_COUNT + 1))
+echo "$GUARD_COUNT" > "$STATE_FILE.guard_count"
+
+if ls "$LIVE_FILE.bak."* >/dev/null 2>&1; then
+    echo "ERROR: Guard called after backup" >&2
+    exit 99
+fi
+if [[ "$(cat "$LIVE_FILE")" != "old_live_content" ]]; then
+    echo "ERROR: Guard called after write" >&2
+    exit 99
+fi
+
+if [[ "${FAIL_GUARD:-0}" != "0" ]]; then
+    exit "${FAIL_GUARD}"
+fi
+exit 0
+MOCKGUARD
+chmod +x "$ADMIN_BOUNDARY_CHECK"
+
 run_sync() {
     local expected_hash=$1
     export EXPECTED_LIVE_SHA256="$expected_hash"
     true > "$DOCKER_CALL_LOG"
-    rm -f "$STATE_FILE.val_count" "$STATE_FILE.hash_count"
-    bash scripts/edge/sync_caddyfile.sh
+    rm -f "$STATE_FILE.val_count" "$STATE_FILE.hash_count" "$STATE_FILE.guard_count"
+    rm -f "$LIVE_FILE.bak."*
+    if [ "${FAIL_ROLLBACK_VALIDATION:-0}" = "1" ]; then
+        bash -x scripts/edge/sync_caddyfile.sh
+    else
+        bash scripts/edge/sync_caddyfile.sh
+    fi
 }
 
 echo "--- Setup basic files ---"
@@ -113,7 +141,7 @@ fi
 echo "--- Fall 3: No-op bei identischen Hashes ---"
 cp "$LIVE_FILE" "$CANDIDATE_FILE"
 set +e
-run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+run_sync "$TRUE_LIVE_HASH"
 EXIT_CODE=$?
 set -e
 if [ $EXIT_CODE -eq 0 ]; then
@@ -127,7 +155,7 @@ echo "new_candidate_content" > "$CANDIDATE_FILE"
 echo "--- Fall 4: Pre-Sync Host-Container Divergenz ---"
 export FAIL_PRE_SYNC_CONTAINER_HASH="1"
 set +e
-run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+run_sync "$TRUE_LIVE_HASH"
 EXIT_CODE=$?
 set -e
 if [ $EXIT_CODE -eq 1 ]; then
@@ -142,7 +170,7 @@ echo "--- Fall 5: Lock-Konkurrenz ---"
 exec 8>"$LOCK_FILE"
 flock -n 8
 set +e
-run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+run_sync "$TRUE_LIVE_HASH"
 EXIT_CODE=$?
 set -e
 if [ $EXIT_CODE -eq 1 ]; then
@@ -157,7 +185,7 @@ exec 8>&-
 echo "--- Fall 6: Post-Sync Container-Hash Fehler -> Rollback verifiziert ---"
 export FAIL_POST_SYNC_CONTAINER_HASH="1"
 set +e
-run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+run_sync "$TRUE_LIVE_HASH"
 EXIT_CODE=$?
 set -e
 if [ $EXIT_CODE -eq 1 ]; then
@@ -178,7 +206,7 @@ echo "--- Fall 7: Rollback-Validierung schlägt fehl (CRITICAL 255) ---"
 export FAIL_POST_SYNC_VALIDATION="1"
 export FAIL_ROLLBACK_VALIDATION="1"
 set +e
-run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+run_sync "$TRUE_LIVE_HASH"
 EXIT_CODE=$?
 set -e
 if [ $EXIT_CODE -eq 255 ]; then
@@ -213,5 +241,56 @@ if [ "$ORIGINAL_INODE" != "$NEW_INODE" ]; then
 else
     echo "✅ Inode preserved"
 fi
+
+echo "== All runbook script tests passed =="
+
+echo "--- Fall 9: Guard-Fehler 1 blockiert Mutation ---"
+echo "old_live_content" > "$LIVE_FILE"
+echo "new_candidate_content" > "$CANDIDATE_FILE"
+export FAIL_GUARD="1"
+set +e
+run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+EXIT_CODE=$?
+set -e
+if [ $EXIT_CODE -eq 1 ]; then
+    echo "✅ Aborted correctly on guard exit 1"
+else
+    echo "❌ Expected exit 1, got $EXIT_CODE"
+    exit 1
+fi
+if ls "$LIVE_FILE.bak."* >/dev/null 2>&1; then
+    echo "❌ Failed: Backup was created despite guard failure"
+    exit 1
+fi
+if [ "$(cat "$STATE_FILE.guard_count" 2>/dev/null)" != "1" ]; then
+    echo "❌ Failed: Guard was not called exactly once (count was $(cat "$STATE_FILE.guard_count" 2>/dev/null))"
+    exit 1
+fi
+export FAIL_GUARD="0"
+
+echo "--- Fall 10: Guard-Fehler 2 blockiert Mutation ---"
+export FAIL_GUARD="2"
+set +e
+run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+EXIT_CODE=$?
+set -e
+if [ $EXIT_CODE -eq 1 ]; then
+    echo "✅ Aborted correctly on guard exit 2"
+else
+    echo "❌ Expected exit 1, got $EXIT_CODE"
+    exit 1
+fi
+export FAIL_GUARD="0"
+
+echo "--- Fall 11: Guard-Aufruf bei No-op ---"
+cp "$LIVE_FILE" "$CANDIDATE_FILE"
+run_sync "$TRUE_LIVE_HASH" >/dev/null
+if [ -f "$STATE_FILE.guard_count" ]; then
+    echo "❌ Failed: Guard was called on No-op sync!"
+    exit 1
+else
+    echo "✅ Guard skipped on No-op sync"
+fi
+echo "new_candidate_content" > "$CANDIDATE_FILE"
 
 echo "== All runbook script tests passed =="

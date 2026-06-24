@@ -65,7 +65,7 @@ Reload Caddy to apply changes without downtime. Only execute this after all vali
 * Erwartete Bindung: `localhost:2019` innerhalb des Containers.
 * Compose darf Port 2019 nicht veröffentlichen.
 * Host und Container-Netz dürfen Port 2019 nicht erreichen.
-* Vor Sync und Reload Admin-Boundary prüfen.
+* Vor Sync und Reload Admin-Boundary prüfen (wird durch `sync_caddyfile.sh` via `check_admin_boundary.sh` automatisch erzwungen).
 * Bei fehlender Admin-API nicht reloaden; stoppen.
 * Ein zukünftiges `admin off` erfordert einen separaten Architekturwechsel auf Neustartbetrieb einschließlich neuem Rollback-Verfahren.
 

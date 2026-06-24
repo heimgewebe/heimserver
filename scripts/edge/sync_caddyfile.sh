@@ -47,6 +47,8 @@ if [[ "$CURRENT_CONTAINER_SHA256" != "$CURRENT_LIVE_SHA256" ]]; then
   exit 1
 fi
 
+ADMIN_BOUNDARY_CHECK="${ADMIN_BOUNDARY_CHECK:-$SCRIPT_DIR/check_admin_boundary.sh}"
+
 echo "Validating candidate with Caddy 2.8.4..."
 CANDIDATE_DIR="$(dirname -- "$CANDIDATE_FILE")"
 CANDIDATE_NAME="$(basename -- "$CANDIDATE_FILE")"
@@ -59,6 +61,12 @@ docker run --rm \
   caddy validate \
     --adapter caddyfile \
     --config "/candidate/$CANDIDATE_NAME"
+
+echo "Running Admin Boundary Guard Check..."
+if ! bash "$ADMIN_BOUNDARY_CHECK"; then
+    echo "ERROR: Admin boundary guard check failed. Aborting sync." >&2
+    exit 1
+fi
 
 # TOCTOU check right before backup and write
 PRE_WRITE_LIVE_SHA256="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
