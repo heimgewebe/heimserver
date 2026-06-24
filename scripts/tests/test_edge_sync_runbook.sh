@@ -11,7 +11,7 @@ mkdir -p "$TEST_DIR/repo/edge"
 
 export EDGE_DIR="$TEST_DIR/opt/heimgewebe/edge"
 export COMPOSE_FILE="$EDGE_DIR/docker-compose.yml"
-export CADDY_SERVICE="edge-caddy"
+export CADDY_SERVICE="caddy"
 export LIVE_FILE="$EDGE_DIR/Caddyfile"
 export CANDIDATE_FILE="$TEST_DIR/repo/edge/Caddyfile.template"
 export LOCK_FILE="$TEST_DIR/lock.lock"

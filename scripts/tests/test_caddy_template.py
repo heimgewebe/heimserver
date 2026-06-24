@@ -98,7 +98,14 @@ print("✅ API Host Semantic Validations Passed")
 
 print("--- Negative Tests ---")
 all_str = json.dumps(data)
-negatives = ["weltweb.net", "www.weltweb.net", "weltweberei.org", "www.weltweberei.org"]
+negatives = [
+    "weltweb.net",
+    "www.weltweb.net",
+    "weltweberei.org",
+    "www.weltweberei.org",
+    "heimserver.home.arpa",
+    "127.0.0.1:8081",
+]
 for neg in negatives:
     if neg in all_str:
         print(f"❌ UNEXPECTED globally: {neg}")
