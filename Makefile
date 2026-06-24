@@ -1,4 +1,4 @@
-.PHONY: help preflight snapshot redact hooks secrets
+.PHONY: help preflight snapshot redact hooks secrets validate-warnings validate-shell-tests validate
 
 help:
 	@echo "Targets:"
@@ -24,3 +24,18 @@ hooks:
 
 secrets:
 	sudo bash ops/init-secrets-path.sh
+
+validate-warnings:
+	-python3 scripts/ci/check-doc-review-age.py
+	-bash scripts/ci/check-runbook-invariants.sh
+	-bash scripts/tests/test_preflight_mock.sh
+
+validate-shell-tests:
+	shellcheck scripts/edge/sync_caddyfile.sh
+	shellcheck scripts/tests/test_edge_sync_runbook.sh
+	python3 scripts/tests/test_caddy_template.py
+	bash scripts/tests/test_edge_sync_runbook.sh
+
+validate: preflight validate-shell-tests
+	python3 scripts/ci/check_repo_index_consistency.py
+	$(MAKE) validate-warnings
