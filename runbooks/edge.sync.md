@@ -44,12 +44,12 @@ Copy the templates to the host and remove the `.template` extension.
 
 ```bash
 # Copy Docker Compose
-cp edge/docker-compose.yml.template /opt/heimgewebe/edge/docker-compose.yml
+sudo cp edge/docker-compose.yml.template /opt/heimgewebe/edge/docker-compose.yml
 
 # Caddyfile Sync (Three-State-Sync)
 # This will perform hash checks, candidate validation, backup, and in-place sync.
 # Provide the known good hash of the active file to authorize the sync:
-EXPECTED_LIVE_SHA256="<your-reviewed-hash>" bash scripts/edge/sync_caddyfile.sh
+sudo EXPECTED_LIVE_SHA256="<your-reviewed-hash>" bash scripts/edge/sync_caddyfile.sh
 ```
 
 ### 4. Customize Runtime (If needed)
@@ -62,7 +62,7 @@ Reload Caddy to apply changes without downtime. Only execute this after all vali
 cd /opt/heimgewebe/edge
 
 # Reload config
-docker compose exec -T edge-caddy \
+sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec -T edge-caddy \
   caddy reload \
     --adapter caddyfile \
     --config /etc/caddy/Caddyfile
@@ -73,7 +73,7 @@ The internal Root CA is generated inside the `edge_caddy_data` volume. To trust 
 
 ```bash
 # Copy root.crt from volume via container execution
-docker compose exec edge-caddy cat /data/caddy/pki/authorities/local/root.crt > /opt/heimgewebe/edge/certs/caddy-local-root.crt
+sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec edge-caddy cat /data/caddy/pki/authorities/local/root.crt | sudo tee /opt/heimgewebe/edge/certs/caddy-local-root.crt >/dev/null
 ```
 *Note: Path inside container depends on Caddy version/config. If `cat` fails, inspect `/data`.*
 
@@ -81,20 +81,20 @@ docker compose exec edge-caddy cat /data/caddy/pki/authorities/local/root.crt > 
 
 1.  **Container Status:**
     ```bash
-    docker compose ps
+    sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml ps
     # Expect: edge-caddy Up
     ```
 
 2.  **Health Check (Local):**
     ```bash
-    docker compose ps edge-caddy
+    sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml ps edge-caddy
     # Expect: Up
 
-    docker logs edge-caddy | tail -n 50
+    sudo docker logs edge-caddy | tail -n 50
     # Expect: "autosaved config", no errors
 
     # Optional (if container runs):
-    docker compose exec edge-caddy caddy validate --config /etc/caddy/Caddyfile
+    sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec edge-caddy caddy validate --config /etc/caddy/Caddyfile
     ```
 
 3.  **Public Endpoint (Network):**
@@ -107,21 +107,21 @@ docker compose exec edge-caddy cat /data/caddy/pki/authorities/local/root.crt > 
 4.  **Upstream Connectivity (Diagnostic):**
     ```bash
     # Verify that 'weltgewebe-api' resolves. If this fails, API routing will break.
-    docker compose exec edge-caddy getent hosts weltgewebe-api || echo "WARNING: Upstream 'weltgewebe-api' not resolvable! Fix in Weltgewebe compose."
+    sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec edge-caddy getent hosts weltgewebe-api || echo "WARNING: Upstream 'weltgewebe-api' not resolvable! Fix in Weltgewebe compose."
     ```
 
 ## Rollback
 If the new configuration fails or post-sync checks abort:
 1. Identify the backup file (e.g., `/opt/heimgewebe/edge/Caddyfile.bak.20260623T...`).
-2. Read the backup hash: `BACKUP_SHA256="$(sha256sum $BACKUP_FILE | awk '{print $1}')"`
+2. Read the backup hash: `BACKUP_SHA256="$(sudo sha256sum "$BACKUP_FILE" | awk '{print $1}')"`
 3. Restore the configuration into the existing file to preserve the bind-mount inode:
-   `cat "$BACKUP_FILE" > /opt/heimgewebe/edge/Caddyfile`
+   `sudo sh -c "cat '$BACKUP_FILE' > /opt/heimgewebe/edge/Caddyfile"`
 4. Verify host file matches backup hash.
-5. Verify container file matches backup hash (`docker compose exec -T edge-caddy sha256sum /etc/caddy/Caddyfile`).
+5. Verify container file matches backup hash (`sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec -T edge-caddy sha256sum /etc/caddy/Caddyfile`).
 6. Validate container configuration before reload:
-   `docker compose exec -T edge-caddy caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile`
+   `sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec -T edge-caddy caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile`
 7. Reload Caddy:
-   `docker compose exec -T edge-caddy caddy reload --adapter caddyfile --config /etc/caddy/Caddyfile`
+   `sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec -T edge-caddy caddy reload --adapter caddyfile --config /etc/caddy/Caddyfile`
 8. Check logs and health status. Document the failure and the restored backup.
 
 ## Drift Management

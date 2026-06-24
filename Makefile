@@ -31,6 +31,8 @@ validate-warnings:
 	-bash scripts/tests/test_preflight_mock.sh
 
 validate-shell-tests:
+	shellcheck scripts/edge/sync_caddyfile.sh
+	shellcheck scripts/tests/test_edge_sync_runbook.sh
 	python3 scripts/tests/test_caddy_template.py
 	bash scripts/tests/test_edge_sync_runbook.sh
 

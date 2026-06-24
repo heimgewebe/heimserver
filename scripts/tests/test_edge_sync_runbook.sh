@@ -50,7 +50,9 @@ if [[ "$*" == *"sha256sum /etc/caddy/Caddyfile"* ]]; then
     HASH_COUNT=$((HASH_COUNT + 1))
     echo "$HASH_COUNT" > "$STATE_FILE.hash_count"
 
-    if [ "$HASH_COUNT" = "2" ] && [ "${FAIL_POST_SYNC_CONTAINER_HASH:-0}" = "1" ]; then
+    if [ "$HASH_COUNT" = "1" ] && [ "${FAIL_PRE_SYNC_CONTAINER_HASH:-0}" = "1" ]; then
+        echo "0000000000000000000000000000000000000000000000000000000000000000  /etc/caddy/Caddyfile"
+    elif [ "$HASH_COUNT" = "2" ] && [ "${FAIL_POST_SYNC_CONTAINER_HASH:-0}" = "1" ]; then
         echo "0000000000000000000000000000000000000000000000000000000000000000  /etc/caddy/Caddyfile"
     elif [ "$HASH_COUNT" = "3" ] && [ "${FAIL_ROLLBACK_CONTAINER_HASH:-0}" = "1" ]; then
         echo "1111111111111111111111111111111111111111111111111111111111111111  /etc/caddy/Caddyfile"
@@ -65,19 +67,93 @@ MOCKDOCKER
 chmod +x "$TEST_DIR/bin/docker"
 export PATH="$TEST_DIR/bin:$PATH"
 
-echo "old_live_content" > "$LIVE_FILE"
-echo "new_candidate_content" > "$CANDIDATE_FILE"
-TRUE_LIVE_HASH=$(sha256sum "$LIVE_FILE" | awk '{print $1}')
-
 run_sync() {
     local expected_hash=$1
     export EXPECTED_LIVE_SHA256="$expected_hash"
-    > "$DOCKER_CALL_LOG"
+    true > "$DOCKER_CALL_LOG"
     rm -f "$STATE_FILE.val_count" "$STATE_FILE.hash_count"
     bash scripts/edge/sync_caddyfile.sh
 }
 
-echo "--- Fall D: Post-Sync Container-Hash Fehler -> Rollback verifiziert ---"
+echo "--- Setup basic files ---"
+echo "old_live_content" > "$LIVE_FILE"
+ORIGINAL_INODE=$(stat -c '%i' "$LIVE_FILE")
+echo "new_candidate_content" > "$CANDIDATE_FILE"
+TRUE_LIVE_HASH=$(sha256sum "$LIVE_FILE" | awk '{print $1}')
+ORIGINAL_INODE=$(stat -c '%i' "$LIVE_FILE")
+
+echo "--- Fall 1: fehlende Live-Datei ---"
+rm -f "$LIVE_FILE"
+set +e
+run_sync "anything" >/dev/null 2>&1
+EXIT_CODE=$?
+set -e
+if [ $EXIT_CODE -eq 1 ]; then
+    echo "✅ Aborted correctly on missing live file"
+else
+    echo "❌ Expected exit 1, got $EXIT_CODE"
+    exit 1
+fi
+echo "old_live_content" > "$LIVE_FILE"
+ORIGINAL_INODE=$(stat -c '%i' "$LIVE_FILE")
+
+echo "--- Fall 2: unerwartete Live-Drift ---"
+set +e
+run_sync "wronghash" >/dev/null 2>&1
+EXIT_CODE=$?
+set -e
+if [ $EXIT_CODE -eq 1 ]; then
+    echo "✅ Aborted correctly on wrong expected hash"
+else
+    echo "❌ Expected exit 1, got $EXIT_CODE"
+    exit 1
+fi
+
+echo "--- Fall 3: No-op bei identischen Hashes ---"
+cp "$LIVE_FILE" "$CANDIDATE_FILE"
+set +e
+run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+EXIT_CODE=$?
+set -e
+if [ $EXIT_CODE -eq 0 ]; then
+    echo "✅ Exited 0 for identical hashes"
+else
+    echo "❌ Expected exit 0, got $EXIT_CODE"
+    exit 1
+fi
+echo "new_candidate_content" > "$CANDIDATE_FILE"
+
+echo "--- Fall 4: Pre-Sync Host-Container Divergenz ---"
+export FAIL_PRE_SYNC_CONTAINER_HASH="1"
+set +e
+run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+EXIT_CODE=$?
+set -e
+if [ $EXIT_CODE -eq 1 ]; then
+    echo "✅ Aborted correctly on pre-sync container drift"
+else
+    echo "❌ Expected exit 1, got $EXIT_CODE"
+    exit 1
+fi
+export FAIL_PRE_SYNC_CONTAINER_HASH="0"
+
+echo "--- Fall 5: Lock-Konkurrenz ---"
+exec 8>"$LOCK_FILE"
+flock -n 8
+set +e
+run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+EXIT_CODE=$?
+set -e
+if [ $EXIT_CODE -eq 1 ]; then
+    echo "✅ Aborted correctly on lock contention"
+else
+    echo "❌ Expected exit 1, got $EXIT_CODE"
+    exit 1
+fi
+flock -u 8
+exec 8>&-
+
+echo "--- Fall 6: Post-Sync Container-Hash Fehler -> Rollback verifiziert ---"
 export FAIL_POST_SYNC_CONTAINER_HASH="1"
 set +e
 run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
@@ -97,7 +173,7 @@ else
 fi
 export FAIL_POST_SYNC_CONTAINER_HASH="0"
 
-echo "--- Fall E: Rollback-Validierung schlägt ebenfalls fehl (CRITICAL 255) ---"
+echo "--- Fall 7: Rollback-Validierung schlägt fehl (CRITICAL 255) ---"
 export FAIL_POST_SYNC_VALIDATION="1"
 export FAIL_ROLLBACK_VALIDATION="1"
 set +e
@@ -112,5 +188,29 @@ else
 fi
 export FAIL_POST_SYNC_VALIDATION="0"
 export FAIL_ROLLBACK_VALIDATION="0"
+
+echo "--- Fall 8: erfolgreicher Sync & Inode Erhaltung ---"
+if run_sync "$TRUE_LIVE_HASH" >/dev/null; then
+    echo "✅ Sync succeeded"
+else
+    echo "❌ Failed: Sync should succeed"
+    exit 1
+fi
+
+if ! grep -q "compose --project-directory $EDGE_DIR -f $COMPOSE_FILE exec -T $CADDY_SERVICE" "$DOCKER_CALL_LOG"; then
+    echo "❌ Docker compose arguments were incorrect!"
+    cat "$DOCKER_CALL_LOG"
+    exit 1
+else
+    echo "✅ Docker compose arguments verified"
+fi
+
+NEW_INODE=$(stat -c '%i' "$LIVE_FILE")
+if [ "$ORIGINAL_INODE" != "$NEW_INODE" ]; then
+    echo "❌ Failed: Inode changed during sync!"
+    exit 1
+else
+    echo "✅ Inode preserved"
+fi
 
 echo "== All runbook script tests passed =="
