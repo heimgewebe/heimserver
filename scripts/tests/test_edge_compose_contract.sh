@@ -57,8 +57,21 @@ require_rendered "name: edge_caddy_config"
 
 reject_rendered "edge_edge_caddy_data"
 reject_rendered "edge_edge_caddy_config"
+reject_rendered "2019"
+
+# Only 80 and 443 are published
+PUBLISHED_PORTS="$(echo "$RENDERED" | awk '/published:/ {print $2}')"
+for port in $PUBLISHED_PORTS; do
+  port="${port//\"/}" # remove quotes if any
+  if [[ "$port" != "80" && "$port" != "443" ]]; then
+    echo "ERROR: Forbidden published port: $port" >&2
+    exit 1
+  fi
+done
 
 echo "PASS: Compose service ID is caddy"
 echo "PASS: container name remains edge-caddy"
 echo "PASS: deployed Caddy volume names are preserved"
 echo "PASS: no doubled project prefix is rendered"
+echo "PASS: Port 2019 is completely absent"
+echo "PASS: Only 80 and 443 are published"

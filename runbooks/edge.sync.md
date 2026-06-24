@@ -60,6 +60,15 @@ If the specific deployment requires modifications (e.g. specific volume mappings
 ### 5. Apply Configuration
 Reload Caddy to apply changes without downtime. Only execute this after all validation and hash checks pass.
 
+**Reload Safety & Admin Boundary:**
+* Reload benötigt die containerlokale Admin-API.
+* Erwartete Bindung: `localhost:2019` innerhalb des Containers.
+* Compose darf Port 2019 nicht veröffentlichen.
+* Host und Container-Netz dürfen Port 2019 nicht erreichen.
+* Vor Sync und Reload Admin-Boundary prüfen.
+* Bei fehlender Admin-API nicht reloaden; stoppen.
+* Ein zukünftiges `admin off` erfordert einen separaten Architekturwechsel auf Neustartbetrieb einschließlich neuem Rollback-Verfahren.
+
 ```bash
 cd /opt/heimgewebe/edge
 
