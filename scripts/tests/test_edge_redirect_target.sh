@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 VALIDATOR="$SCRIPT_DIR/../edge/validate_caddy_redirect.py"
+SYNC_SCRIPT="$SCRIPT_DIR/../edge/sync_caddyfile.sh"
+BOUNDARY_SCRIPT="$SCRIPT_DIR/../edge/check_admin_boundary.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -55,4 +57,39 @@ set -e
 }
 grep -qF 'expected exact 308 redirect from /api to /api/' <<<"$out"
 
-echo "Edge redirect target tests passed"
+python3 - "$SYNC_SCRIPT" "$BOUNDARY_SCRIPT" <<'PY'
+from pathlib import Path
+import sys
+
+sync = Path(sys.argv[1]).read_text(encoding="utf-8")
+boundary = Path(sys.argv[2]).read_text(encoding="utf-8")
+
+required_sync = [
+    "set -euo pipefail",
+    "CANDIDATE_SNAPSHOT=",
+    "SYNTAX_RC=$?",
+    'python3 "$CADDY_CONTRACT_VALIDATOR" --caddyfile "$CANDIDATE_SNAPSHOT"',
+    'python3 "$CADDY_REDIRECT_VALIDATOR" --caddyfile "$CANDIDATE_SNAPSHOT"',
+    'cat "$CANDIDATE_SNAPSHOT" >"$LIVE_FILE"',
+]
+required_boundary = [
+    'compose ps --quiet "$CADDY_SERVICE"',
+    'docker inspect "$CADDY_CONTAINER_ID"',
+    "http://127.0.0.1:2019/config/",
+    "http://[::1]:2019/config/",
+    'wget -qO- -T 3 "$url"',
+    'curl --fail --silent --max-time 3 "$url"',
+]
+
+for needle in required_sync:
+    if needle not in sync:
+        raise SystemExit(f"missing sync hardening invariant: {needle}")
+for forbidden in ('cat "$CANDIDATE_FILE" >"$LIVE_FILE"', 'docker inspect "$CADDY_CONTAINER"'):
+    if forbidden in sync or forbidden in boundary:
+        raise SystemExit(f"forbidden stale-path invariant present: {forbidden}")
+for needle in required_boundary:
+    if needle not in boundary:
+        raise SystemExit(f"missing boundary hardening invariant: {needle}")
+PY
+
+echo "Edge redirect and hardening invariant tests passed"
