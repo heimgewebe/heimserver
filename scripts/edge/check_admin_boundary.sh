@@ -54,6 +54,7 @@ echo "ADMIN_CONTAINER_ID=$CADDY_CONTAINER_ID"
 
 echo "== A. Containerlokale Admin-API erreichbar =="
 set +e
+# shellcheck disable=SC2034
 EXEC_OUT="$(compose exec -T "$CADDY_SERVICE" sh -ec '
 probe() {
   url="$1"
