@@ -10,6 +10,7 @@ cd "$REPO_ROOT" || exit 1
 
 TEMPLATE="edge/Caddyfile.template"
 VALIDATOR="scripts/edge/validate_caddy_contract.py"
+JSON_MUTATOR="scripts/tests/edge_contract_json_mutations.py"
 
 if [[ ! -f "$TEMPLATE" ]]; then
     echo "ERROR: Template not found at $TEMPLATE" >&2
@@ -45,6 +46,50 @@ run_caddy_mutant() {
 
     if [[ -n "$expected_stderr" ]] && ! echo "$stderr_out" | grep -qF "$expected_stderr"; then
         echo "❌ FAIL [$desc]: expected stderr to contain ${expected_stderr@Q}, got: $stderr_out"
+        FAILURES=$((FAILURES + 1))
+        return
+    fi
+
+    echo "✅ PASS [$desc] (exit $actual_rc)"
+}
+
+# ── Adapted-JSON mutation runner ─────────────────────────────────────────────
+run_caddy_json_case() {
+    local desc="$1"
+    local mutation="$2"
+    local expected_rc="$3"
+    local expected_stderr="${4:-}"
+    local mutated_json="$MUTATION_DIR/${mutation}.json"
+
+    python3 "$JSON_MUTATOR" \
+        --source "$BASELINE_JSON" \
+        --output "$mutated_json" \
+        --mutation "$mutation"
+
+    if cmp -s "$BASELINE_JSON" "$mutated_json"; then
+        echo "❌ FAIL [$desc]: mutation produced unchanged JSON"
+        FAILURES=$((FAILURES + 1))
+        return
+    fi
+
+    local actual_rc=0
+    local stderr_out
+    stderr_out="$(
+        python3 "$VALIDATOR" --adapted-json "$mutated_json" \
+            2>&1 >/dev/null
+    )" || actual_rc=$?
+
+    if [[ "$actual_rc" -ne "$expected_rc" ]]; then
+        echo "❌ FAIL [$desc]: expected exit $expected_rc, got $actual_rc"
+        echo "   stderr: $stderr_out"
+        FAILURES=$((FAILURES + 1))
+        return
+    fi
+
+    if [[ -n "$expected_stderr" ]] \
+        && ! grep -qF "$expected_stderr" <<< "$stderr_out"; then
+        echo "❌ FAIL [$desc]: expected diagnostic ${expected_stderr@Q}"
+        echo "   stderr: $stderr_out"
         FAILURES=$((FAILURES + 1))
         return
     fi
@@ -94,6 +139,18 @@ BASELINE="$MUTATION_DIR/Caddyfile.baseline"
 cp "$TEMPLATE" "$BASELINE"
 run_caddy_mutant "Baseline (unmodified)" "$BASELINE" 0
 
+BASELINE_JSON="$MUTATION_DIR/Caddyfile.baseline.json"
+docker run \
+    --rm \
+    --pull=never \
+    --network none \
+    -v "$MUTATION_DIR:/candidate:ro" \
+    caddy:2.8.4 \
+    caddy adapt \
+        --adapter caddyfile \
+        --config /candidate/Caddyfile.baseline \
+    > "$BASELINE_JSON"
+
 echo ""
 echo "-- Caddyfile Mutations (expect exit 1, CONTRACT VIOLATION in stderr) --"
 
@@ -127,166 +184,90 @@ M6="$MUTATION_DIR/m6.template"
 sed 's/Content-Security-Policy/X-Removed-CSP-Header/' "$TEMPLATE" > "$M6"
 run_caddy_mutant "Mutant 6: CSP header removed" "$M6" 1 "CONTRACT VIOLATION"
 
-# Mutant 7: move the actual adapted UI fallback before the basemap route.
-# Caddy may canonically reorder Caddyfile directives during adaptation, so this
-# ordering counterexample mutates the adapted JSON contract surface itself.
-M7_BASE_JSON="$MUTATION_DIR/m7.baseline.json"
-M7_JSON="$MUTATION_DIR/m7.fallback-before-basemap.json"
+# Positive control: IPv6 loopback must be accepted.
+run_caddy_json_case \
+    "Positive control: IPv6 loopback admin" \
+    "ipv6-admin" \
+    0
 
-docker run \
-   --rm \
-   --pull=never \
-   --network none \
-   -v "$MUTATION_DIR:/candidate:ro" \
-   caddy:2.8.4 \
-   caddy adapt \
-      --adapter caddyfile \
-      --config /candidate/Caddyfile.baseline \
-   > "$M7_BASE_JSON"
+# Mutant 7: actual adapted fallback precedes basemap.
+run_caddy_json_case \
+    "Mutant 7: adapted UI fallback before basemap route" \
+    "fallback-before-basemap" \
+    1 \
+    "Route ordering violation"
 
-python3 - "$M7_BASE_JSON" "$M7_JSON" << 'PYEOF'
-import json
-import sys
+# Mutants 13-16 keep values globally present but misplace them.
+run_caddy_json_case \
+    "Mutant 13: version no-store moved to UI fallback" \
+    "version-cache-misplaced" \
+    1 \
+    "version metadata route"
 
-source_path, target_path = sys.argv[1:3]
+run_caddy_json_case \
+    "Mutant 14: PMTiles CORS moved to UI fallback" \
+    "cors-misplaced" \
+    1 \
+    "PMTiles branch"
 
-with open(source_path, encoding="utf-8") as handle:
-    data = json.load(handle)
+run_caddy_json_case \
+    "Mutant 15: OPTIONS 204 moved outside PMTiles branch" \
+    "options-misplaced" \
+    1 \
+    "OPTIONS matcher and 204 response"
 
-servers = data.get("apps", {}).get("http", {}).get("servers", {})
+run_caddy_json_case \
+    "Mutant 16: PMTiles file_server removed" \
+    "pmtiles-file-server-missing" \
+    1 \
+    "root and file_server must coexist"
 
+echo ""
+echo "-- CADDY_IMAGE execution seam --"
 
-def route_hosts(route):
-    hosts = set()
-    for matcher in route.get("match", []):
-        hosts.update(matcher.get("host", []))
-    return hosts
+MOCK_BIN="$MUTATION_DIR/mock-bin"
+MOCK_DOCKER_LOG="$MUTATION_DIR/mock-docker.log"
+mkdir -p "$MOCK_BIN"
 
+cat > "$MOCK_BIN/docker" <<'MOCKDOCKER'
+#!/usr/bin/env bash
+printf '%s
+' "$*" >> "$MOCK_DOCKER_LOG"
 
-def route_paths(route):
-    paths = []
-    for matcher in route.get("match", []):
-        paths.extend(matcher.get("path", []))
-    return paths
+if [[ "$1" == "image" && "$2" == "inspect" ]]; then
+    [[ "$3" == "contract-test:caddy" ]] || exit 97
+    exit 0
+fi
 
+if [[ "$1" == "run" ]]; then
+    [[ " $* " == *" contract-test:caddy "* ]] || exit 98
+    cat "$MOCK_ADAPTED_JSON"
+    exit 0
+fi
 
-def contains_web_root(node):
-    if isinstance(node, dict):
-        if (
-            node.get("handler") == "vars"
-            and node.get("root") == "/srv/weltgewebe-web"
-        ):
-            return True
-        return any(contains_web_root(value) for value in node.values())
-    if isinstance(node, list):
-        return any(contains_web_root(value) for value in node)
-    return False
+exit 99
+MOCKDOCKER
+chmod +x "$MOCK_BIN/docker"
 
+export MOCK_DOCKER_LOG
+export MOCK_ADAPTED_JSON="$BASELINE_JSON"
 
-candidate_route_sets = []
-
-for server in servers.values():
-    for host_route in server.get("routes", []):
-        if "weltgewebe.home.arpa" not in route_hosts(host_route):
-            continue
-
-        for handler in host_route.get("handle", []):
-            if handler.get("handler") != "subroute":
-                continue
-
-            sibling_routes = handler.get("routes", [])
-            available_paths = {
-                path
-                for route in sibling_routes
-                for path in route_paths(route)
-            }
-
-            required_paths = {
-                "/api",
-                "/_app/version.json",
-                "/_app/immutable/*",
-                "/local-basemap/*",
-                "/api/*",
-            }
-            if required_paths.issubset(available_paths):
-                candidate_route_sets.append(sibling_routes)
-
-if len(candidate_route_sets) != 1:
-    raise SystemExit(
-        "Mutant 7 setup failed: expected exactly one HTTPS route set, "
-        f"found {len(candidate_route_sets)}"
-    )
-
-routes = candidate_route_sets[0]
-
-basemap_matches = [
-    index
-    for index, route in enumerate(routes)
-    if "/local-basemap/*" in route_paths(route)
-]
-fallback_matches = [
-    index
-    for index, route in enumerate(routes)
-    if not route_paths(route) and contains_web_root(route)
-]
-
-if len(basemap_matches) != 1:
-    raise SystemExit(
-        "Mutant 7 setup failed: expected exactly one basemap route, "
-        f"found {len(basemap_matches)}"
-    )
-
-if len(fallback_matches) != 1:
-    raise SystemExit(
-        "Mutant 7 setup failed: expected exactly one UI fallback, "
-        f"found {len(fallback_matches)}"
-    )
-
-basemap_index = basemap_matches[0]
-fallback_index = fallback_matches[0]
-
-fallback_route = routes.pop(fallback_index)
-if fallback_index < basemap_index:
-    basemap_index -= 1
-
-routes.insert(basemap_index, fallback_route)
-
-new_fallback_index = next(
-    index
-    for index, route in enumerate(routes)
-    if not route_paths(route) and contains_web_root(route)
-)
-new_basemap_index = next(
-    index
-    for index, route in enumerate(routes)
-    if "/local-basemap/*" in route_paths(route)
-)
-
-if new_fallback_index >= new_basemap_index:
-    raise SystemExit(
-        "Mutant 7 setup failed: fallback was not moved before basemap"
-    )
-
-with open(target_path, "w", encoding="utf-8") as handle:
-    json.dump(data, handle, indent=2, sort_keys=True)
-    handle.write("\n")
-PYEOF
-
-actual_rc=0
-stderr_out="$(
-   python3 "$VALIDATOR" --adapted-json "$M7_JSON" 2>&1 >/dev/null
-)" || actual_rc=$?
-
-if [[ "$actual_rc" -ne 1 ]]; then
-   echo "❌ FAIL [Mutant 7: adapted UI fallback before basemap route]: expected exit 1, got $actual_rc"
-   echo "   stderr: $stderr_out"
-   FAILURES=$((FAILURES + 1))
-elif ! grep -qF "Route ordering violation" <<< "$stderr_out"; then
-   echo "❌ FAIL [Mutant 7: adapted UI fallback before basemap route]: missing route-order diagnostic"
-   echo "   stderr: $stderr_out"
-   FAILURES=$((FAILURES + 1))
+if PATH="$MOCK_BIN:$PATH" \
+    CADDY_IMAGE="contract-test:caddy" \
+    python3 "$VALIDATOR" --caddyfile "$BASELINE" \
+    >/dev/null 2>&1; then
+    if grep -qF "image inspect contract-test:caddy" "$MOCK_DOCKER_LOG" \
+        && grep -Eq '^run .* contract-test:caddy ' "$MOCK_DOCKER_LOG"; then
+        echo "✅ PASS [CADDY_IMAGE inspected and executed consistently]"
+    else
+        echo "❌ FAIL [CADDY_IMAGE seam]: image mismatch"
+        cat "$MOCK_DOCKER_LOG"
+        FAILURES=$((FAILURES + 1))
+    fi
 else
-   echo "✅ PASS [Mutant 7: adapted UI fallback before basemap route] (exit 1)"
+    echo "❌ FAIL [CADDY_IMAGE seam]: validator failed"
+    cat "$MOCK_DOCKER_LOG"
+    FAILURES=$((FAILURES + 1))
 fi
 
 echo ""
@@ -403,8 +384,8 @@ fi
 
 echo ""
 if [[ $FAILURES -eq 0 ]]; then
-    echo "== All mutation tests passed (12 mutants) =="
+    echo "== All mutation tests passed (16 mutants + 2 positive controls) =="
 else
-    echo "== FAILED: $FAILURES mutation test(s) failed ==" >&2
+    echo "== FAILED: $FAILURES contract test(s) failed ==" >&2
     exit 1
 fi
