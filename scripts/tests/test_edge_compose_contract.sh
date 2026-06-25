@@ -47,4 +47,7 @@ if [[ $VALIDATOR_RC -ne 0 ]]; then
     exit "$VALIDATOR_RC"
 fi
 
-echo "✅ All Compose contract assertions passed"
+# Step 3: Validate the exact internal API redirect target independently.
+bash "$SCRIPT_DIR/test_edge_redirect_target.sh"
+
+echo "✅ All Compose and redirect contract assertions passed"
