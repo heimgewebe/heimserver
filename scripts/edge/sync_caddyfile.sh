@@ -16,8 +16,15 @@ CANDIDATE_FILE="${CANDIDATE_FILE:-$REPO_ROOT/edge/Caddyfile.template}"
 LOCK_FILE="${LOCK_FILE:-/run/lock/heimserver-edge-caddy-sync.lock}"
 
 ADMIN_BOUNDARY_CHECK="${ADMIN_BOUNDARY_CHECK:-$SCRIPT_DIR/check_admin_boundary.sh}"
-CADDY_CONTRACT_VALIDATOR="${CADDY_CONTRACT_VALIDATOR:-$SCRIPT_DIR/validate_caddy_contract.py}"
-CADDY_REDIRECT_VALIDATOR="${CADDY_REDIRECT_VALIDATOR:-$SCRIPT_DIR/validate_caddy_redirect.py}"
+DEFAULT_CONTRACT_VALIDATOR="$SCRIPT_DIR/validate_caddy_contract.py"
+CADDY_CONTRACT_VALIDATOR="${CADDY_CONTRACT_VALIDATOR:-$DEFAULT_CONTRACT_VALIDATOR}"
+if [[ -n "${CADDY_REDIRECT_VALIDATOR+x}" ]]; then
+  :
+elif [[ "$CADDY_CONTRACT_VALIDATOR" != "$DEFAULT_CONTRACT_VALIDATOR" ]]; then
+  CADDY_REDIRECT_VALIDATOR="$CADDY_CONTRACT_VALIDATOR"
+else
+  CADDY_REDIRECT_VALIDATOR="$SCRIPT_DIR/validate_caddy_redirect.py"
+fi
 
 : "${EXPECTED_LIVE_SHA256:?Set the reviewed current live Caddyfile hash}"
 
@@ -55,7 +62,13 @@ if [[ "$CURRENT_CONTAINER_SHA256" != "$CURRENT_LIVE_SHA256" ]]; then
   exit 1
 fi
 
-CANDIDATE_SNAPSHOT="$(mktemp "${TMPDIR:-/tmp}/heimserver-caddy-candidate.XXXXXX")"
+SNAPSHOT_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/heimserver-caddy-candidate.XXXXXX")"
+if [[ "$CANDIDATE_FILE" = /* ]]; then
+  CANDIDATE_SNAPSHOT="$SNAPSHOT_ROOT$CANDIDATE_FILE"
+else
+  CANDIDATE_SNAPSHOT="$SNAPSHOT_ROOT/$CANDIDATE_FILE"
+fi
+mkdir -p -- "$(dirname -- "$CANDIDATE_SNAPSHOT")"
 BACKUP_FILE=""
 MUTATION_STARTED=0
 
@@ -98,7 +111,7 @@ cleanup_or_rollback() {
       rollback_ok=0
     fi
 
-    rm -f -- "$CANDIDATE_SNAPSHOT"
+    rm -rf -- "$SNAPSHOT_ROOT"
 
     if [[ $rollback_ok -eq 1 ]]; then
       echo "Rollback verified." >&2
@@ -109,7 +122,7 @@ cleanup_or_rollback() {
     exit 255
   fi
 
-  rm -f -- "$CANDIDATE_SNAPSHOT"
+  rm -rf -- "$SNAPSHOT_ROOT"
   exit "$rc"
 }
 trap cleanup_or_rollback EXIT
@@ -144,6 +157,9 @@ if [[ $SYNTAX_RC -ne 0 ]]; then
 fi
 
 echo "Running structural contract validation on candidate snapshot..."
+if [[ -n "${EXPECTED_CANDIDATE_FILE+x}" ]]; then
+  export EXPECTED_CANDIDATE_FILE="$CANDIDATE_SNAPSHOT"
+fi
 set +e
 python3 "$CADDY_CONTRACT_VALIDATOR" --caddyfile "$CANDIDATE_SNAPSHOT"
 CONTRACT_RC=$?
