@@ -12,11 +12,11 @@ Ein Fehlschlag an einem Gate bricht den Sync sofort ab — keine Mutation findet
 | Gate | Was wird geprüft | Exit bei Fehler |
 |------|-----------------|-----------------|
 | 1. Hash + Container-Identität | `sha256sum` der Live-Datei muss mit `EXPECTED_LIVE_SHA256` übereinstimmen; Container-Datei muss mit Host übereinstimmen | 1 |
-| 2. Caddy-Syntax (`caddy validate`) | Kandidat syntaktisch korrekt laut `caddy:2.8.4` | ≠0 (Docker exit code) |
-| 3. Kandidatenvertrag (`validate_caddy_contract.py`) | Strukturelle Assertion: Admin-Binding, Hosts, Upstream, Cache-Control, CSP, Route-Reihenfolge | 1 = Vertrag verletzt, 2 = Diagnose nicht möglich |
-| 4. Aktive Admin-Boundary (`check_admin_boundary.sh`) | Container läuft, Admin-API lokal erreichbar, Port 2019 nicht veröffentlicht (Compose + Runtime) | 1 = Vertrag verletzt, 2 = Diagnose nicht möglich |
-| 5. TOCTOU-Wiederholung | Hash-Check der Live-Datei unmittelbar vor dem Schreiben | 1 |
-| 6. Backup + Write | `cp -a` (Backup), dann `cat >` (in-place, Inode erhalten) | 1 oder 255 bei Rollback-Fehler |
+| 2. Snapshot + Caddy-Syntax (`caddy validate`) | Ein privater Snapshot des Kandidaten ist syntaktisch korrekt; der veränderliche Quellpfad wird danach nicht mehr geschrieben | ≠0 (Docker exit code) |
+| 3. Snapshot-Verträge | `validate_caddy_contract.py` und `validate_caddy_redirect.py` prüfen Admin-Binding, Hosts, Upstream, Cache, CSP, Route-Reihenfolge und den exakten Redirect `/api` → `/api/` | 1 = Vertrag verletzt, 2 = Diagnose nicht möglich |
+| 4. Aktive Admin-Boundary (`check_admin_boundary.sh`) | Genau eine Compose-Container-ID; Admin-API auf IPv4- oder IPv6-Loopback erreichbar; Port 2019 weder in Compose noch im Runtime-Container oder Host veröffentlicht | 1 = Vertrag verletzt, 2 = Diagnose nicht möglich |
+| 5. Live-TOCTOU-Wiederholung | Hash-Check der Live-Datei unmittelbar vor dem Schreiben | 1 |
+| 6. Backup + Write | `cp -a` sichert die Live-Datei; ausschließlich der validierte Snapshot wird in-place geschrieben | 1 oder 255 bei Rollback-Fehler |
 
 ### Exit-Codes
 
@@ -69,15 +69,14 @@ docker network inspect weltgewebe_default >/dev/null 2>&1 || { echo "CRITICAL: w
 Copy the templates to the host and remove the `.template` extension.
 **Warning:** Do not overwrite existing certificates or data volumes.
 
-**Compose terminology:** The Compose service ID is `caddy`; the stable container name is `edge-caddy`. Use `caddy` with `docker compose` subcommands such as `exec` and `ps`. Use `edge-caddy` only with container-level commands such as `docker inspect` or `docker logs`.
+**Compose terminology:** The Compose service ID is `caddy`. Guards resolve its current container ID once through `docker compose ps --quiet caddy` and use that exact ID for runtime inspection. The stable name `edge-caddy` remains an operational label, not the guard's identity source.
 
 ```bash
 # Copy Docker Compose
 sudo cp edge/docker-compose.yml.template /opt/heimgewebe/edge/docker-compose.yml
 
 # Caddyfile Sync (Three-State-Sync)
-# This will perform hash checks, candidate validation, backup, and in-place sync.
-# Provide the known good hash of the active file to authorize the sync:
+# Performs hash checks, immutable snapshot validation, backup and in-place sync.
 sudo EXPECTED_LIVE_SHA256="<your-reviewed-hash>" bash scripts/edge/sync_caddyfile.sh
 ```
 
@@ -89,17 +88,15 @@ Reload Caddy to apply changes without downtime. Only execute this after all vali
 
 **Reload Safety & Admin Boundary:**
 * Reload benötigt die containerlokale Admin-API.
-* Erwartete Bindung: `localhost:2019` innerhalb des Containers.
+* Zulässige Bindungen: `localhost:2019`, `127.0.0.1:2019` oder `[::1]:2019` innerhalb genau des von Compose aufgelösten Containers.
 * Compose darf Port 2019 nicht veröffentlichen.
 * Host und Container-Netz dürfen Port 2019 nicht erreichen.
-* Vor Sync und Reload Admin-Boundary prüfen (wird durch `sync_caddyfile.sh` via `check_admin_boundary.sh` automatisch erzwungen).
+* Vor Sync und Reload Admin-Boundary prüfen; `sync_caddyfile.sh` erzwingt dies automatisch.
 * Bei fehlender Admin-API nicht reloaden; stoppen.
 * Ein zukünftiges `admin off` erfordert einen separaten Architekturwechsel auf Neustartbetrieb einschließlich neuem Rollback-Verfahren.
 
 ```bash
 cd /opt/heimgewebe/edge
-
-# Reload config
 sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec -T caddy \
   caddy reload \
     --adapter caddyfile \
@@ -110,57 +107,44 @@ sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/
 The internal Root CA is generated inside the `edge_caddy_data` volume. To trust it on clients, export it to the host:
 
 ```bash
-# Copy root.crt from volume via container execution
 sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec caddy cat /data/caddy/pki/authorities/local/root.crt | sudo tee /opt/heimgewebe/edge/certs/caddy-local-root.crt >/dev/null
 ```
 *Note: Path inside container depends on Caddy version/config. If `cat` fails, inspect `/data`.*
 
 ## Verification
 
-1.  **Container Status:**
-    ```bash
-    sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml ps
-    # Expect: edge-caddy Up
-    ```
+1. **Container Status:**
+   ```bash
+   sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml ps
+   ```
 
-2.  **Health Check (Local):**
-    ```bash
-    sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml ps caddy
-    # Expect: Up
+2. **Health Check (Local):**
+   ```bash
+   sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml ps caddy
+   sudo docker logs edge-caddy | tail -n 50
+   sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec caddy caddy validate --config /etc/caddy/Caddyfile
+   ```
 
-    sudo docker logs edge-caddy | tail -n 50
-    # Expect: "autosaved config", no errors
+3. **Public Endpoint (Network):**
+   ```bash
+   curl -I https://weltgewebe.home.arpa
+   ```
 
-    # Optional (if container runs):
-    sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec caddy caddy validate --config /etc/caddy/Caddyfile
-    ```
-
-3.  **Public Endpoint (Network):**
-    ```bash
-    curl -I https://weltgewebe.home.arpa
-    # Expect: 200 OK or 308 Redirect (depending on path)
-    # Check for valid TLS certificate (Internal CA)
-    ```
-
-4.  **Upstream Connectivity (Diagnostic):**
-    ```bash
-    # Verify that 'weltgewebe-api' resolves. If this fails, API routing will break.
-    sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec caddy getent hosts weltgewebe-api || echo "WARNING: Upstream 'weltgewebe-api' not resolvable! Fix in Weltgewebe compose."
-    ```
+4. **Upstream Connectivity (Diagnostic):**
+   ```bash
+   sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec caddy getent hosts weltgewebe-api || echo "WARNING: Upstream 'weltgewebe-api' not resolvable! Fix in Weltgewebe compose."
+   ```
 
 ## Rollback
 If the new configuration fails or post-sync checks abort:
-1. Identify the backup file (e.g., `/opt/heimgewebe/edge/Caddyfile.bak.20260623T...`).
-2. Read the backup hash: `BACKUP_SHA256="$(sudo sha256sum "$BACKUP_FILE" | awk '{print $1}')"`
-3. Restore the configuration into the existing file to preserve the bind-mount inode:
-   `sudo sh -c "cat '$BACKUP_FILE' > /opt/heimgewebe/edge/Caddyfile"`
-4. Verify host file matches backup hash.
-5. Verify container file matches backup hash (`sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec -T caddy sha256sum /etc/caddy/Caddyfile`).
-6. Validate container configuration before reload:
-   `sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec -T caddy caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile`
-7. Reload Caddy:
-   `sudo docker compose --project-directory /opt/heimgewebe/edge -f /opt/heimgewebe/edge/docker-compose.yml exec -T caddy caddy reload --adapter caddyfile --config /etc/caddy/Caddyfile`
-8. Check logs and health status. Document the failure and the restored backup.
+1. Identify the backup file.
+2. Read its SHA-256.
+3. Restore it in-place with `cat` to preserve the bind-mount inode.
+4. Verify the host hash.
+5. Verify the container hash.
+6. Validate the restored container configuration.
+7. Reload Caddy only after all rollback checks pass.
+8. Check logs and health status and document the failure.
 
 ## Drift Management
 Any permanent change to the `Caddyfile` on the host MUST be backported to `edge/Caddyfile.template` in the repository, unless it contains secrets.
