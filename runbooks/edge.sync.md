@@ -4,6 +4,33 @@
 **Target:** `/opt/heimgewebe/edge`
 **Source:** `edge/` (Repo Template)
 
+## Sync Gate-Reihenfolge (`sync_caddyfile.sh`)
+
+Die folgenden Gates werden in dieser zwingenden Reihenfolge ausgeführt.
+Ein Fehlschlag an einem Gate bricht den Sync sofort ab — keine Mutation findet statt.
+
+| Gate | Was wird geprüft | Exit bei Fehler |
+|------|-----------------|-----------------|
+| 1. Hash + Container-Identität | `sha256sum` der Live-Datei muss mit `EXPECTED_LIVE_SHA256` übereinstimmen; Container-Datei muss mit Host übereinstimmen | 1 |
+| 2. Caddy-Syntax (`caddy validate`) | Kandidat syntaktisch korrekt laut `caddy:2.8.4` | ≠0 (Docker exit code) |
+| 3. Kandidatenvertrag (`validate_caddy_contract.py`) | Strukturelle Assertion: Admin-Binding, Hosts, Upstream, Cache-Control, CSP, Route-Reihenfolge | 1 = Vertrag verletzt, 2 = Diagnose nicht möglich |
+| 4. Aktive Admin-Boundary (`check_admin_boundary.sh`) | Container läuft, Admin-API lokal erreichbar, Port 2019 nicht veröffentlicht (Compose + Runtime) | 1 = Vertrag verletzt, 2 = Diagnose nicht möglich |
+| 5. TOCTOU-Wiederholung | Hash-Check der Live-Datei unmittelbar vor dem Schreiben | 1 |
+| 6. Backup + Write | `cp -a` (Backup), dann `cat >` (in-place, Inode erhalten) | 1 oder 255 bei Rollback-Fehler |
+
+### Exit-Codes
+
+| Exit | Bedeutung |
+|------|-----------|
+| 0 | Sync erfolgreich, Live-Datei aktualisiert |
+| 1 | Vertrag verletzt oder Drift erkannt — keine Mutation |
+| 2 | Diagnose nicht möglich (fehlendes Tool, ungültiges JSON, kein Container) |
+| 255 | Rollback nicht vollständig verifiziert — manueller Eingriff erforderlich |
+
+> [!IMPORTANT]
+> `sync_caddyfile.sh` führt **keinen** `caddy reload` durch. Nach erfolgreichem Sync muss der Reload
+> manuell gemäß Schritt 5 „Apply Configuration" ausgeführt werden.
+
 ## Context
 The Edge service (Caddy) is the primary ingress for `weltgewebe.home.arpa` and `heimgewebe.home.arpa`.
 Configuration is managed via templates in this repository to prevent drift, but the actual runtime environment contains state (certificates, data) that must not be committed.

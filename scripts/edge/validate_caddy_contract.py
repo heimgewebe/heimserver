@@ -13,12 +13,17 @@ Exit codes:
 """
 import argparse
 import json
+import os
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any, Optional
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
+CADDY_IMAGE = os.environ.get("CADDY_IMAGE", "caddy:2.8.4")
+
 
 def die(code: int, msg: str) -> None:
     print(f"{'CONTRACT VIOLATION' if code == 1 else 'DIAGNOSTIC FAILURE'}: {msg}", file=sys.stderr)
@@ -27,18 +32,33 @@ def die(code: int, msg: str) -> None:
 
 def adapt_caddyfile(caddyfile_path: str) -> dict:
     """Run caddy adapt via Docker and return parsed JSON. Exits on failure."""
+    candidate = Path(caddyfile_path).resolve()
+    candidate_dir = candidate.parent
+    candidate_name = candidate.name
+
+    # Check that image exists locally before attempting docker run
+    try:
+        inspect = subprocess.run(
+            ["docker", "image", "inspect", CADDY_IMAGE],
+            capture_output=True,
+        )
+        if inspect.returncode != 0:
+            die(2, f"Caddy Docker image not found locally: {CADDY_IMAGE!r}. "
+                   f"Pull it first: docker pull {CADDY_IMAGE}")
+    except FileNotFoundError:
+        die(2, "docker not found")
+
     try:
         result = subprocess.run(
             [
                 "docker", "run", "--rm",
                 "--pull=never",
                 "--network", "none",
-                "-v", f"{subprocess.getoutput('pwd')}:/repo:ro",
-                "-w", "/repo",
+                "-v", f"{candidate_dir}:/candidate:ro",
                 "caddy:2.8.4",
                 "caddy", "adapt",
                 "--adapter", "caddyfile",
-                "--config", caddyfile_path,
+                "--config", f"/candidate/{candidate_name}",
             ],
             capture_output=True,
             text=True,
@@ -114,14 +134,16 @@ def find_subroutes(routes: list) -> list:
 
 
 def walk_routes(routes: list) -> list:
-    """Flatten all routes including those inside subroutes."""
-    result = list(routes)
-    for sr in find_subroutes(routes):
-        result.extend(walk_routes(sr.get("routes", [])))
+    """Flatten every route exactly once via direct subroute descent."""
+    result = []
+    for route in routes:
+        result.append(route)
+        for handler in route.get("handle", []):
+            if handler.get("handler") == "subroute":
+                result.extend(walk_routes(handler.get("routes", [])))
     return result
 
-
-def get_path_matchers(route: dict) -> list[str]:
+def get_path_matchers(route: dict) -> list:
     """Extract all path matcher values from a route."""
     paths = []
     for m in route.get("match", []):
@@ -154,36 +176,36 @@ def has_reverse_proxy_dial(routes: list, dial: str) -> bool:
     return False
 
 
+def count_reverse_proxy_upstreams(routes: list) -> int:
+    """Count total upstream entries across all reverse_proxy handlers."""
+    count = 0
+    for rp in find_handler_recursive(routes, "reverse_proxy"):
+        count += len(rp.get("upstreams", []))
+    return count
+
+
 def has_file_server_root(routes: list, root: str) -> bool:
     """Check that at least one file_server route uses the given root."""
-    for sr in find_handler_recursive(routes, "static_response"):
-        pass  # not relevant
-    for h in find_handler_recursive(routes, "file_server"):
-        # root is typically set via vars/vars_root handler or root directive
-        pass
-    # root is set via a "vars" or "root" handler type in Caddy JSON
+    # root is set via a "vars" handler type in Caddy JSON
     for h in find_handler_recursive(routes, "vars"):
         if h.get("root") == root:
             return True
     return False
 
 
-def has_cache_control(routes: list, path_prefix: str, expected_value: str) -> bool:
-    """Verify that routes matching a path prefix set the expected Cache-Control value."""
-    flat = walk_routes(routes)
-    for r in flat:
+def find_route_by_path_prefix(flat_routes: list, prefix: str) -> Optional[dict]:
+    """Find the first route that has a path matcher matching the given prefix."""
+    for r in flat_routes:
         paths = get_path_matchers(r)
-        if not any(p.startswith(path_prefix) or path_prefix.startswith(p.rstrip("*")) for p in paths):
-            continue
-        for h in find_handler_recursive(r.get("handle", []), "headers"):
-            sets = h.get("response", {}).get("set", {})
-            cc = sets.get("Cache-Control", sets.get("cache-control", []))
-            if isinstance(cc, list):
-                if any(expected_value in v for v in cc):
-                    return True
-            elif expected_value in cc:
-                return True
-    return False
+        if any(p == prefix or p.startswith(prefix) or prefix.rstrip("/*") in p for p in paths):
+            return r
+    return None
+
+
+def has_cache_control_exact(routes: list, expected_value: str) -> bool:
+    """Verify that routes set the expected exact Cache-Control value somewhere."""
+    flat_str = json.dumps(routes)
+    return expected_value in flat_str
 
 
 def has_static_response_status(routes: list, status: int) -> bool:
@@ -193,13 +215,32 @@ def has_static_response_status(routes: list, status: int) -> bool:
     return False
 
 
-def get_all_matched_hosts(data: dict) -> set[str]:
+def get_all_matched_hosts(data: dict) -> set:
     """Collect all hostnames referenced in any route's host matcher."""
     hosts = set()
     for r in all_routes(data):
         for m in r.get("match", []):
             hosts.update(m.get("host", []))
     return hosts
+
+
+def find_route_index_with_any_path(flat: list, path_substrings: list) -> Optional[int]:
+    """Find the lowest index of routes matching any of the given path substrings."""
+    for i, r in enumerate(flat):
+        paths = get_path_matchers(r)
+        if any(any(sub in p for sub in path_substrings) for p in paths):
+            return i
+    return None
+
+
+def find_route_index_with_root(flat: list, root: str) -> Optional[int]:
+    """Find the index of the first route in flat that has a vars handler with the given root."""
+    for i, r in enumerate(flat):
+        if find_handler_recursive([r], "vars"):
+            for h in find_handler_recursive([r], "vars"):
+                if h.get("root") == root:
+                    return i
+    return None
 
 
 # ── Contract assertions ────────────────────────────────────────────────────────
@@ -270,10 +311,11 @@ def check_public_web_host(data: dict) -> None:
 
     flat = walk_routes(host_routes)
 
+    # API upstream must be present
     if not has_reverse_proxy_dial(flat, "weltgewebe-api:8080"):
         die(1, "Public web host: missing reverse_proxy upstream weltgewebe-api:8080")
 
-    # Check basemap root
+    # Check basemap root via vars handler
     if not has_file_server_root(flat, "/srv/weltgewebe-basemap"):
         die(1, "Public web host: missing file_server root /srv/weltgewebe-basemap")
 
@@ -289,14 +331,13 @@ def check_public_web_host(data: dict) -> None:
     if not cors_origin:
         die(1, "Public web host: missing Access-Control-Allow-Origin header")
 
-    # Cache control
-    flat_str = json.dumps(flat)
+    # Cache control — exact string check in JSON
     for expected_cc in [
         "public, max-age=31536000, immutable",
         "no-store",
         "no-cache, must-revalidate",
     ]:
-        if expected_cc not in flat_str:
+        if not has_cache_control_exact(flat, expected_cc):
             die(1, f"Public web host: missing Cache-Control value: {expected_cc!r}")
 
     print("✅ Public web host contract OK")
@@ -309,16 +350,20 @@ def check_api_host(data: dict) -> None:
     if not host_routes:
         die(1, "No route with exact host api.weltgewebe.net")
 
-    flat = walk_routes(host_routes)
 
-    if not has_reverse_proxy_dial(flat, "weltgewebe-api:8080"):
+    if not has_reverse_proxy_dial(host_routes, "weltgewebe-api:8080"):
         die(1, "API host: missing reverse_proxy upstream weltgewebe-api:8080")
 
-    if find_handler_recursive(flat, "file_server"):
+    # Exactly one upstream — no over-specification
+    upstream_count = count_reverse_proxy_upstreams(host_routes)
+    if upstream_count != 1:
+        die(1, f"API host: expected exactly 1 upstream, found {upstream_count}")
+
+    if find_handler_recursive(host_routes, "file_server"):
         die(1, "API host: unexpected file_server handler present")
 
-    flat_str = json.dumps(flat)
-    if "/srv/" in flat_str:
+    host_str = json.dumps(host_routes)
+    if "/srv/" in host_str:
         die(1, "API host: unexpected /srv/ root path reference")
 
     print("✅ API host contract OK")
@@ -345,6 +390,10 @@ def check_internal_host(data: dict) -> None:
     if not has_file_server_root(flat, "/srv/weltgewebe-map-style"):
         die(1, "Internal host: missing file_server root /srv/weltgewebe-map-style")
 
+    # UI web root
+    if not has_file_server_root(flat, "/srv/weltgewebe-web"):
+        die(1, "Internal host: missing file_server root /srv/weltgewebe-web")
+
     # CORS
     cors_origin = get_header_val(flat, "Access-Control-Allow-Origin")
     if not cors_origin:
@@ -359,16 +408,16 @@ def check_internal_host(data: dict) -> None:
     if not has_static_response_status(flat, 204):
         die(1, "Internal host: missing OPTIONS 204 static response")
 
-    # Cache-Control values
+    # Cache-Control values — exact match in JSON
     for expected_cc in [
         "public, max-age=31536000, immutable",
         "no-store",
         "no-cache, must-revalidate",
     ]:
-        if expected_cc not in flat_str:
+        if not has_cache_control_exact(flat, expected_cc):
             die(1, f"Internal host: missing Cache-Control value: {expected_cc!r}")
 
-    # Security headers — exact values
+    # Security headers — exact values, not partial checks
     security_checks = {
         "X-Frame-Options": "DENY",
         "Referrer-Policy": "no-referrer",
@@ -377,57 +426,118 @@ def check_internal_host(data: dict) -> None:
         val = get_header_val(flat, hdr)
         if not val:
             die(1, f"Internal host: missing security header {hdr}")
-        if expected_val not in val:
-            die(1, f"Internal host: {hdr} expected to contain {expected_val!r}, got {val!r}")
+        if val != expected_val:
+            die(1, f"Internal host: {hdr} expected exact value {expected_val!r}, got {val!r}")
 
-    # CSP must be present (full value check)
+    # CSP must be present
     csp = get_header_val(flat, "Content-Security-Policy")
     if not csp:
         die(1, "Internal host: missing Content-Security-Policy header")
-
-    # Web root for static UI
-    if not has_file_server_root(flat, "/srv/weltgewebe-web"):
-        die(1, "Internal host: missing file_server root /srv/weltgewebe-web")
 
     print("✅ Internal host contract OK")
 
 
 def check_route_ordering(data: dict) -> None:
-    """
-    Verify that specific basemap/API/asset routes appear before the general UI fallback.
-    We do this by finding the index of the first specific-path route and the UI fallback
-    in the flat route list for weltgewebe.home.arpa.
+    """Verify direct host-route ordering before the general UI fallback.
+
+    Caddy adapts each site into a host wrapper whose first-level subroute
+    contains the ordered sibling routes. Ordering must be checked on those
+    siblings. Recursively searching the whole host wrapper misclassifies the
+    wrapper itself as the fallback because it contains the fallback below it.
     """
     routes = all_routes(data)
-    host_routes = routes_for_host(routes, "weltgewebe.home.arpa")
-    if not host_routes:
-        return  # already caught above
+    host_roots = routes_for_host(routes, "weltgewebe.home.arpa")
+    if not host_roots:
+        return  # already caught by the required-host check
 
-    flat = walk_routes(host_routes)
+    required_paths = {
+        "API redirect": "/api",
+        "version metadata": "/_app/version.json",
+        "immutable assets": "/_app/immutable/*",
+        "local basemap": "/local-basemap/*",
+        "API proxy": "/api/*",
+    }
 
-    specific_paths = ["/local-basemap/", "/api/", "/_app/immutable/"]
-    fallback_indicators = ["/index.html", "/_app/version.json"]  # SPA fallback
+    candidates = []
+    for host_root in host_roots:
+        sibling_routes = []
+        for handler in host_root.get("handle", []):
+            if handler.get("handler") == "subroute":
+                sibling_routes.extend(handler.get("routes", []))
 
-    first_specific = None
-    last_fallback = None
+        available_paths = {
+            path
+            for route in sibling_routes
+            for path in get_path_matchers(route)
+        }
+        if set(required_paths.values()).issubset(available_paths):
+            candidates.append(sibling_routes)
 
-    for i, r in enumerate(flat):
-        paths = get_path_matchers(r)
-        if any(any(sp in p for sp in specific_paths) for p in paths):
-            if first_specific is None:
-                first_specific = i
+    if len(candidates) != 1:
+        die(
+            1,
+            "Route ordering: expected exactly one HTTPS host route set with "
+            f"all required paths, found {len(candidates)}",
+        )
 
-    for i, r in enumerate(flat):
-        rstr = json.dumps(r)
-        if any(fb in rstr for fb in fallback_indicators):
-            last_fallback = i
+    sibling_routes = candidates[0]
 
-    if first_specific is not None and last_fallback is not None:
-        if first_specific >= last_fallback:
-            die(1, f"Route ordering violation: specific route ({first_specific}) "
-                f"appears after fallback ({last_fallback})")
+    def unique_path_index(label: str, expected_path: str) -> int:
+        matches = [
+            index
+            for index, route in enumerate(sibling_routes)
+            if expected_path in get_path_matchers(route)
+        ]
+        if len(matches) != 1:
+            die(
+                1,
+                f"Route ordering: {label} expected exactly once at "
+                f"{expected_path!r}, found {len(matches)}",
+            )
+        return matches[0]
 
-    print("✅ Route ordering: specific routes before UI fallback")
+    fallback_matches = []
+    for index, route in enumerate(sibling_routes):
+        if get_path_matchers(route):
+            continue
+
+        has_web_root = any(
+            handler.get("root") == "/srv/weltgewebe-web"
+            for handler in find_handler_recursive([route], "vars")
+        )
+        if has_web_root:
+            fallback_matches.append(index)
+
+    if len(fallback_matches) != 1:
+        die(
+            1,
+            "Route ordering: expected exactly one unmatched UI fallback with "
+            f"root /srv/weltgewebe-web, found {len(fallback_matches)}",
+        )
+
+    fallback_index = fallback_matches[0]
+
+    route_indices = {
+        label: unique_path_index(label, expected_path)
+        for label, expected_path in required_paths.items()
+    }
+
+    for label, route_index in route_indices.items():
+        if route_index >= fallback_index:
+            die(
+                1,
+                f"Route ordering violation: {label} route ({route_index}) "
+                f"appears at or after UI fallback ({fallback_index})",
+            )
+
+    ordered = ", ".join(
+        f"{label}={route_indices[label]}"
+        for label in required_paths
+    )
+    print(
+        "✅ Route ordering: direct routes precede UI fallback "
+        f"({ordered}, fallback={fallback_index})"
+    )
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
@@ -442,7 +552,7 @@ def main() -> None:
     if args.adapted_json:
         data = load_json_file(args.adapted_json)
     else:
-        print(f"Adapting {args.caddyfile} with Caddy 2.8.4 ...")
+        print(f"Adapting {args.caddyfile} with {CADDY_IMAGE} ...")
         data = adapt_caddyfile(args.caddyfile)
 
     print("Running contract assertions ...")

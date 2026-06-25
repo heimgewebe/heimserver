@@ -35,6 +35,7 @@ compose() {
 echo "== A. Containerlokale Admin-API erreichbar =="
 
 set +e
+# shellcheck disable=SC2034,SC2016
 EXEC_OUT="$(compose exec -T "$CADDY_SERVICE" sh -ec '
   if command -v wget >/dev/null 2>&1; then
     wget -qO- http://127.0.0.1:2019/config/ >/dev/null 2>&1
@@ -116,68 +117,81 @@ def is_ipv4_loopback(hex_ip):
     return ip == "127.0.0.1"
 
 def ipv6_from_hex(hex_str):
-    """Convert /proc/net/tcp6 hex address (32 chars, little-endian 4-byte groups) to colon notation."""
-    # Each 8 chars = 4 bytes in little-endian
-    groups = []
-    for i in range(0, 32, 8):
-        chunk = hex_str[i:i+8]
-        val = int(chunk, 16)
-        # reverse byte order
-        b = [(val >> (8*j)) & 0xFF for j in range(4)]
-        groups.append(f"{b[1]:02x}{b[0]:02x}")
-        groups.append(f"{b[3]:02x}{b[2]:02x}")
-    return ":".join(groups)
+    """Convert /proc/net/tcp6 hex address (32 chars, 4 little-endian 32-bit words) to standard notation."""
+    import socket, ipaddress
+    # hex_str is 32 hex chars representing 4 little-endian 32-bit words
+    raw = bytes.fromhex(hex_str)
+    # Reverse each 4-byte word to get network byte order
+    words = [raw[i:i+4][::-1] for i in range(0, 16, 4)]
+    addr_bytes = b"".join(words)
+    return str(ipaddress.ip_address(socket.inet_ntop(socket.AF_INET6, addr_bytes)))
 
 def is_ipv6_loopback(hex_ip):
-    ip = ipv6_from_hex(hex_ip)
-    # ::1 in full form
-    return ip == "0000:0000:0000:0000:0000:0000:0000:0001"
+    try:
+        ip = ipv6_from_hex(hex_ip)
+        return ip == "::1"
+    except Exception:
+        return False
 
 # Parse tcp4
-for line in tcp4_lines:
-    line = line.strip()
-    if not line or line.startswith("sl"):
-        continue
-    cols = line.split()
-    if len(cols) < 4:
-        continue
-    local = cols[1]   # HHHHHHHH:PPPP
-    state = cols[3]   # hex state
-    if state != "0A":  # 0A = LISTEN
-        continue
-    parts2 = local.split(":")
-    if len(parts2) != 2:
-        continue
-    hex_ip, hex_port = parts2
-    if hex_port.upper() != PORT_HEX:
-        continue
-    checked += 1
-    if not is_ipv4_loopback(hex_ip):
-        ip = ipv4_from_hex(hex_ip)
-        violations.append(f"IPv4 non-loopback listener on {ip}:2019")
+try:
+    for line in tcp4_lines:
+        line = line.strip()
+        if not line or line.startswith("sl"):
+            continue
+        cols = line.split()
+        if len(cols) < 4:
+            continue
+        local = cols[1]   # HHHHHHHH:PPPP
+        state = cols[3]   # hex state
+        if state != "0A":  # 0A = LISTEN
+            continue
+        parts2 = local.split(":")
+        if len(parts2) != 2:
+            continue
+        hex_ip, hex_port = parts2
+        if hex_port.upper() != PORT_HEX:
+            continue
+        checked += 1
+        if not is_ipv4_loopback(hex_ip):
+            try:
+                ip = ipv4_from_hex(hex_ip)
+            except Exception:
+                ip = hex_ip
+            violations.append(f"IPv4 non-loopback listener on {ip}:2019")
+except Exception as e:
+    print(f"Parse error (tcp4): {e}", file=sys.stderr)
+    sys.exit(2)
 
 # Parse tcp6
-for line in tcp6_lines:
-    line = line.strip()
-    if not line or line.startswith("sl"):
-        continue
-    cols = line.split()
-    if len(cols) < 4:
-        continue
-    local = cols[1]   # 32hex:PPPP
-    state = cols[3]
-    if state != "0A":
-        continue
-    parts2 = local.split(":")
-    if len(parts2) != 2:
-        continue
-    hex_ip, hex_port = parts2
-    if hex_port.upper() != PORT_HEX:
-        continue
-    checked += 1
-    if not is_ipv6_loopback(hex_ip):
-        ip = ipv6_from_hex(hex_ip)
-        violations.append(f"IPv6 non-loopback listener on [{ip}]:2019")
+try:
+    for line in tcp6_lines:
+        line = line.strip()
+        if not line or line.startswith("sl"):
+            continue
+        cols = line.split()
+        if len(cols) < 4:
+            continue
+        local = cols[1]   # 32hex:PPPP
+        state = cols[3]
+        if state != "0A":
+            continue
+        parts2 = local.split(":")
+        if len(parts2) != 2:
+            continue
+        hex_ip, hex_port = parts2
+        if hex_port.upper() != PORT_HEX:
+            continue
+        checked += 1
+        if not is_ipv6_loopback(hex_ip):
+            try:
+                ip = ipv6_from_hex(hex_ip)
+            except Exception:
+                ip = hex_ip
+            violations.append(f"IPv6 non-loopback listener on [{ip}]:2019")
+except Exception as e:
+    print(f"Parse error (tcp6): {e}", file=sys.stderr)
+    sys.exit(2)
 
 if checked == 0:
     print("NO_LISTENER")
@@ -194,7 +208,7 @@ PYEOF
 )" || BINDING_RC=$?
 
 if [[ "$BINDING_RESULT" == "NO_LISTENER" ]]; then
-  sysfail "no_listener_2019" "No LISTEN socket found on port 2019 inside the container"
+  fail "ADMIN_CONTAINER_NO_LISTENER" "No LISTEN socket found on port 2019 inside the container — admin API not bound"
 elif [[ $BINDING_RC -eq 1 ]]; then
   fail "ADMIN_CONTAINER_BINDING" "Port 2019 is bound to non-loopback address inside container"
 elif [[ $BINDING_RC -eq 2 ]]; then
@@ -218,6 +232,7 @@ if [[ $COMPOSE_JSON_RC -ne 0 ]]; then
 fi
 
 set +e
+# shellcheck disable=SC2034
 COMPOSE_CHECK="$(python3 - "$COMPOSE_JSON" <<'PYEOF'
 import sys, json
 
@@ -278,6 +293,7 @@ if [[ $INSPECT_RC -ne 0 ]]; then
 fi
 
 set +e
+# shellcheck disable=SC2034
 INSPECT_CHECK="$(python3 - "$INSPECT_JSON" <<'PYEOF'
 import sys, json
 

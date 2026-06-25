@@ -26,6 +26,7 @@ PROC_LOOPBACK_ONLY="  sl  local_address rem_addr   st tx_queue rx_queue tr tm->w
 PROC_IPV6_LOOPBACK="  sl  local_address                         remote_address                   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
    0: 00000000000000000000000001000000:07E3 00000000000000000000000000000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 12346 1 0000000000000000 100 0 0 10 0"
 
+# shellcheck disable=SC2034
 PROC_IPV4_AND_IPV6_LOOPBACK="$PROC_LOOPBACK_ONLY"$'\n'"$PROC_IPV6_LOOPBACK"
 
 PROC_WILDCARD="  sl  local_address rem_addr   st tx_queue rx_queue tr queue tx_queue retrnsmt   uid  timeout inode
@@ -67,7 +68,11 @@ case "$CMD" in
     # "docker compose ... config --format json"
     if [[ "$*" == *"config --format json"* ]]; then
       if [[ "${MOCK_COMPOSE_JSON_FAIL:-0}" == "1" ]]; then exit 1; fi
-      printf '%s\n' "${MOCK_COMPOSE_JSON:-{}}"
+      mock_value="${MOCK_COMPOSE_JSON-}"
+      if [[ -z "$mock_value" ]]; then
+        mock_value='{}'
+      fi
+      printf '%s\n' "$mock_value"
       exit 0
     fi
     # Passthrough compose ps

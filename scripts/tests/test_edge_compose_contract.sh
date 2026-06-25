@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
+# test_edge_compose_contract.sh — Compose contract test via validate_compose_contract.py
+# Uses docker compose config --format json to get rendered JSON, then validates it.
 set -euo pipefail
 
-REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 TEMPLATE="$REPO_ROOT/edge/docker-compose.yml.template"
+VALIDATOR="$REPO_ROOT/scripts/edge/validate_compose_contract.py"
 
 TEST_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEST_DIR"' EXIT
@@ -19,59 +23,28 @@ compose_cmd=(
 
 echo "== Edge Compose Contract =="
 
-SERVICES="$("${compose_cmd[@]}" config --services)"
+# Step 1: Get rendered JSON (capture exit code separately)
+COMPOSE_JSON_FILE="$TEST_DIR/compose_rendered.json"
+set +e
+"${compose_cmd[@]}" config --format json > "$COMPOSE_JSON_FILE" 2>&1
+COMPOSE_JSON_RC=$?
+set -e
 
-if [[ "$SERVICES" != "caddy" ]]; then
-  echo "ERROR: Expected exactly the Compose service 'caddy'." >&2
-  printf 'Observed services:\n%s\n' "$SERVICES" >&2
-  exit 1
+if [[ $COMPOSE_JSON_RC -ne 0 ]]; then
+    echo "ERROR: docker compose config --format json failed (rc=$COMPOSE_JSON_RC)" >&2
+    cat "$COMPOSE_JSON_FILE" >&2
+    exit 2
 fi
 
-RENDERED="$("${compose_cmd[@]}" config)"
+# Step 2: Run structural validator
+set +e
+python3 "$VALIDATOR" --json "$COMPOSE_JSON_FILE"
+VALIDATOR_RC=$?
+set -e
 
-require_rendered() {
-  local expected="$1"
+if [[ $VALIDATOR_RC -ne 0 ]]; then
+    echo "ERROR: validate_compose_contract.py failed (rc=$VALIDATOR_RC)" >&2
+    exit "$VALIDATOR_RC"
+fi
 
-  if ! grep -Fq -- "$expected" <<< "$RENDERED"; then
-    echo "ERROR: Missing rendered Compose contract: $expected" >&2
-    printf '%s\n' "$RENDERED" >&2
-    exit 1
-  fi
-}
-
-reject_rendered() {
-  local forbidden="$1"
-
-  if grep -Fq -- "$forbidden" <<< "$RENDERED"; then
-    echo "ERROR: Forbidden rendered Compose value: $forbidden" >&2
-    printf '%s\n' "$RENDERED" >&2
-    exit 1
-  fi
-}
-
-require_rendered "container_name: edge-caddy"
-require_rendered "source: caddy_data"
-require_rendered "source: caddy_config"
-require_rendered "name: edge_caddy_data"
-require_rendered "name: edge_caddy_config"
-
-reject_rendered "edge_edge_caddy_data"
-reject_rendered "edge_edge_caddy_config"
-reject_rendered "2019"
-
-# Only 80 and 443 are published
-PUBLISHED_PORTS="$(echo "$RENDERED" | awk '/published:/ {print $2}')"
-for port in $PUBLISHED_PORTS; do
-  port="${port//\"/}" # remove quotes if any
-  if [[ "$port" != "80" && "$port" != "443" ]]; then
-    echo "ERROR: Forbidden published port: $port" >&2
-    exit 1
-  fi
-done
-
-echo "PASS: Compose service ID is caddy"
-echo "PASS: container name remains edge-caddy"
-echo "PASS: deployed Caddy volume names are preserved"
-echo "PASS: no doubled project prefix is rendered"
-echo "PASS: Port 2019 is completely absent"
-echo "PASS: Only 80 and 443 are published"
+echo "✅ All Compose contract assertions passed"

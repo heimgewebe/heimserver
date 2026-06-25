@@ -21,6 +21,7 @@ touch "$COMPOSE_FILE"
 mkdir -p "$TEST_DIR/bin"
 export DOCKER_CALL_LOG="$TEST_DIR/docker.log"
 export STATE_FILE="$TEST_DIR/state"
+export CONTRACT_CALL_LOG="$TEST_DIR/contract.log"
 
 cat << 'MOCKDOCKER' > "$TEST_DIR/bin/docker"
 #!/bin/bash
@@ -72,6 +73,7 @@ echo "Mock: Unhandled docker command: $*" >&2
 exit 1
 MOCKDOCKER
 chmod +x "$TEST_DIR/bin/docker"
+REAL_PATH="$PATH"
 export PATH="$TEST_DIR/bin:$PATH"
 
 export ADMIN_BOUNDARY_CHECK="$TEST_DIR/mock_guard.sh"
@@ -81,7 +83,7 @@ GUARD_COUNT=$(cat "$STATE_FILE.guard_count" 2>/dev/null || echo "0")
 GUARD_COUNT=$((GUARD_COUNT + 1))
 echo "$GUARD_COUNT" > "$STATE_FILE.guard_count"
 
-if ls "$LIVE_FILE.bak."* >/dev/null 2>&1; then
+if ls "$LIVE_FILE.bak."* > /dev/null 2>&1; then
     echo "ERROR: Guard called after backup" >&2
     exit 99
 fi
@@ -97,15 +99,30 @@ exit 0
 MOCKGUARD
 chmod +x "$ADMIN_BOUNDARY_CHECK"
 
-# Mock contract validator — structural checks are covered by test_caddy_template.py
+# ── Mock contract validator with MOCK_CONTRACT_RC support ─────────────────────
 export CADDY_CONTRACT_VALIDATOR="$TEST_DIR/mock_contract.py"
 cat << 'MOCKCONTRACT' > "$CADDY_CONTRACT_VALIDATOR"
 #!/usr/bin/env python3
-import sys
-if "--caddyfile" in sys.argv:
-    # Just exit 0 to pass; real checks are done by test_caddy_template.py
-    sys.exit(0)
-sys.exit(0)
+import os, sys
+
+call_log = os.environ.get('CONTRACT_CALL_LOG', '')
+if call_log:
+    with open(call_log, 'a') as f:
+        f.write(' '.join(sys.argv) + '\n')
+
+# Verify --caddyfile matches expected candidate
+expected = os.environ.get('EXPECTED_CANDIDATE_FILE', '')
+if '--caddyfile' in sys.argv:
+    idx = sys.argv.index('--caddyfile')
+    received = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else ''
+    if expected and received != expected:
+        print(f'CONTRACT MOCK: wrong candidate: got {received}, expected {expected}', file=sys.stderr)
+        sys.exit(1)
+
+rc = int(os.environ.get('MOCK_CONTRACT_RC', '0'))
+if rc != 0:
+    print(f'CONTRACT VIOLATION: mock failure (rc={rc})', file=sys.stderr)
+sys.exit(rc)
 MOCKCONTRACT
 chmod +x "$CADDY_CONTRACT_VALIDATOR"
 
@@ -113,6 +130,7 @@ run_sync() {
     local expected_hash=$1
     export EXPECTED_LIVE_SHA256="$expected_hash"
     true > "$DOCKER_CALL_LOG"
+    true > "$CONTRACT_CALL_LOG"
     rm -f "$STATE_FILE.val_count" "$STATE_FILE.hash_count" "$STATE_FILE.guard_count"
     rm -f "$LIVE_FILE.bak."*
     if [ "${FAIL_ROLLBACK_VALIDATION:-0}" = "1" ]; then
@@ -132,7 +150,7 @@ ORIGINAL_INODE=$(stat -c '%i' "$LIVE_FILE")
 echo "--- Fall 1: fehlende Live-Datei ---"
 rm -f "$LIVE_FILE"
 set +e
-run_sync "anything" >/dev/null 2>&1
+run_sync "anything" > /dev/null 2>&1
 EXIT_CODE=$?
 set -e
 if [ $EXIT_CODE -eq 1 ]; then
@@ -146,7 +164,7 @@ ORIGINAL_INODE=$(stat -c '%i' "$LIVE_FILE")
 
 echo "--- Fall 2: unerwartete Live-Drift ---"
 set +e
-run_sync "wronghash" >/dev/null 2>&1
+run_sync "wronghash" > /dev/null 2>&1
 EXIT_CODE=$?
 set -e
 if [ $EXIT_CODE -eq 1 ]; then
@@ -237,7 +255,7 @@ export FAIL_POST_SYNC_VALIDATION="0"
 export FAIL_ROLLBACK_VALIDATION="0"
 
 echo "--- Fall 8: erfolgreicher Sync & Inode Erhaltung ---"
-if run_sync "$TRUE_LIVE_HASH" >/dev/null; then
+if run_sync "$TRUE_LIVE_HASH" > /dev/null; then
     echo "✅ Sync succeeded"
 else
     echo "❌ Failed: Sync should succeed"
@@ -267,7 +285,7 @@ echo "old_live_content" > "$LIVE_FILE"
 echo "new_candidate_content" > "$CANDIDATE_FILE"
 export FAIL_GUARD="1"
 set +e
-run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+run_sync "$TRUE_LIVE_HASH" > /dev/null 2>&1
 EXIT_CODE=$?
 set -e
 if [ $EXIT_CODE -eq 1 ]; then
@@ -276,7 +294,7 @@ else
     echo "❌ Expected exit 1, got $EXIT_CODE"
     exit 1
 fi
-if ls "$LIVE_FILE.bak."* >/dev/null 2>&1; then
+if ls "$LIVE_FILE.bak."* > /dev/null 2>&1; then
     echo "❌ Failed: Backup was created despite guard failure"
     exit 1
 fi
@@ -284,25 +302,26 @@ if [ "$(cat "$STATE_FILE.guard_count" 2>/dev/null)" != "1" ]; then
     echo "❌ Failed: Guard was not called exactly once (count was $(cat "$STATE_FILE.guard_count" 2>/dev/null))"
     exit 1
 fi
+echo "✅ No backup on guard failure, guard called exactly once"
 export FAIL_GUARD="0"
 
-echo "--- Fall 10: Guard-Fehler 2 blockiert Mutation ---"
+echo "--- Fall 10: Guard-Fehler 2 blockiert Mutation (exit code preserviert) ---"
 export FAIL_GUARD="2"
 set +e
-run_sync "$TRUE_LIVE_HASH" >/dev/null 2>&1
+run_sync "$TRUE_LIVE_HASH" > /dev/null 2>&1
 EXIT_CODE=$?
 set -e
-if [ $EXIT_CODE -eq 1 ]; then
-    echo "✅ Aborted correctly on guard exit 2"
+if [ $EXIT_CODE -eq 2 ]; then
+    echo "✅ Aborted correctly on guard exit 2 (exit code 2 preserved)"
 else
-    echo "❌ Expected exit 1, got $EXIT_CODE"
+    echo "❌ Expected exit 2 (guard rc preserved), got $EXIT_CODE"
     exit 1
 fi
 export FAIL_GUARD="0"
 
 echo "--- Fall 11: Guard-Aufruf bei No-op ---"
 cp "$LIVE_FILE" "$CANDIDATE_FILE"
-run_sync "$TRUE_LIVE_HASH" >/dev/null
+run_sync "$TRUE_LIVE_HASH" > /dev/null
 if [ -f "$STATE_FILE.guard_count" ]; then
     echo "❌ Failed: Guard was called on No-op sync!"
     exit 1
@@ -310,5 +329,120 @@ else
     echo "✅ Guard skipped on No-op sync"
 fi
 echo "new_candidate_content" > "$CANDIDATE_FILE"
+
+# ── Contract validator integration tests ──────────────────────────────────────
+
+echo "--- Fall 12: Contract-Validator RC=1 → Sync Exit 1, kein Guard ---"
+echo "old_live_content" > "$LIVE_FILE"
+echo "new_candidate_content" > "$CANDIDATE_FILE"
+export MOCK_CONTRACT_RC="1"
+set +e
+run_sync "$TRUE_LIVE_HASH" > /dev/null 2>&1
+EXIT_CODE=$?
+set -e
+if [ $EXIT_CODE -eq 1 ]; then
+    echo "✅ Sync exited 1 on contract violation"
+else
+    echo "❌ Expected exit 1, got $EXIT_CODE"
+    exit 1
+fi
+if [ -f "$STATE_FILE.guard_count" ]; then
+    echo "❌ Failed: Guard was called despite contract violation"
+    exit 1
+else
+    echo "✅ Guard not called on contract violation"
+fi
+if ls "$LIVE_FILE.bak."* > /dev/null 2>&1; then
+    echo "❌ Failed: Backup was created despite contract violation"
+    exit 1
+else
+    echo "✅ No backup on contract violation"
+fi
+if [ "$(cat "$LIVE_FILE")" = "old_live_content" ]; then
+    echo "✅ Live file unchanged on contract violation"
+else
+    echo "❌ Live file was modified despite contract violation"
+    exit 1
+fi
+export MOCK_CONTRACT_RC="0"
+
+echo "--- Fall 13: Contract-Validator RC=2 → Sync Exit 2, kein Guard ---"
+echo "old_live_content" > "$LIVE_FILE"
+echo "new_candidate_content" > "$CANDIDATE_FILE"
+export MOCK_CONTRACT_RC="2"
+set +e
+run_sync "$TRUE_LIVE_HASH" > /dev/null 2>&1
+EXIT_CODE=$?
+set -e
+if [ $EXIT_CODE -eq 2 ]; then
+    echo "✅ Sync exited 2 on contract diagnostic failure"
+else
+    echo "❌ Expected exit 2, got $EXIT_CODE"
+    exit 1
+fi
+if [ -f "$STATE_FILE.guard_count" ]; then
+    echo "❌ Failed: Guard was called despite contract diagnostic failure"
+    exit 1
+else
+    echo "✅ Guard not called on contract diagnostic failure"
+fi
+export MOCK_CONTRACT_RC="0"
+
+echo "--- Fall 14: Validator protokolliert EXPECTED_CANDIDATE_FILE korrekt ---"
+echo "old_live_content" > "$LIVE_FILE"
+echo "new_candidate_content" > "$CANDIDATE_FILE"
+export EXPECTED_CANDIDATE_FILE="$CANDIDATE_FILE"
+true > "$CONTRACT_CALL_LOG"
+set +e
+run_sync "$TRUE_LIVE_HASH" > /dev/null 2>&1
+set -e
+unset EXPECTED_CANDIDATE_FILE
+if grep -q "$CANDIDATE_FILE" "$CONTRACT_CALL_LOG" 2>/dev/null; then
+    echo "✅ Contract validator received correct --caddyfile path"
+else
+    echo "❌ Contract validator did not receive expected candidate path"
+    echo "   Contract log: $(cat "$CONTRACT_CALL_LOG" 2>/dev/null || echo '(empty)')"
+    exit 1
+fi
+
+echo "--- Fall 15: Validator vor Guard (Aufrufreihenfolge via Logs) ---"
+echo "old_live_content" > "$LIVE_FILE"
+echo "new_candidate_content" > "$CANDIDATE_FILE"
+true > "$CONTRACT_CALL_LOG"
+set +e
+run_sync "$TRUE_LIVE_HASH" > /dev/null 2>&1
+EXIT_CODE=$?
+set -e
+# Contract log must have an entry (validator was called)
+if grep -q "\-\-caddyfile" "$CONTRACT_CALL_LOG" 2>/dev/null; then
+    echo "✅ Contract validator was called before guard"
+else
+    echo "❌ Contract validator was not recorded in call log"
+    exit 1
+fi
+# Guard must have been called (it was a successful sync)
+if [ "$(cat "$STATE_FILE.guard_count" 2>/dev/null)" = "1" ]; then
+    echo "✅ Guard called exactly once (after validator)"
+else
+    echo "❌ Guard count unexpected: $(cat "$STATE_FILE.guard_count" 2>/dev/null)"
+    exit 1
+fi
+
+# ── Real validator test ───────────────────────────────────────────────────────
+
+echo "--- Real: Produktionsvalidator auf echtem Template ---"
+REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+set +e
+PATH="$REAL_PATH" python3 scripts/edge/validate_caddy_contract.py \
+  --caddyfile "$(realpath "$REPO_ROOT/edge/Caddyfile.template")" \
+  > /dev/null 2>&1
+REAL_RC=$?
+set -e
+if [ $REAL_RC -eq 0 ]; then
+    echo "✅ Produktionsvalidator auf echtem Template: PASS"
+else
+    echo "❌ Produktionsvalidator auf echtem Template: FAIL (rc=$REAL_RC)"
+    exit 1
+fi
 
 echo "== All runbook script tests passed =="

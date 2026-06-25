@@ -31,12 +31,20 @@ validate-warnings:
 	-bash scripts/tests/test_preflight_mock.sh
 
 validate-shell-tests:
+	shellcheck scripts/edge/check_admin_boundary.sh
 	shellcheck scripts/edge/sync_caddyfile.sh
+	shellcheck scripts/tests/test_edge_admin_boundary.sh
 	shellcheck scripts/tests/test_edge_sync_runbook.sh
 	shellcheck scripts/tests/test_edge_compose_contract.sh
+	shellcheck scripts/tests/test_edge_contract_mutations.sh
+	python3 -m py_compile scripts/edge/validate_caddy_contract.py
+	python3 -m py_compile scripts/edge/validate_compose_contract.py
+	python3 -m py_compile scripts/tests/test_caddy_template.py
 	python3 scripts/tests/test_caddy_template.py
+	bash scripts/tests/test_edge_admin_boundary.sh
 	bash scripts/tests/test_edge_sync_runbook.sh
 	bash scripts/tests/test_edge_compose_contract.sh
+	bash scripts/tests/test_edge_contract_mutations.sh
 
 validate: preflight validate-shell-tests
 	python3 scripts/ci/check_repo_index_consistency.py

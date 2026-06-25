@@ -91,7 +91,7 @@ GUARD_RC=$?
 set -e
 if [[ $GUARD_RC -ne 0 ]]; then
     echo "ERROR: Admin boundary guard failed (rc=$GUARD_RC). Aborting." >&2
-    exit 1
+    exit "$GUARD_RC"
 fi
 
 # ── 5. TOCTOU re-check right before backup and write ─────────────────────────
