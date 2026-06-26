@@ -6,14 +6,17 @@ canonicality: canonical
 doc_type: architecture
 title: "Blaupause: Heimnetz 2026+ (Deterministische Layer-Architektur, gehärtet & durchsetzbar)"
 summary: "Kanonische Zielarchitektur für den kombinierten Einsatz von Heimserver und Heimberry."
-last_reviewed: 2026-04-19
+last_reviewed: 2026-06-25
 depends_on:
   - constitution
   - network
   - naming
   - port-matrix
 related_docs: []
-verifies_with: []
+verifies_with:
+  - ops/checks/preflight.sh
+  - scripts/tests/test_preflight_mock.sh
+  - scripts/tests/test_caddy_template.py
 ---
 # **Blaupause: Heimnetz 2026+ (Deterministische Layer-Architektur, gehärtet & durchsetzbar)**
 
@@ -28,8 +31,13 @@ verifies_with: []
    DNS/Name → **Heimberry** (erzwingbar, nicht nur intendiert)
 2. **Strikte Ebenentrennung:**
    **Truth ≠ Service ≠ Interaction ≠ Access**
-3. **Internal-First + Zero-Exposure:**
-   Kein direkter öffentlicher Ingress. Zugriff erfolgt ausschließlich über ein authentifiziertes Overlay. (Hinweis: Das Overlay nutzt das Internet als Transportschicht und ist nicht mit physischer Isolation zu verwechseln.)
+3. **Internal-First + kontrollierte Public-Exception:**
+   Kein direkter öffentlicher Ingress für interne Dienste. Zugriff erfolgt
+   standardmäßig über ein authentifiziertes Overlay. Einzige öffentliche
+   Ausnahme sind `weltgewebe.net`, `www.weltgewebe.net` und
+   `api.weltgewebe.net` über Edge-Caddy TCP 80/443 auf dem Heimserver.
+   (Hinweis: Das Overlay nutzt das Internet als Transportschicht und ist nicht
+   mit physischer Isolation zu verwechseln.)
 4. **Determinismus vor Komfort:**
    Jeder Request ist rekonstruierbar (DNS → Proxy → Service)
 5. **Eindeutige Abbildung:**
@@ -82,10 +90,12 @@ Eine Version wird nur dann übernommen, wenn:
 **Optionale Dienste:**
 * DHCP (nur bei vollständiger Router-Deaktivierung)
 * node-exporter (Observability)
+* Weltgewebe-DynDNS-Updater (outbound-only; keine eingehenden Ports)
 **Explizit ausgeschlossen:**
 * kein Reverse Proxy
 * keine App-Container
 * keine GUI / Dev / Media
+* kein eingehender Internetdienst für Weltgewebe oder andere Apps
 **Invarianten:**
 * einziger primärer Resolver für `home.arpa`
 * primäre Quelle für DNS-Antworten
@@ -159,9 +169,10 @@ tailscale up \
 
 ### 2.3 Routing-Invarianten
 * kein Portforwarding
+  * Ausnahme: TCP 80/443 zur Edge-Caddy-Frontdoor des Heimservers ausschließlich für `weltgewebe.net`, `www.weltgewebe.net`, `api.weltgewebe.net`.
 * kein Dual-VPN
 * kein implizites Routing
-* kein Internet-Ingress
+* kein Internet-Ingress außer der dokumentierten Weltgewebe-Public-Exception
 ---
 ## 3. DNS-Architektur & Resilienz (erzwingbar gemacht)
 
@@ -224,7 +235,7 @@ Dieses Modell (127.0.0.1-Bindung) ersetzt perspektivisch das aktuelle Firewall-b
 
 * Host Firewall (UFW/iptables):
     * Heimberry: Erlaubt Port 53 (DNS) aus dem LAN und Tailnet sowie Tailscale-interne Ports. Pi-hole Webinterface ist strikt auf Tailnet-only (`tailscale0` interface) beschränkt.
-    * Heimserver: Erlaubt Ports 80/443 (Caddy) aus dem LAN und Tailnet. Port 22 (SSH) als Admin-Zugang ist aus dem LAN und Tailnet erlaubt. Alle direkten App-Ports von außen sind strikt verboten.
+    * Heimserver: Erlaubt Ports 80/443 für Edge-Caddy. Öffentlich ist darauf ausschließlich die Weltgewebe-Public-Exception für `weltgewebe.net`, `www.weltgewebe.net` und `api.weltgewebe.net` zulässig. Port 22 (SSH) als Admin-Zugang ist aus dem LAN und Tailnet erlaubt. Alle direkten App-, Admin- und DB-Ports von außen sind strikt verboten.
     * Heim-PC: Erlaubt Sunshine-Ports und Port 22 (SSH) ausschließlich Tailnet-only (`tailscale0` interface).
 ---
 ## 6. Access Layer (VPN, final)
@@ -264,13 +275,13 @@ iPad → Heimserver → SSH/code-server
 * Tailscale intern
 * Pi-hole Webinterface - Tailnet-only
 **Heimserver**
-* 80/443 (Caddy) - LAN & Tailnet
+* 80/443 (Caddy) - LAN & Tailnet; public nur für `weltgewebe.net`, `www.weltgewebe.net`, `api.weltgewebe.net`
 * 22 (SSH) - LAN & Tailnet
 **Heim-PC**
 * Sunshine Ports - Tailnet-only
 * 22 (SSH) - Tailnet-only
 **Global**
-* keine offenen Internetports
+* keine offenen Internetports außer Edge-Caddy TCP 80/443 für die dokumentierte Weltgewebe-Public-Exception
 * keine direkten Serviceports
 ---
 ## 9. IPv6-Policy (explizit gehärtet)
@@ -287,7 +298,7 @@ iPad → Heimserver → SSH/code-server
 ## 10. Sicherheitsmodell
 * Zero Trust via Overlay
 * interne TLS-CA verpflichtend
-* keine extern erreichbaren Dienste
+* keine extern erreichbaren Dienste außer `weltgewebe.net`, `www.weltgewebe.net` und `api.weltgewebe.net` über Edge-Caddy TCP 80/443
 * keine impliziten Trust-Zonen
 ---
 ## 11. Observability (erweitert)
@@ -444,7 +455,7 @@ Das System hat Regeln; es benötigt zwingend Sichtbarkeit, um deren Einhaltung e
 * SSH-Logins und Caddy Access-Logs auswerten. Traffic auf inoffiziellen Ports identifizieren.
 * Nmap/Portscans aus dem Tailnet: Sind nur die erwarteten Ports offen?
   * Heimberry: erwartbar 53 plus definierte Admin-/Tailnet-Pfade
-  * Heimserver: erwartbar 80/443, 22
+  * Heimserver: erwartbar 80/443, 22; extern nur Edge-Caddy TCP 80/443 für die drei Weltgewebe-Public-Hosts
   * Heim-PC: erwartbar Sunshine + 22 Tailnet-only
 **Ziel-Metrik:** > 95% aller legitimen DNS-Requests im LAN/Tailnet werden vom Heimberry beantwortet.
 ---

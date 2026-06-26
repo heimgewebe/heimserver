@@ -6,10 +6,12 @@ canonicality: canonical
 doc_type: architecture
 title: Heimnetz Constitution (Repo: heimserver)
 summary: Canonical rules and context for the Heimnetz layer model
-last_reviewed: 2026-04-28
+last_reviewed: 2026-06-25
 depends_on: []
 verifies_with:
   - ops/checks/preflight.sh
+  - scripts/tests/test_preflight_mock.sh
+  - scripts/tests/test_caddy_template.py
 ---
 
 # constitution.md
@@ -57,14 +59,24 @@ Die Wahrheit ist föderal organisiert:
 
 ## 2. Hard Rules (Unverhandelbare Verbote)
 
-1. **Kein Public Exposing**
-   Dienste dürfen niemals direkt ins Internet exponiert werden (kein Port-Forwarding im Router).
-   Einziger Ingress ist das authentifizierte Overlay (Tailscale) oder der Reverse Proxy (intern).
+1. **Kein unkontrolliertes Public Exposing**
+   Dienste dürfen niemals direkt ins Internet exponiert werden. Der Standard
+   bleibt: kein Router-Portforwarding, Zugriff nur über authentifiziertes
+   Overlay (Tailscale) oder internen Reverse Proxy.
+
+   **Eng begrenzte öffentliche Ausnahme:** Ausschließlich
+   `weltgewebe.net`, `www.weltgewebe.net` und `api.weltgewebe.net` dürfen über
+   Edge-Caddy auf dem Heimserver per TCP 80/443 öffentlich terminiert werden.
+   Diese Ausnahme erlaubt keine direkten App-, Admin-, Datenbank- oder
+   Diagnoseports und keinen eingehenden Heimberry-Dienst. DynDNS verändert nur
+   die öffentlichen A-Records dieser drei Namen.
 
    *Architektur-Entscheidung:*
    Dienste (Docker/Caddy) dürfen auf 0.0.0.0 lauschen.
    Sicherheit wird NICHT durch Loopback-Binding, sondern durch Firewall-Regeln (DOCKER-USER Chain) erzwungen.
-   Offene Listener sind zulässig, solange DOCKER-USER die Exposition begrenzt; runtime dokumentiert Listener, preflight/iptables dokumentieren die Erreichbarkeit.
+   Offene Listener sind zulässig, solange DOCKER-USER die Exposition begrenzt
+   und nur Edge-Caddy die Ports 80/443 besitzt; runtime dokumentiert Listener,
+   preflight/iptables dokumentieren die Erreichbarkeit.
 
 2. **Kein Host-Caddy**
    Caddy läuft ausschließlich als Docker-Container. Systemd-Caddy ist verboten.
@@ -111,7 +123,7 @@ Diese Invarianten werden durch `ops/checks/preflight.sh` überwacht:
 
 1.	Port 80/443 sind vorhanden (Dienst läuft).
 2.	Port 2019 ist am Host und in Docker-Netzen nicht erreichbar; containerintern ist nur `127.0.0.1:2019` zulässig.
-3.	Firewall (DOCKER-USER) erlaubt nur LAN (192.168.178.0/24) und WireGuard (10.7.0.0/24). Alles andere wird verworfen.
+3.	Firewall (DOCKER-USER) erlaubt LAN und WireGuard grundsätzlich. Die eng begrenzte Weltgewebe-Public-Exception darf extern ausschließlich TCP 80/443 zu Edge-Caddy öffnen; direkte App-, Admin-, Datenbank- und Diagnosepfade sowie Heimberry-Ingress bleiben verworfen.
 
 ---
 

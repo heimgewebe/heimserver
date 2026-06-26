@@ -16,6 +16,7 @@ safe_read_paths:
   - runbooks/
   - manifest/
   - docs/
+  - ops/systemd/
   - AGENTS.md
   - repo.meta.yaml
   - SYSTEM_MAP.md
@@ -25,17 +26,21 @@ guarded_write_paths:
   - runtime/
   - runbooks/
   - manifest/repo-index.yaml
+  - audit/impl-registry.yaml
+  - ops/systemd/
   - docs/
 
 forbidden_write_paths:
   - ops/audit/snapshots/
   - docker-compose.override.yml
   - .env
+  - "*.password"
   - "*.key"
   - "*.pem"
 
 external_sensitive_paths:
   - /etc/heimserver/secrets/
+  - /etc/weltgewebe-ddns/
 
 requires_target_proof_for:
   - runtime/
@@ -47,6 +52,8 @@ required_checks_before_patch:
   - bash ops/checks/preflight.sh
   - python3 scripts/ci/check-doc-review-age.py
   - bash scripts/ci/check-runbook-invariants.sh
+  - python3 -m unittest scripts/tests/test_weltgewebe_ddns.py
+  - bash scripts/tests/test_ddns_bundle.sh
 
 artifact_refresh_steps:
   - python3 scripts/generate-relations.py

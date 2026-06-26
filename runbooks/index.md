@@ -7,7 +7,7 @@ canonicality: canonical
 doc_type: reference
 title: Runbooks Index
 summary: Entrypoint for execution guides
-last_reviewed: 2026-04-28
+last_reviewed: 2026-06-25
 depends_on: []
 verifies_with:
   - scripts/ci/check-runbook-invariants.sh
@@ -28,6 +28,9 @@ Diese Runbooks sind operative Abläufe (Recovery/Rotation/Änderungen).
 - `heimberry-bootstrap.md` — Truth-Layer Bootstrap für Heimberry
 - `dns-migration.md` — DNS-Autorität von Heimserver nach Heimberry verlagern
 - `tailscale-migration.md` — Overlay-Migration auf Tailscale als Zielmodell
+
+## Weltgewebe Public Edge
+- `weltgewebe-dyndns.md` — outbound-only DynDNS auf Heimberry für die drei erlaubten Public-Hosts
 
 ## Historical / Superseded
 - `ops.runbook.heimserver-edge.md` — superseded (monolithisches Altmodell)

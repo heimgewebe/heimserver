@@ -1,4 +1,5 @@
 implementations:
+
   - id: impl.ops.preflight
     path: ops/checks/preflight.sh
     impl_type: script
@@ -26,6 +27,74 @@ implementations:
     status: active
     documented_by:
       - architecture/docmeta.schema.md
+    verified_by: []
+    supersedes: []
+    deprecated_by: []
+
+  - id: impl.heimberry.weltgewebe-ddns-updater
+    path: scripts/heimberry/weltgewebe_ddns.py
+    impl_type: script
+    status: active
+    documented_by:
+      - runbooks/weltgewebe-dyndns.md
+      - operations/operations.md
+    verified_by:
+      - scripts/tests/test_weltgewebe_ddns.py
+    supersedes: []
+    deprecated_by: []
+
+  - id: impl.heimberry.weltgewebe-ddns-installer
+    path: scripts/heimberry/install_weltgewebe_ddns.sh
+    impl_type: script
+    status: active
+    documented_by:
+      - runbooks/weltgewebe-dyndns.md
+      - operations/operations.md
+    verified_by:
+      - scripts/tests/test_ddns_bundle.sh
+    supersedes: []
+    deprecated_by: []
+
+  - id: impl.systemd.weltgewebe-ddns-service
+    path: ops/systemd/weltgewebe-ddns.service
+    impl_type: systemd-unit
+    status: active
+    documented_by:
+      - runbooks/weltgewebe-dyndns.md
+      - operations/operations.md
+    verified_by:
+      - make validate-ddns-systemd
+    supersedes: []
+    deprecated_by: []
+
+  - id: impl.systemd.weltgewebe-ddns-timer
+    path: ops/systemd/weltgewebe-ddns.timer
+    impl_type: systemd-unit
+    status: active
+    documented_by:
+      - runbooks/weltgewebe-dyndns.md
+      - operations/operations.md
+    verified_by:
+      - make validate-ddns-systemd
+    supersedes: []
+    deprecated_by: []
+
+  - id: impl.test.weltgewebe-ddns-unit
+    path: scripts/tests/test_weltgewebe_ddns.py
+    impl_type: test
+    status: active
+    documented_by:
+      - runbooks/weltgewebe-dyndns.md
+    verified_by: []
+    supersedes: []
+    deprecated_by: []
+
+  - id: impl.test.weltgewebe-ddns-bundle
+    path: scripts/tests/test_ddns_bundle.sh
+    impl_type: test
+    status: active
+    documented_by:
+      - runbooks/weltgewebe-dyndns.md
     verified_by: []
     supersedes: []
     deprecated_by: []

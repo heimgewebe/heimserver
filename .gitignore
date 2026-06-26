@@ -5,6 +5,7 @@
 **/*.key
 **/*.log
 **/*.pem
+**/*.password
 **/*.sqlite
 **/*.sqlite3
 **/*.tar
