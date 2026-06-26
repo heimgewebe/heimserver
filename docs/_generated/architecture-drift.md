@@ -25,10 +25,19 @@ The following scripts were discovered via `Makefile` references or by scanning t
 - `scripts/docmeta/generate-architecture-drift.py`
 - `scripts/docmeta/generate-doc-coverage.py`
 - `scripts/docmeta/generate-knowledge-gaps.py`
+- `scripts/edge/validate_caddy_contract.py`
+- `scripts/edge/validate_compose_contract.py`
 - `scripts/generate-relations.py`
 - `scripts/generate-system-map.py`
+- `scripts/tests/edge_contract_json_mutations.py`
 - `scripts/tests/test_caddy_template.py`
+- `scripts/tests/test_edge_admin_boundary.sh`
 - `scripts/tests/test_edge_compose_contract.sh`
+- `scripts/tests/test_edge_compose_stderr.py`
+- `scripts/tests/test_edge_contract_mutations.sh`
+- `scripts/tests/test_edge_ipv4_only.py`
+- `scripts/tests/test_edge_noop_proof.py`
+- `scripts/tests/test_edge_redirect_target.sh`
 - `scripts/tests/test_edge_sync_runbook.sh`
 - `scripts/tests/test_preflight_mock.sh`
 
