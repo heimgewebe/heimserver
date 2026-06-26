@@ -185,9 +185,9 @@ def ipv6(hex_ip: str) -> str:
     return str(ipaddress.ip_address(socket.inet_ntop(socket.AF_INET6, network)))
 
 
-for family, lines, decode, expected in (
-    ("IPv4", tcp4, ipv4, "127.0.0.1"),
-    ("IPv6", tcp6, ipv6, "::1"),
+for family, lines, decode in (
+    ("IPv4", tcp4, ipv4),
+    ("IPv6", tcp6, ipv6),
 ):
     for line in lines:
         cols = line.split()
@@ -205,10 +205,17 @@ for family, lines, decode, expected in (
         except Exception as exc:
             print(f"Parse error ({family}): {exc}", file=sys.stderr)
             sys.exit(2)
-        if family == "IPv4" and address == "127.0.0.1":
-            ipv4_loopback += 1
-        if address != expected:
-            violations.append(f"{family} non-loopback listener on {address}:2019")
+        if family == "IPv4":
+            if address == "127.0.0.1":
+                ipv4_loopback += 1
+            else:
+                violations.append(
+                    f"IPv4 listener violates 127.0.0.1-only contract: {address}:2019"
+                )
+        else:
+            violations.append(
+                f"IPv6 listener violates 127.0.0.1-only contract: [{address}]:2019"
+            )
 
 if checked == 0:
     print("NO_LISTENER")
@@ -219,7 +226,7 @@ if violations:
 if ipv4_loopback != 1:
     print("NO_IPV4_LOOPBACK")
     sys.exit(1)
-print("loopback-only")
+print("127.0.0.1-only")
 PY
 )"
 BINDING_RC=$?
@@ -230,7 +237,7 @@ if [[ "$BINDING_RESULT" == "NO_LISTENER" ]]; then
 elif [[ "$BINDING_RESULT" == "NO_IPV4_LOOPBACK" ]]; then
   fail "ADMIN_CONTAINER_BINDING" "Expected exactly one 127.0.0.1:2019 listener"
 elif [[ $BINDING_RC -eq 1 ]]; then
-  fail "ADMIN_CONTAINER_BINDING" "Port 2019 is bound to a non-loopback address"
+  fail "ADMIN_CONTAINER_BINDING" "Port 2019 violates the 127.0.0.1-only binding contract"
 elif [[ $BINDING_RC -ne 0 ]]; then
   sysfail "proc_parse" "Failed to parse container socket table"
 fi
