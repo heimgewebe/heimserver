@@ -60,7 +60,7 @@ Die Einhaltung der Repo-Regeln wird durch folgende Checks gewährleistet, die zw
 ## Häufige Fallen
 - **Secrets in Git:** Keine produktiven Overrides (`docker-compose.override.yml`), `.env` oder unredacted Audit-Snapshots in Git.
 - **Port-Ownership Violation:** Port 8081 gehört zwingend Pi-hole. Weltgewebe Container müssen internal-only sein.
-- **Caddy Admin API:** Die Caddy-Admin-API darf weder hostseitig veröffentlicht noch über Container-Netze erreichbar sein. Eine ausschließlich an Container-Loopback gebundene Admin-API ist für kontrolliertes Reloading und Rollback zulässig.
+- **Caddy Admin API:** Die Caddy-Admin-API darf weder hostseitig veröffentlicht noch über Container-Netze erreichbar sein. Eine ausschließlich an `127.0.0.1:2019` innerhalb des geprüften Caddy-Containers gebundene Admin-API ist für kontrolliertes Reloading und Rollback zulässig.
 - **DOCKER-USER Firewall:** allow LAN/WG, drop rest für 80/443.
 
 ## Offene Lücken

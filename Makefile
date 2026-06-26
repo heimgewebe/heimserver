@@ -37,6 +37,7 @@ validate-shell-tests:
 	shellcheck scripts/tests/test_edge_sync_runbook.sh
 	shellcheck scripts/tests/test_edge_compose_contract.sh
 	shellcheck scripts/tests/test_edge_contract_mutations.sh
+	shellcheck scripts/tests/test_edge_redirect_target.sh
 	python3 -m py_compile scripts/edge/validate_caddy_contract.py
 	python3 -m py_compile scripts/edge/validate_compose_contract.py
 	python3 -m py_compile scripts/tests/test_caddy_template.py
@@ -46,6 +47,7 @@ validate-shell-tests:
 	bash scripts/tests/test_edge_sync_runbook.sh
 	bash scripts/tests/test_edge_compose_contract.sh
 	bash scripts/tests/test_edge_contract_mutations.sh
+	bash scripts/tests/test_edge_redirect_target.sh
 
 validate: preflight validate-shell-tests
 	python3 scripts/ci/check_repo_index_consistency.py

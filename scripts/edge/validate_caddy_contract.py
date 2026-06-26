@@ -220,6 +220,14 @@ def route_has_static_response_status(route: dict, status: int) -> bool:
     )
 
 
+def direct_static_response_handlers(route: dict) -> list:
+    return [
+        handler
+        for handler in route.get("handle", [])
+        if handler.get("handler") == "static_response"
+    ]
+
+
 def route_has_method_static_response(
     route: dict,
     method: str,
@@ -256,6 +264,14 @@ def count_reverse_proxy_upstreams(routes: list) -> int:
         len(proxy.get("upstreams", []))
         for proxy in find_handler_recursive(routes, "reverse_proxy")
     )
+
+
+def identity_index(routes: list, target: dict) -> int:
+    'Return the index of the exact route object, not an equal dictionary.'
+    for index, candidate in enumerate(routes):
+        if candidate is target:
+            return index
+    die(2, "internal validator error: route object is not present")
 
 
 def get_all_matched_hosts(data: dict) -> set:
@@ -510,16 +526,11 @@ def check_admin(data: dict) -> None:
         )
 
     listen = admin.get("listen", "")
-    allowed = {
-        "localhost:2019",
-        "127.0.0.1:2019",
-        "[::1]:2019",
-    }
-    if listen not in allowed:
+    if listen != "127.0.0.1:2019":
         die(
             1,
-            f"Admin listen address must be one of {sorted(allowed)}, "
-            f"got {listen!r}",
+            "Admin listen address must be exactly "
+            f"'127.0.0.1:2019', got {listen!r}",
         )
 
     print(f"✅ Admin bound to loopback: {listen}")
@@ -651,8 +662,42 @@ def check_internal_host(data: dict) -> None:
         "/api",
         "Internal API redirect",
     )
-    if not route_has_static_response_status(redirect_route, 308):
-        die(1, "Internal API redirect: missing 308 static response")
+    redirect_handlers = direct_static_response_handlers(redirect_route)
+    if len(redirect_handlers) != 1:
+        die(
+            1,
+            "Internal API redirect: expected exactly one direct "
+            f"static_response handler, found {len(redirect_handlers)}",
+        )
+    redirect_handler = redirect_handlers[0]
+    if redirect_handler.get("status_code") != 308:
+        die(
+            1,
+            "Internal API redirect: expected status 308, got "
+            f"{redirect_handler.get('status_code')!r}",
+        )
+    headers = redirect_handler.get("headers", {})
+    if not isinstance(headers, dict):
+        die(1, "Internal API redirect: missing headers map")
+    locations = [
+        value
+        for key, value in headers.items()
+        if key.lower() == "location"
+    ]
+    if len(locations) != 1:
+        die(
+            1,
+            "Internal API redirect: expected exactly one Location header, "
+            f"found {len(locations)}",
+        )
+    location = locations[0]
+    normalized_location = location if isinstance(location, list) else [location]
+    if normalized_location != ["/api/"]:
+        die(
+            1,
+            "Internal API redirect: expected Location '/api/', got "
+            f"{normalized_location!r}",
+        )
 
     api_route = unique_direct_route_by_path(
         routes,
@@ -697,59 +742,78 @@ def check_internal_host(data: dict) -> None:
     print("✅ Internal host contract OK")
 
 
-def check_route_ordering(data: dict) -> None:
-    'Verify all specific internal routes precede the UI fallback.'
-    required_paths = {
-        "/api",
-        "/_app/version.json",
-        "/_app/immutable/*",
-        "/local-basemap/*",
-        "/api/*",
-    }
+def check_route_ordering_for_hosts(
+    data: dict,
+    hosts: set,
+    labels: dict,
+    label: str,
+) -> None:
+    'Verify all specific routes for one host set precede the UI fallback.'
+    required_paths = set(labels.values())
     routes = unique_host_sibling_routes(
         data,
-        {"weltgewebe.home.arpa"},
+        hosts,
         required_paths,
-        "Route ordering",
+        f"Route ordering {label}",
     )
     fallback_route = unique_fallback_route(
         routes,
         "/srv/weltgewebe-web",
-        "Route ordering",
+        f"Route ordering {label}",
     )
-    fallback_index = routes.index(fallback_route)
+    fallback_index = identity_index(routes, fallback_route)
 
-    labels = {
-        "API redirect": "/api",
-        "version metadata": "/_app/version.json",
-        "immutable assets": "/_app/immutable/*",
-        "local basemap": "/local-basemap/*",
-        "API proxy": "/api/*",
-    }
     indices = {}
-    for label, expected_path in labels.items():
+    for route_label, expected_path in labels.items():
         route = unique_direct_route_by_path(
             routes,
             expected_path,
-            f"Route ordering {label}",
+            f"Route ordering {label} {route_label}",
         )
-        route_index = routes.index(route)
-        indices[label] = route_index
+        route_index = identity_index(routes, route)
+        indices[route_label] = route_index
         if route_index >= fallback_index:
             die(
                 1,
-                f"Route ordering violation: {label} route "
+                f"Route ordering violation: {label} {route_label} route "
                 f"({route_index}) appears at or after UI fallback "
                 f"({fallback_index})",
             )
 
     ordered = ", ".join(
-        f"{label}={indices[label]}"
-        for label in labels
+        f"{route_label}={indices[route_label]}"
+        for route_label in labels
     )
     print(
-        "✅ Route ordering: direct routes precede UI fallback "
+        f"✅ Route ordering {label}: direct routes precede UI fallback "
         f"({ordered}, fallback={fallback_index})"
+    )
+
+
+def check_route_ordering(data: dict) -> None:
+    check_route_ordering_for_hosts(
+        data,
+        {"weltgewebe.home.arpa"},
+        {
+            "API redirect": "/api",
+            "version metadata": "/_app/version.json",
+            "immutable assets": "/_app/immutable/*",
+            "local basemap": "/local-basemap/*",
+            "API proxy": "/api/*",
+        },
+        "internal host",
+    )
+    check_route_ordering_for_hosts(
+        data,
+        {"weltgewebe.net", "www.weltgewebe.net"},
+        {
+            "version metadata": "/_app/version.json",
+            "immutable assets": "/_app/immutable/*",
+            "local basemap": "/local-basemap/*",
+            "API proxy": "/api/*",
+            "health": "/health/*",
+        },
+        "public web host",
     )
 
 

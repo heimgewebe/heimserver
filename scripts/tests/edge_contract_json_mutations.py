@@ -120,6 +120,30 @@ def direct_route(routes, expected_path):
     return matches[0]
 
 
+def static_response_handler(route):
+    handlers = [
+        handler
+        for handler in route.get("handle", [])
+        if handler.get("handler") == "static_response"
+    ]
+    if len(handlers) != 1:
+        raise SystemExit(
+            f"expected one direct static_response, found {len(handlers)}"
+        )
+    return handlers[0]
+
+
+def replace_root(route, old_root, new_root):
+    replaced = 0
+    for node in iter_routes(route):
+        for handler in node.get("handle", []):
+            if handler.get("handler") == "vars" and handler.get("root") == old_root:
+                handler["root"] = new_root
+                replaced += 1
+    if replaced == 0:
+        raise SystemExit(f"root not found: {old_root}")
+
+
 def regexp_route(route, fragment):
     matches = [
         node
@@ -205,13 +229,55 @@ def first_subroute_list(route):
 
 def mutate(data, mutation):
     routes = internal_siblings(data)
+    api_redirect = direct_route(routes, "/api")
     basemap = direct_route(routes, "/local-basemap/*")
     fallback = fallback_route(routes)
     version = direct_route(routes, "/_app/version.json")
+    immutable = direct_route(routes, "/_app/immutable/*")
     pmtiles = regexp_route(basemap, r"\.pmtiles$")
 
-    if mutation == "ipv6-admin":
-        data.setdefault("admin", {})["listen"] = "[::1]:2019"
+    if mutation == "redirect-status-wrong":
+        static_response_handler(api_redirect)["status_code"] = 307
+        return
+
+    if mutation == "redirect-target-wrong":
+        static_response_handler(api_redirect).setdefault("headers", {})["Location"] = ["/wrong/"]
+        return
+
+    if mutation == "redirect-foreign-host-decoy":
+        static_response_handler(api_redirect).setdefault("headers", {})["Location"] = ["/wrong/"]
+        servers = data.setdefault("apps", {}).setdefault("http", {}).setdefault("servers", {})
+        first_server = next(iter(servers.values()))
+        first_server.setdefault("routes", []).append(
+            {
+                "match": [{"host": ["redirect-decoy.home.arpa"]}],
+                "handle": [
+                    {
+                        "handler": "subroute",
+                        "routes": [
+                            {
+                                "match": [{"path": ["/api"]}],
+                                "handle": [
+                                    {
+                                        "handler": "static_response",
+                                        "status_code": 308,
+                                        "headers": {"Location": ["/api/"]},
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+        return
+
+    if mutation == "basemap-route-missing":
+        routes.pop(identity_index(routes, basemap))
+        return
+
+    if mutation == "basemap-root-wrong":
+        replace_root(pmtiles, "/srv/weltgewebe-basemap", "/srv/wrong-basemap")
         return
 
     if mutation == "fallback-before-basemap":
@@ -234,6 +300,12 @@ def mutate(data, mutation):
 
     if mutation == "version-cache-misplaced":
         removed = remove_header(version, "Cache-Control")
+        values = {key: raw_values for key, raw_values in removed}
+        append_headers_to_web_fallback(fallback, values)
+        return
+
+    if mutation == "immutable-cache-misplaced":
+        removed = remove_header(immutable, "Cache-Control")
         values = {key: raw_values for key, raw_values in removed}
         append_headers_to_web_fallback(fallback, values)
         return
@@ -273,6 +345,11 @@ def mutate(data, mutation):
             raise SystemExit("PMTiles file_server not found")
         return
 
+    if mutation == "duplicate-equal-specific-route":
+        duplicate = json.loads(json.dumps(basemap))
+        routes.insert(identity_index(routes, fallback), duplicate)
+        return
+
     raise SystemExit(f"unknown mutation: {mutation}")
 
 
@@ -284,12 +361,18 @@ def main():
         "--mutation",
         required=True,
         choices=[
-            "ipv6-admin",
+            "redirect-status-wrong",
+            "redirect-target-wrong",
+            "redirect-foreign-host-decoy",
+            "basemap-route-missing",
+            "basemap-root-wrong",
             "fallback-before-basemap",
             "version-cache-misplaced",
+            "immutable-cache-misplaced",
             "cors-misplaced",
             "options-misplaced",
             "pmtiles-file-server-missing",
+            "duplicate-equal-specific-route",
         ],
     )
     args = parser.parse_args()

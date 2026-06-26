@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# test_edge_compose_contract.sh — Compose contract test via validate_compose_contract.py
-# Uses docker compose config --format json to get rendered JSON, then validates it.
+# Compose contract test via validate_compose_contract.py.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 TEMPLATE="$REPO_ROOT/edge/docker-compose.yml.template"
 VALIDATOR="$REPO_ROOT/scripts/edge/validate_compose_contract.py"
+CADDY_SERVICE="${CADDY_SERVICE:-caddy}"
 
 TEST_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEST_DIR"' EXIT
@@ -23,31 +23,31 @@ compose_cmd=(
 
 echo "== Edge Compose Contract =="
 
-# Step 1: Get rendered JSON (capture exit code separately)
 COMPOSE_JSON_FILE="$TEST_DIR/compose_rendered.json"
+COMPOSE_STDERR_FILE="$TEST_DIR/compose_rendered.stderr"
 set +e
-"${compose_cmd[@]}" config --format json > "$COMPOSE_JSON_FILE" 2>&1
+"${compose_cmd[@]}" config --format json \
+  >"$COMPOSE_JSON_FILE" \
+  2>"$COMPOSE_STDERR_FILE"
 COMPOSE_JSON_RC=$?
 set -e
 
 if [[ $COMPOSE_JSON_RC -ne 0 ]]; then
-    echo "ERROR: docker compose config --format json failed (rc=$COMPOSE_JSON_RC)" >&2
-    cat "$COMPOSE_JSON_FILE" >&2
-    exit 2
+  echo "ERROR: docker compose config --format json failed (rc=$COMPOSE_JSON_RC)" >&2
+  cat "$COMPOSE_STDERR_FILE" >&2
+  exit 2
 fi
 
-# Step 2: Run structural validator
-set +e
-python3 "$VALIDATOR" --json "$COMPOSE_JSON_FILE"
-VALIDATOR_RC=$?
-set -e
+python3 - "$COMPOSE_JSON_FILE" <<'PY'
+import json
+import sys
+from pathlib import Path
 
-if [[ $VALIDATOR_RC -ne 0 ]]; then
-    echo "ERROR: validate_compose_contract.py failed (rc=$VALIDATOR_RC)" >&2
-    exit "$VALIDATOR_RC"
-fi
+json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+PY
 
-# Step 3: Validate the exact internal API redirect target independently.
-bash "$SCRIPT_DIR/test_edge_redirect_target.sh"
+python3 "$VALIDATOR" --service "$CADDY_SERVICE" --json "$COMPOSE_JSON_FILE"
 
-echo "✅ All Compose and redirect contract assertions passed"
+echo "Compose stderr was captured separately:"
+sed 's/^/  /' "$COMPOSE_STDERR_FILE"
+echo "Edge Compose contract assertions passed"
