@@ -28,6 +28,7 @@ INITIAL_LIVE_SHA256=""
 CANDIDATE_SHA256=""
 ADAPTED_SHA256=""
 CADDY_CONTAINER_ID=""
+NO_CHANGES=0
 MUTATION_STARTED=0
 
 record_event() {
@@ -252,8 +253,7 @@ chmod 0444 "$CANDIDATE_SNAPSHOT"
 CANDIDATE_SHA256="$(hash_file "$CANDIDATE_SNAPSHOT")"
 
 if [[ "$INITIAL_LIVE_SHA256" == "$CANDIDATE_SHA256" ]]; then
-  echo "No changes to sync."
-  exit 0
+  NO_CHANGES=1
 fi
 
 if ! docker image inspect "$CADDY_IMAGE" >/dev/null 2>&1; then
@@ -345,6 +345,12 @@ confirm_same_container "pre-write recheck"
 record_event "container-recheck"
 
 verify_snapshot_hash "pre-write recheck"
+verify_adapted_hash "pre-write recheck"
+
+if [[ $NO_CHANGES -eq 1 ]]; then
+  echo "No changes to sync; full read-only proof chain passed."
+  exit 0
+fi
 
 LIVE_DIR="$(dirname -- "$LIVE_FILE")"
 LIVE_BASE="$(basename -- "$LIVE_FILE")"
