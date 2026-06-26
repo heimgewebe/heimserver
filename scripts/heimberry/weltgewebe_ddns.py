@@ -204,9 +204,7 @@ def read_password(host: str) -> str:
     path = CONFIG_DIR / f"{host}.password"
 
     try:
-        password = path.read_text(
-            encoding="utf-8"
-        ).rstrip("\r\n")
+        raw_password = path.read_text(encoding="utf-8")
     except OSError as error:
         abort(
             2,
@@ -215,6 +213,13 @@ def read_password(host: str) -> str:
             host=host,
             error=type(error).__name__,
         )
+
+    if raw_password.endswith("\r\n"):
+        password = raw_password[:-2]
+    elif raw_password.endswith("\n"):
+        password = raw_password[:-1]
+    else:
+        password = raw_password
 
     if not password:
         abort(

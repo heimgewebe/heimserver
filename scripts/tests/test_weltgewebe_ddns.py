@@ -44,7 +44,7 @@ class WeltgewebeDdnsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             config_dir = pathlib.Path(tmp)
 
-            for content in ("", "secret\nsecond\n"):
+            for content in ("", "secret\nsecond\n", "secret\n\n", "secret\r\n\r\n"):
                 with self.subTest(content=content):
                     path = config_dir / "weltgewebe.net.password"
                     path.write_text(content, encoding="utf-8")
@@ -56,6 +56,17 @@ class WeltgewebeDdnsTests(unittest.TestCase):
                         with self.assertRaises(SystemExit) as raised:
                             DDNS.read_password("weltgewebe.net")
                         self.assertEqual(raised.exception.code, 2)
+
+    def test_read_password_accepts_single_line_with_optional_terminal_newline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_dir = pathlib.Path(tmp)
+            path = config_dir / "weltgewebe.net.password"
+
+            for content in ("secret", "secret\n", "secret\r\n"):
+                with self.subTest(content=content):
+                    path.write_text(content, encoding="utf-8")
+                    with mock.patch.object(DDNS, "CONFIG_DIR", config_dir):
+                        self.assertEqual(DDNS.read_password("weltgewebe.net"), "secret")
 
     def test_collect_mismatches_reports_exact_nameserver_host_pair(self) -> None:
         expected = "1.1.1.1"
