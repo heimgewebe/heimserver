@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
+
+SOURCE_PROGRAM="$SCRIPT_DIR/weltgewebe_ddns.py"
+SOURCE_SERVICE="$REPO_ROOT/ops/systemd/weltgewebe-ddns.service"
+SOURCE_TIMER="$REPO_ROOT/ops/systemd/weltgewebe-ddns.timer"
+
+DESTDIR="${DESTDIR:-}"
+ACTIVATE=0
+CHECK_ONLY=0
+ALLOW_ANY_HOST="${WELTGEWEBE_DDNS_ALLOW_ANY_HOST:-0}"
+
+PROGRAM_PATH="$DESTDIR/usr/local/sbin/weltgewebe-ddns"
+SERVICE_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.service"
+TIMER_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.timer"
+CONFIG_DIR="$DESTDIR/etc/weltgewebe-ddns"
+
+HOSTS=(
+  "weltgewebe.net"
+  "www.weltgewebe.net"
+  "api.weltgewebe.net"
+)
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/heimberry/install_weltgewebe_ddns.sh [--activate | --check]
+
+Without an option, install or refresh the program and systemd unit files but do
+not start the timer. --activate additionally validates credential metadata,
+reloads systemd, enables the timer and performs one immediate update run.
+--check performs a read-only file drift comparison against the installed files.
+
+DESTDIR may be set for staging and tests. Activation is disabled with DESTDIR.
+EOF
+}
+
+fail() {
+  printf 'ERROR: %s\n' "$*" >&2
+  exit 1
+}
+
+log() {
+  printf 'INFO: %s\n' "$*"
+}
+
+while (($# > 0)); do
+  case "$1" in
+    --activate)
+      ((ACTIVATE += 1))
+      ;;
+    --check)
+      ((CHECK_ONLY += 1))
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage >&2
+      fail "unknown argument: $1"
+      ;;
+  esac
+  shift
+done
+
+if ((ACTIVATE > 1 || CHECK_ONLY > 1 || (ACTIVATE == 1 && CHECK_ONLY == 1))); then
+  fail "choose exactly one of --activate or --check"
+fi
+
+for source in "$SOURCE_PROGRAM" "$SOURCE_SERVICE" "$SOURCE_TIMER"; do
+  [[ -f "$source" ]] || fail "source file missing: $source"
+done
+
+if [[ -z "$DESTDIR" ]]; then
+  [[ $EUID -eq 0 ]] || fail "installation on the live host requires root"
+
+  if [[ "$ALLOW_ANY_HOST" != "1" && "$(hostname -s)" != "heimberry" ]]; then
+    fail "refusing live installation outside heimberry; use WELTGEWEBE_DDNS_ALLOW_ANY_HOST=1 only for a reviewed exception"
+  fi
+elif ((ACTIVATE == 1)); then
+  fail "--activate is unavailable with DESTDIR"
+fi
+
+compare_file() {
+  local source=$1
+  local target=$2
+
+  [[ -f "$target" ]] || fail "installed file missing: $target"
+  cmp --silent -- "$source" "$target" || fail "installed file differs: $target"
+}
+
+check_installation() {
+  compare_file "$SOURCE_PROGRAM" "$PROGRAM_PATH"
+  compare_file "$SOURCE_SERVICE" "$SERVICE_PATH"
+  compare_file "$SOURCE_TIMER" "$TIMER_PATH"
+
+  [[ "$(stat -c '%a' "$PROGRAM_PATH")" == "755" ]] || fail "unexpected mode on $PROGRAM_PATH"
+  [[ "$(stat -c '%a' "$SERVICE_PATH")" == "644" ]] || fail "unexpected mode on $SERVICE_PATH"
+  [[ "$(stat -c '%a' "$TIMER_PATH")" == "644" ]] || fail "unexpected mode on $TIMER_PATH"
+  [[ -d "$CONFIG_DIR" ]] || fail "configuration directory missing: $CONFIG_DIR"
+  [[ "$(stat -c '%a' "$CONFIG_DIR")" == "700" ]] || fail "unexpected mode on $CONFIG_DIR"
+
+  if [[ -z "$DESTDIR" ]]; then
+    [[ "$(stat -c '%u:%g' "$PROGRAM_PATH")" == "0:0" ]] || fail "unexpected owner on $PROGRAM_PATH"
+    [[ "$(stat -c '%u:%g' "$SERVICE_PATH")" == "0:0" ]] || fail "unexpected owner on $SERVICE_PATH"
+    [[ "$(stat -c '%u:%g' "$TIMER_PATH")" == "0:0" ]] || fail "unexpected owner on $TIMER_PATH"
+    [[ "$(stat -c '%u:%g' "$CONFIG_DIR")" == "0:0" ]] || fail "unexpected owner on $CONFIG_DIR"
+  fi
+
+  log "installed files match the repository sources"
+}
+
+if ((CHECK_ONLY == 1)); then
+  check_installation
+  log "activation state intentionally not checked by --check"
+  exit 0
+fi
+
+install -d -m 0700 -- "$CONFIG_DIR"
+install -D -m 0755 -- "$SOURCE_PROGRAM" "$PROGRAM_PATH"
+install -D -m 0644 -- "$SOURCE_SERVICE" "$SERVICE_PATH"
+install -D -m 0644 -- "$SOURCE_TIMER" "$TIMER_PATH"
+
+if [[ -z "$DESTDIR" ]]; then
+  chown root:root -- "$PROGRAM_PATH" "$SERVICE_PATH" "$TIMER_PATH" "$CONFIG_DIR"
+fi
+
+check_installation
+
+if ((ACTIVATE == 0)); then
+  log "installation complete; timer not activated"
+  exit 0
+fi
+
+for host in "${HOSTS[@]}"; do
+  credential="$CONFIG_DIR/$host.password"
+  [[ -f "$credential" ]] || fail "credential file missing: $credential"
+  [[ "$(stat -c '%u:%g' "$credential")" == "0:0" ]] || fail "credential must be owned by root:root: $credential"
+  [[ "$(stat -c '%a' "$credential")" == "600" ]] || fail "credential must have mode 0600: $credential"
+  [[ -s "$credential" ]] || fail "credential file is empty: $credential"
+done
+
+systemd-analyze verify "$SERVICE_PATH" "$TIMER_PATH"
+systemctl daemon-reload
+systemctl enable --now weltgewebe-ddns.timer
+systemctl start weltgewebe-ddns.service
+systemctl is-active --quiet weltgewebe-ddns.timer || fail "timer activation failed"
+
+log "timer enabled and immediate update run completed"

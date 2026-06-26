@@ -63,6 +63,7 @@ guarded_write_paths:
   - runbooks/
   - manifest/repo-index.yaml
   - ops/checks/
+  - ops/systemd/
   - scripts/
   - docs/
 
@@ -70,15 +71,19 @@ forbidden_write_paths:
   - docs/_generated/
   - docker-compose.override.yml
   - ops/audit/snapshots/**
+  - "**/*.password"
 
 external_sensitive_paths:
   - /etc/heimserver/secrets/
+  - /etc/weltgewebe-ddns/
 
 required_checks:
   - bash ops/checks/preflight.sh
   - python3 scripts/ci/check_repo_index_consistency.py
   - python3 scripts/ci/check-doc-review-age.py
   - bash scripts/ci/check-runbook-invariants.sh
+  - python3 -m unittest scripts/tests/test_weltgewebe_ddns.py
+  - bash scripts/tests/test_ddns_bundle.sh
 
 indexing:
   enabled: true

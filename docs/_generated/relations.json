@@ -96,6 +96,11 @@
       "zone": "runbooks"
     },
     {
+      "id": "runbook-weltgewebe-dyndns",
+      "path": "runbooks/weltgewebe-dyndns.md",
+      "zone": "runbooks"
+    },
+    {
       "id": "runbook-dns-migration",
       "path": "runbooks/dns-migration.md",
       "zone": "runbooks"
@@ -220,6 +225,16 @@
     {
       "source": "runbook-heimberry-bootstrap",
       "target": "node-heimberry",
+      "type": "depends_on"
+    },
+    {
+      "source": "runbook-weltgewebe-dyndns",
+      "target": "constitution",
+      "type": "depends_on"
+    },
+    {
+      "source": "runbook-weltgewebe-dyndns",
+      "target": "naming",
       "type": "depends_on"
     },
     {

@@ -30,6 +30,7 @@ zones:
       - ops.runbook.weltgewebe-stack.md
       - ops.runbook.heimserver-edge.md
       - heimberry-bootstrap.md
+      - weltgewebe-dyndns.md
       - dns-migration.md
       - tailscale-migration.md
   decisions:
@@ -46,3 +47,5 @@ checks:
   - scripts/ci/check-runbook-invariants.sh
   - scripts/ci/check_repo_index_consistency.py
   - scripts/ci/check-doc-review-age.py
+  - scripts/tests/test_weltgewebe_ddns.py
+  - scripts/tests/test_ddns_bundle.sh

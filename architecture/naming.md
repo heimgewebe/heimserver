@@ -6,7 +6,7 @@ canonicality: canonical
 doc_type: architecture
 title: Naming Architecture (Layer Model)
 summary: Canonical naming conventions for Heimnetz layer separation
-last_reviewed: 2026-04-28
+last_reviewed: 2026-06-25
 depends_on: []
 verifies_with:
   - ops/checks/preflight.sh
@@ -125,21 +125,48 @@ API (optional; sofern existent)
 
 **Regel:**
 Keine Kurzformen.
-Keine alternativen Domains.
-Keine parallelen Namensräume.
+Keine alternativen internen Domains.
+Keine parallelen internen Namensräume.
 
 Ein Host → ein kanonischer Name.
 
 ---
 
+### 4.3 Weltgewebe Public Edge
+
+Öffentlich delegierte Namen sind eine enge Ausnahme und kein zweiter interner
+Namensraum. Erlaubt sind ausschließlich:
+
+| Name | Ziel |
+|---|---|
+| `weltgewebe.net` | Edge-Caddy TCP 80/443 auf dem Heimserver |
+| `www.weltgewebe.net` | Edge-Caddy TCP 80/443 auf dem Heimserver |
+| `api.weltgewebe.net` | Edge-Caddy TCP 80/443 auf dem Heimserver |
+
+Heimberry darf diese drei öffentlichen A-Records per outbound-only DynDNS
+aktualisieren. Heimberry bleibt dabei ohne eingehenden Internetdienst.
+
+Nicht erlaubt:
+	•	Wildcard-Records für `*.weltgewebe.net`
+	•	weitere Public-Hostnames ohne neue Architekturentscheidung
+	•	direkte A-Records auf App-, Admin- oder DB-Ports
+	•	öffentliche Namen für `home.arpa`
+
+---
+
 ## 5. TLS-Policy
 
-Caddy `tls internal`.
+Interne `home.arpa`-Namen verwenden Caddy `tls internal`.
 
 Konsequenz:
 	•	Eigene lokale CA
 	•	Root-Zertifikat muss auf Clients installiert werden
-	•	Kein öffentliches ACME
+	•	Kein öffentliches ACME für interne Namen
+
+Public-Weltgewebe-Namen (`weltgewebe.net`, `www.weltgewebe.net`,
+`api.weltgewebe.net`) terminieren dagegen am Edge-Caddy mit öffentlich
+validierbarem TLS. Diese Ausnahme darf nicht auf `home.arpa` oder weitere
+Public-Hostnames ausgedehnt werden.
 
 Nicht erlaubt:
 	•	Mischbetrieb öffentlich + intern für dieselbe Zone
@@ -229,6 +256,8 @@ DNS-Quelle ist immer Pi-hole.
 | Router-DNS ≠ Pi-hole | Splitbrain |
 | Private Relay aktiv | DNS-Umgehung |
 | Heimgewebe-Host auf Weltgewebe-Upstream | Semantischer Bruch |
+| weiterer Public-Weltgewebe-Hostname | unkontrollierte Exposition |
+| Public-Wildcard `*.weltgewebe.net` | Host-Allowlist umgangen |
 
 
 ---

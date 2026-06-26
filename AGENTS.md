@@ -39,6 +39,7 @@ Diese Dateien werden automatisch durch Skripte generiert und dürfen niemals man
 - `runtime/`
 - `runbooks/`
 - `docs/`
+- `ops/systemd/`
 - `manifest/`
 - `SYSTEM_MAP.md`
 
@@ -47,6 +48,7 @@ Diese Dateien werden automatisch durch Skripte generiert und dürfen niemals man
 - `runtime/` (Anpassung der Realität, erfordert immer Snapshot-Beweise)
 - `runbooks/` (Operative Anweisungen)
 - `manifest/repo-index.yaml`
+- `ops/systemd/`
 - `docs/`
 - Drift-Trigger: Änderungen an Docker/Compose, Firewall/iptables/netfilter-persistent, WireGuard peers/routes, Caddy/TLS/Hostnames, DNS (FritzBox/Resolver).
 
@@ -56,12 +58,14 @@ Die Einhaltung der Repo-Regeln wird durch folgende Checks gewährleistet, die zw
 - `python3 scripts/ci/check_repo_index_consistency.py`
 - `python3 scripts/ci/check-doc-review-age.py`
 - `bash scripts/ci/check-runbook-invariants.sh`
+- `python3 -m unittest scripts/tests/test_weltgewebe_ddns.py`
+- `bash scripts/tests/test_ddns_bundle.sh`
 
 ## Häufige Fallen
 - **Secrets in Git:** Keine produktiven Overrides (`docker-compose.override.yml`), `.env` oder unredacted Audit-Snapshots in Git.
 - **Port-Ownership Violation:** Port 8081 gehört zwingend Pi-hole. Weltgewebe Container müssen internal-only sein.
 - **Caddy Admin API:** Caddy Admin (2019) darf nicht lauschen.
-- **DOCKER-USER Firewall:** allow LAN/WG, drop rest für 80/443.
+- **Public Edge Exception:** Öffentlich erlaubt sind ausschließlich `weltgewebe.net`, `www.weltgewebe.net` und `api.weltgewebe.net` über Edge-Caddy TCP 80/443. Direkte App-/Admin-/DB-Ports und Heimberry-Ingress bleiben verboten.
 
 ## Offene Lücken
 - Abweichungen im Dateibaum gegenüber den definierten Roots werden durch `docs/_generated/architecture-drift.md` erfasst.

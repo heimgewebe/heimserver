@@ -12,14 +12,6 @@ The following top-level paths exist but are not tracked as canonical zones or di
 - `security/`
 
 ## Implicit Dependencies (Infrastructure Coupling)
-**Severity:** `warn`
+**Severity:** `info`
 
-The following scripts were discovered via `Makefile` references or by scanning the `scripts/ci/` directory but are not registered in `audit/impl-registry.yaml`:
-- `ops/checks/redact_snapshot.sh`
-- `ops/checks/snapshot.sh`
-- `ops/init-secrets-path.sh`
-- `ops/install-hooks.sh`
-- `scripts/ci/check-repo-index-consistency.sh`
-- `scripts/ci/check-runbook-invariants.sh`
-
-_Recommendation: Register these scripts to ensure they are formally tracked and documented._
+No implicit infrastructure scripts detected. All discovered scripts are registered.

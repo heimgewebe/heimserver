@@ -7,7 +7,7 @@ canonicality: canonical
 doc_type: policy
 title: Operations Policy
 summary: Operational procedures protocol
-last_reviewed: 2026-02-13
+last_reviewed: 2026-06-25
 depends_on:
   - runtime/runtime.md
 verifies_with:
@@ -165,6 +165,28 @@ Default ist QUIC AUS. Aktivierung nur wenn ausdrücklich gewollt:
 - Caddy global: `servers { protocols h1 h2 }` entfernen/anpassen (h3 zulassen)
 - Compose: UDP 443 publish hinzufügen
 - Preflight: `ALLOW_QUIC=1` setzen und dokumentieren ([`constitution.md`](../architecture/constitution.md) / [`network.md`](../architecture/network.md))
+
+---
+
+### 2.y Weltgewebe DynDNS auf Heimberry
+
+Der DynDNS-Dienst ist ein outbound-only Dienst auf Heimberry. Er ist keine
+Ingress-Komponente und öffnet keine Ports auf Heimberry.
+
+Operative Regeln:
+- Standardinstallation: `sudo scripts/heimberry/install_weltgewebe_ddns.sh`
+  installiert nur Dateien und aktiviert nichts.
+- Aktivierung: nur explizit mit `--activate` nach externer Provisionierung der
+  drei bestehenden pro-Host-Dateien `*.password` unter
+  `/etc/weltgewebe-ddns/`. Keine stille Formatmigration.
+- Driftprüfung: `sudo scripts/heimberry/install_weltgewebe_ddns.sh --check`
+  vergleicht Dateien, Modi und Eigentümer; Timer-Aktivierung ist separat zu
+  prüfen.
+- PR-/Review-Kontext: Den Updater nicht direkt starten. Ein echter Lauf liest
+  die aktuelle WAN-IP und kann bei DNS-Drift Provider-Writes auslösen.
+- Abschlussberichte enthalten keine Providerwerte und keine aktuelle WAN-IP.
+
+Runbook: [`weltgewebe-dyndns.md`](../runbooks/weltgewebe-dyndns.md)
 
 ---
 
