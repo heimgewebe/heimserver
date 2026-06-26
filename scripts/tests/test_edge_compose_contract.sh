@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
+# Compose contract test via validate_compose_contract.py.
 set -euo pipefail
 
-REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 TEMPLATE="$REPO_ROOT/edge/docker-compose.yml.template"
+VALIDATOR="$REPO_ROOT/scripts/edge/validate_compose_contract.py"
+CADDY_SERVICE="${CADDY_SERVICE:-caddy}"
 
 TEST_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEST_DIR"' EXIT
 
 cp "$TEMPLATE" "$TEST_DIR/docker-compose.yml"
 touch "$TEST_DIR/Caddyfile"
+EXPECTED_CADDYFILE_SOURCE="${EXPECTED_CADDYFILE_SOURCE:-$TEST_DIR/Caddyfile}"
 
 compose_cmd=(
   docker compose
@@ -19,46 +24,34 @@ compose_cmd=(
 
 echo "== Edge Compose Contract =="
 
-SERVICES="$("${compose_cmd[@]}" config --services)"
+COMPOSE_JSON_FILE="$TEST_DIR/compose_rendered.json"
+COMPOSE_STDERR_FILE="$TEST_DIR/compose_rendered.stderr"
+set +e
+"${compose_cmd[@]}" config --format json \
+  >"$COMPOSE_JSON_FILE" \
+  2>"$COMPOSE_STDERR_FILE"
+COMPOSE_JSON_RC=$?
+set -e
 
-if [[ "$SERVICES" != "caddy" ]]; then
-  echo "ERROR: Expected exactly the Compose service 'caddy'." >&2
-  printf 'Observed services:\n%s\n' "$SERVICES" >&2
-  exit 1
+if [[ $COMPOSE_JSON_RC -ne 0 ]]; then
+  echo "ERROR: docker compose config --format json failed (rc=$COMPOSE_JSON_RC)" >&2
+  cat "$COMPOSE_STDERR_FILE" >&2
+  exit 2
 fi
 
-RENDERED="$("${compose_cmd[@]}" config)"
+python3 - "$COMPOSE_JSON_FILE" <<'PY'
+import json
+import sys
+from pathlib import Path
 
-require_rendered() {
-  local expected="$1"
+json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+PY
 
-  if ! grep -Fq -- "$expected" <<< "$RENDERED"; then
-    echo "ERROR: Missing rendered Compose contract: $expected" >&2
-    printf '%s\n' "$RENDERED" >&2
-    exit 1
-  fi
-}
+python3 "$VALIDATOR" \
+  --service "$CADDY_SERVICE" \
+  --expected-caddyfile-source "$EXPECTED_CADDYFILE_SOURCE" \
+  --json "$COMPOSE_JSON_FILE"
 
-reject_rendered() {
-  local forbidden="$1"
-
-  if grep -Fq -- "$forbidden" <<< "$RENDERED"; then
-    echo "ERROR: Forbidden rendered Compose value: $forbidden" >&2
-    printf '%s\n' "$RENDERED" >&2
-    exit 1
-  fi
-}
-
-require_rendered "container_name: edge-caddy"
-require_rendered "source: caddy_data"
-require_rendered "source: caddy_config"
-require_rendered "name: edge_caddy_data"
-require_rendered "name: edge_caddy_config"
-
-reject_rendered "edge_edge_caddy_data"
-reject_rendered "edge_edge_caddy_config"
-
-echo "PASS: Compose service ID is caddy"
-echo "PASS: container name remains edge-caddy"
-echo "PASS: deployed Caddy volume names are preserved"
-echo "PASS: no doubled project prefix is rendered"
+echo "Compose stderr was captured separately:"
+sed 's/^/  /' "$COMPOSE_STDERR_FILE"
+echo "Edge Compose contract assertions passed"

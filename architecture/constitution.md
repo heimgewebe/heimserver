@@ -82,7 +82,9 @@ Die Wahrheit ist föderal organisiert:
    Caddy läuft ausschließlich als Docker-Container. Systemd-Caddy ist verboten.
 
 3. **Kein Caddy Admin Exposing**
-   Der Admin-Port (2019) darf niemals lauschen (außer localhost innerhalb des Containers).
+   Der Admin-Port (2019) darf weder am Host noch über Docker-Netze erreichbar sein.
+   Eine ausschließlich an `127.0.0.1:2019` innerhalb des geprüften Caddy-Containers
+   gebundene Admin-API ist für kontrolliertes Reloading und Rollback zulässig.
 
 4. **QUIC-Policy**
    HTTP/3 (QUIC/UDP 443) ist standardmäßig AUS.
@@ -120,8 +122,8 @@ Erst die Architektur klären (constitution/network/naming), dann die Runtime än
 Diese Invarianten werden durch `ops/checks/preflight.sh` überwacht:
 
 1.	Port 80/443 sind vorhanden (Dienst läuft).
-2.	Port 2019 ist tot (Sicherheit).
-3.	Firewall (DOCKER-USER) verhindert direkte App-/Admin-/DB-Exposition. Falls die Weltgewebe-Public-Exception aktiv ist, darf externes TCP 80/443 nur Edge-Caddy erreichen; ohne diese Ausnahme gilt weiterhin LAN/WireGuard-only.
+2.	Port 2019 ist am Host und in Docker-Netzen nicht erreichbar; containerintern ist nur `127.0.0.1:2019` zulässig.
+3.	Firewall (DOCKER-USER) erlaubt LAN und WireGuard grundsätzlich. Die eng begrenzte Weltgewebe-Public-Exception darf extern ausschließlich TCP 80/443 zu Edge-Caddy öffnen; direkte App-, Admin-, Datenbank- und Diagnosepfade sowie Heimberry-Ingress bleiben verworfen.
 
 ---
 

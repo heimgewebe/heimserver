@@ -64,8 +64,9 @@ Die Einhaltung der Repo-Regeln wird durch folgende Checks gewährleistet, die zw
 ## Häufige Fallen
 - **Secrets in Git:** Keine produktiven Overrides (`docker-compose.override.yml`), `.env` oder unredacted Audit-Snapshots in Git.
 - **Port-Ownership Violation:** Port 8081 gehört zwingend Pi-hole. Weltgewebe Container müssen internal-only sein.
-- **Caddy Admin API:** Caddy Admin (2019) darf nicht lauschen.
+- **Caddy Admin API:** Die Caddy-Admin-API darf weder hostseitig veröffentlicht noch über Container-Netze erreichbar sein. Eine ausschließlich an `127.0.0.1:2019` innerhalb des geprüften Caddy-Containers gebundene Admin-API ist für kontrolliertes Reloading und Rollback zulässig.
 - **Public Edge Exception:** Öffentlich erlaubt sind ausschließlich `weltgewebe.net`, `www.weltgewebe.net` und `api.weltgewebe.net` über Edge-Caddy TCP 80/443. Direkte App-/Admin-/DB-Ports und Heimberry-Ingress bleiben verboten.
+- **DOCKER-USER Firewall:** LAN/WireGuard bleiben grundsätzlich erlaubt; die eng begrenzte Public-Edge-Ausnahme darf ausschließlich TCP 80/443 zu Edge-Caddy öffnen. Alle anderen direkten Internetpfade werden verworfen.
 
 ## Offene Lücken
 - Abweichungen im Dateibaum gegenüber den definierten Roots werden durch `docs/_generated/architecture-drift.md` erfasst.

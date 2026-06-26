@@ -36,14 +36,31 @@ validate-warnings:
 
 validate-shell-tests:
 	shellcheck ops/checks/preflight.sh
+	shellcheck scripts/edge/check_admin_boundary.sh
 	shellcheck scripts/edge/sync_caddyfile.sh
+	shellcheck scripts/tests/test_edge_admin_boundary.sh
 	shellcheck scripts/tests/test_edge_sync_runbook.sh
 	shellcheck scripts/tests/test_edge_compose_contract.sh
+	shellcheck scripts/tests/test_edge_contract_mutations.sh
+	shellcheck scripts/tests/test_edge_redirect_target.sh
 	shellcheck scripts/heimberry/install_weltgewebe_ddns.sh
 	shellcheck scripts/tests/test_ddns_bundle.sh
+	python3 -m py_compile scripts/edge/validate_caddy_contract.py
+	python3 -m py_compile scripts/edge/validate_compose_contract.py
+	python3 -m py_compile scripts/tests/test_caddy_template.py
+	python3 -m py_compile scripts/tests/edge_contract_json_mutations.py
+	python3 -m py_compile scripts/tests/test_edge_noop_proof.py
+	python3 -m py_compile scripts/tests/test_edge_ipv4_only.py
+	python3 -m py_compile scripts/tests/test_edge_compose_stderr.py
 	python3 scripts/tests/test_caddy_template.py
+	bash scripts/tests/test_edge_admin_boundary.sh
 	bash scripts/tests/test_edge_sync_runbook.sh
 	bash scripts/tests/test_edge_compose_contract.sh
+	python3 scripts/tests/test_edge_noop_proof.py
+	python3 scripts/tests/test_edge_ipv4_only.py
+	python3 scripts/tests/test_edge_compose_stderr.py
+	bash scripts/tests/test_edge_contract_mutations.sh
+	bash scripts/tests/test_edge_redirect_target.sh
 
 validate-ddns-syntax:
 	python3 -m py_compile scripts/heimberry/weltgewebe_ddns.py scripts/tests/test_weltgewebe_ddns.py

@@ -1,5 +1,5 @@
 {
-    admin off
+    admin 127.0.0.1:2019
     # Global options
     servers {
         trusted_proxies static private_ranges
@@ -27,10 +27,49 @@ http://weltgewebe.home.arpa {
 https://weltgewebe.home.arpa {
     tls internal
 
+    handle_path /local-basemap/* {
+        @pmtiles path_regexp \.pmtiles$
+        handle @pmtiles {
+            root * /srv/weltgewebe-basemap
+            header Access-Control-Allow-Origin "*"
+            header Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            header Access-Control-Expose-Headers "Content-Range, Accept-Ranges, Content-Length"
+            header Access-Control-Allow-Headers "Range, If-None-Match"
+            @options {
+                method OPTIONS
+            }
+            respond @options 204
+            file_server
+        }
+
+        @meta path_regexp \.meta\.json$
+        handle @meta {
+            root * /srv/weltgewebe-basemap
+            file_server
+        }
+
+        handle {
+            root * /srv/weltgewebe-map-style
+            file_server
+        }
+    }
+
     # Reverse proxy for API under the main domain
     redir /api /api/ 308
     handle_path /api/* {
         reverse_proxy weltgewebe-api:8080
+    }
+
+    handle /_app/immutable/* {
+        root * /srv/weltgewebe-web
+        header Cache-Control "public, max-age=31536000, immutable"
+        file_server
+    }
+
+    handle /_app/version.json {
+        root * /srv/weltgewebe-web
+        header Cache-Control "no-store"
+        file_server
     }
 
     # Option A: Static UI (Default / Primary)
@@ -39,11 +78,15 @@ https://weltgewebe.home.arpa {
     handle {
         root * /srv/weltgewebe-web
         try_files {path} {path}/ /index.html
+        header Cache-Control "no-cache, must-revalidate"
         file_server
     }
 
-    # Option B: Upstream Container (Legacy/Secondary)
-    # reverse_proxy weltgewebe-ui:80
+    # Security headers (minimal, aber vorhanden)
+    header {
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+    }
 }
 
 http://api.weltgewebe.home.arpa {
