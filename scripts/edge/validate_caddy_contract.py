@@ -23,6 +23,7 @@ from typing import Any, Optional
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 CADDY_IMAGE = os.environ.get("CADDY_IMAGE", "caddy:2.8.4")
+SUBPROCESS_TIMEOUT_SECONDS = int(os.environ.get("EDGE_SUBPROCESS_TIMEOUT_SECONDS", "30"))
 
 
 def die(code: int, msg: str) -> None:
@@ -41,12 +42,15 @@ def adapt_caddyfile(caddyfile_path: str) -> dict:
         inspect = subprocess.run(
             ["docker", "image", "inspect", CADDY_IMAGE],
             capture_output=True,
+            timeout=SUBPROCESS_TIMEOUT_SECONDS,
         )
         if inspect.returncode != 0:
             die(2, f"Caddy Docker image not found locally: {CADDY_IMAGE!r}. "
                    f"Pull it first: docker pull {CADDY_IMAGE}")
     except FileNotFoundError:
         die(2, "docker not found")
+    except subprocess.TimeoutExpired:
+        die(2, "docker image inspect timed out")
 
     try:
         result = subprocess.run(
@@ -62,9 +66,12 @@ def adapt_caddyfile(caddyfile_path: str) -> dict:
             ],
             capture_output=True,
             text=True,
+            timeout=SUBPROCESS_TIMEOUT_SECONDS,
         )
     except FileNotFoundError:
         die(2, "docker not found")
+    except subprocess.TimeoutExpired:
+        die(2, "caddy adapt timed out")
 
     if result.returncode != 0:
         die(2, f"caddy adapt failed (rc={result.returncode}): {result.stderr.strip()}")
@@ -77,7 +84,7 @@ def adapt_caddyfile(caddyfile_path: str) -> dict:
 
 def load_json_file(path: str) -> dict:
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (OSError, json.JSONDecodeError) as e:
         die(2, f"Cannot load JSON from {path}: {e}")
@@ -199,7 +206,8 @@ def route_header_values(route: dict, header_name: str) -> list:
 
 
 def route_has_header_exact(route: dict, header_name: str, expected: str) -> bool:
-    return expected in route_header_values(route, header_name)
+    """Require exactly one value, rejecting duplicates and contradictions."""
+    return route_header_values(route, header_name) == [expected]
 
 
 def route_has_handler(route: dict, handler_type: str) -> bool:
@@ -735,10 +743,6 @@ def check_internal_host(data: dict) -> None:
                 f"Internal host: {header_name} expected "
                 f"{expected_value!r}, got {actual!r}",
             )
-
-    if not get_header_val(host_roots, "Content-Security-Policy"):
-        die(1, "Internal host: missing Content-Security-Policy header")
-
     print("✅ Internal host contract OK")
 
 

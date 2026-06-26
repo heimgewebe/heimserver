@@ -91,6 +91,7 @@ with tempfile.TemporaryDirectory() as tmp:
         check=False,
         capture_output=True,
         text=True,
+        timeout=30,
     )
     combined = result.stdout + result.stderr
     if result.returncode != 0:

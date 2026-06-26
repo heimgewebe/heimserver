@@ -31,6 +31,24 @@ export GOOD_ID ALT_ID
 touch "$COMPOSE_FILE"
 mkdir -p "$STATE_DIR"
 
+cat >"$TEST_DIR/bin/cp" <<'MOCKCP'
+#!/usr/bin/env bash
+set -euo pipefail
+destination="${!#}"
+
+if [[ "$destination" == *.bak.* && "${FAIL_BACKUP_COPY:-0}" == "1" ]]; then
+  printf 'partial-backup\n' >"$destination"
+  exit 1
+fi
+
+/bin/cp "$@"
+
+if [[ "$destination" == *.bak.* && "${CORRUPT_BACKUP_COPY:-0}" == "1" ]]; then
+  printf 'backup-corruption\n' >>"$destination"
+fi
+MOCKCP
+chmod +x "$TEST_DIR/bin/cp"
+
 cat >"$TEST_DIR/bin/docker" <<'MOCKDOCKER'
 #!/usr/bin/env bash
 printf '%q ' "$@" >>"$DOCKER_LOG"
@@ -87,7 +105,9 @@ case "$cmd" in
     fi
     if [[ "$*" == *"sha256sum /etc/caddy/Caddyfile"* ]]; then
       n="$(counter hash)"
-      if [[ "${FAIL_POST_CONTAINER_HASH:-0}" == "1" && "$n" -eq 2 ]]; then
+      if [[ "${FAIL_PRE_CONTAINER_HASH:-0}" == "1" && "$n" -eq 1 ]]; then
+        printf '%064d  /etc/caddy/Caddyfile\n' 0
+      elif [[ "${FAIL_POST_CONTAINER_HASH:-0}" == "1" && "$n" -eq 2 ]]; then
         printf '%064d  /etc/caddy/Caddyfile\n' 0
       elif [[ "${FAIL_ROLLBACK_CONTAINER_HASH:-0}" == "1" && "$n" -ge 3 ]]; then
         printf '%064d  /etc/caddy/Caddyfile\n' 1
@@ -290,7 +310,7 @@ assert_log_absent() {
   local desc="$1"
   local path="$2"
   local pattern="$3"
-  if [[ -f "$path" ]] && grep -qF "$pattern" "$path"; then
+  if [[ -f "$path" ]] && grep -qF -- "$pattern" "$path"; then
     echo "FAIL [$desc]: found $pattern in $path"
     cat "$path"
     FAILURES=$((FAILURES + 1))
@@ -306,7 +326,7 @@ assert_log_present_count() {
   local expected="$4"
   local actual=0
   if [[ -f "$path" ]]; then
-    actual="$(grep -cF "$pattern" "$path" || true)"
+    actual="$(grep -cF -- "$pattern" "$path" || true)"
   fi
   if [[ "$actual" != "$expected" ]]; then
     echo "FAIL [$desc]: expected $expected occurrences of $pattern, got $actual"
@@ -320,6 +340,33 @@ assert_log_present_count() {
 echo "=== sync_caddyfile.sh behavior tests ==="
 
 reset_case
+run_sync LIVE_FILE="$EDGE_DIR/missing-Caddyfile"
+expect_rc "missing live file fails closed" 1
+assert_no_backup "missing live file"
+assert_log_absent "missing live file skips Docker" "$DOCKER_LOG" "compose"
+
+reset_case
+run_sync EXPECTED_LIVE_SHA256="$(printf '%064d' 0)"
+expect_rc "wrong reviewed live hash fails closed" 1
+assert_no_backup "wrong reviewed live hash"
+assert_file_content "wrong reviewed hash leaves live untouched" "$LIVE_FILE" "old-live"
+
+reset_case
+run_sync FAIL_PRE_CONTAINER_HASH=1
+expect_rc "pre-sync container hash drift fails closed" 1
+assert_no_backup "pre-sync container hash drift"
+assert_file_content "pre-sync container drift leaves live untouched" "$LIVE_FILE" "old-live"
+
+reset_case
+exec 8>"$LOCK_FILE"
+flock -n 8
+run_sync
+expect_rc "held sync lock fails closed" 1
+assert_no_backup "held sync lock"
+flock -u 8
+exec 8>&-
+
+reset_case
 run_sync MOCK_SYNTAX_RC=42
 expect_rc "syntax error maps to contract violation" 1
 assert_log_absent "syntax error skips adapt" "$DOCKER_LOG" "caddy adapt"
@@ -327,6 +374,16 @@ assert_log_absent "syntax error skips contract" "$CONTRACT_LOG" "--adapted-json"
 assert_log_absent "syntax error skips boundary" "$BOUNDARY_LOG" "--container-id"
 assert_no_backup "syntax error"
 assert_file_content "syntax error leaves live untouched" "$LIVE_FILE" "old-live"
+
+reset_case
+run_sync MOCK_SYNTAX_RC=124
+expect_rc "syntax validation timeout maps to diagnostic failure" 2
+assert_no_backup "syntax validation timeout"
+
+reset_case
+run_sync MOCK_SYNTAX_RC=125
+expect_rc "Docker start failure maps to diagnostic failure" 2
+assert_no_backup "Docker start failure"
 
 reset_case
 run_sync MOCK_ADAPT_RC=42
@@ -399,12 +456,39 @@ expect_rc "boundary exit 2 is preserved" 2
 assert_no_backup "boundary exit 2"
 
 reset_case
+run_sync CORRUPT_BACKUP_COPY=1
+expect_rc "corrupt pre-write backup fails closed" 1
+assert_no_backup "corrupt pre-write backup is removed"
+assert_file_content "corrupt backup leaves live untouched" "$LIVE_FILE" "old-live"
+assert_log_absent "corrupt backup stops before write" "$SYNC_EVENT_LOG" "write"
+
+reset_case
+run_sync FAIL_BACKUP_COPY=1
+expect_rc "partial backup copy maps to diagnostic failure" 2
+assert_no_backup "partial pre-write backup is removed"
+assert_file_content "partial backup copy leaves live untouched" "$LIVE_FILE" "old-live"
+assert_log_absent "partial backup stops before write" "$SYNC_EVENT_LOG" "write"
+
+reset_case
+LIVE_INODE_BEFORE="$(stat -c '%i' "$LIVE_FILE")"
 run_sync MOCK_PS_STDERR="compose warning" MOCK_ADAPT_STDERR="adapt warning"
 expect_rc "success path tolerates structured stdout with stderr warnings" 0
 assert_backup_exists "success path"
 assert_file_content "success path writes candidate snapshot" "$LIVE_FILE" "reviewed-content"
+LIVE_INODE_AFTER="$(stat -c '%i' "$LIVE_FILE")"
+if [[ "$LIVE_INODE_AFTER" == "$LIVE_INODE_BEFORE" ]]; then
+  echo "PASS [success path preserves live-file inode]"
+else
+  echo "FAIL [success path changed live-file inode]"
+  FAILURES=$((FAILURES + 1))
+fi
+BACKUP_PATH="$(compgen -G "$LIVE_FILE.bak.*" | head -n 1)"
+if [[ "$(sha256sum "$BACKUP_PATH" | awk '{print $1}')" != "$OLD_HASH" ]]; then
+  echo "FAIL [verified backup hash does not match original live hash]"
+  FAILURES=$((FAILURES + 1))
+fi
 assert_log_present_count "success path adapts exactly once" "$DOCKER_LOG" "caddy adapt" 1
-EXPECTED_EVENTS=$'syntax\nadapt\ncontract\nboundary\nsnapshot-recheck\nlive-recheck\ncontainer-recheck\nbackup\nwrite\npost-write-container-recheck\nvalidate'
+EXPECTED_EVENTS=$'snapshot\nsyntax\nadapt\ncontract\nboundary\nsnapshot-recheck\nlive-recheck\ncontainer-recheck\nbackup\nwrite\npost-write-container-recheck\nvalidate'
 if [[ "$(cat "$SYNC_EVENT_LOG")" == "$EXPECTED_EVENTS" ]]; then
   echo "PASS [success event order]"
 else

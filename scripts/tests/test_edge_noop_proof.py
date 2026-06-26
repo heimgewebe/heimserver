@@ -104,6 +104,7 @@ with tempfile.TemporaryDirectory() as tmp:
         raise SystemExit(f"no-op proof returned {ok.returncode}")
 
     expected = [
+        "snapshot",
         "syntax",
         "adapt",
         "contract",

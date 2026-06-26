@@ -11,16 +11,16 @@ bricht das Skript ab, bevor es die Live-Datei verändert.
 
 | Gate | Was wird geprüft | Exit bei Fehler |
 |------|------------------|-----------------|
-| 1. Lock + Eingaben | Exklusiver Sync-Lock; Live-Datei und Kandidat sind vorhanden; Kandidat wird einmal in ein privates temporäres Verzeichnis kopiert | 1 oder 2 |
+| 1. Lock + Eingaben + Snapshot | Exklusiver Sync-Lock; Live-Datei und Kandidat sind vorhanden; der Kandidat wird sofort einmal in ein privates temporäres Verzeichnis kopiert und gehasht | 1 oder 2 |
 | 2. Container-ID-Auflösung | Compose-Service-ID `caddy` löst auf genau eine konkrete Container-ID auf | 1 bei Mehrdeutigkeit, 2 bei fehlender Diagnose |
 | 3. Anfangs-Hashes | Host-Live-Hash entspricht `EXPECTED_LIVE_SHA256`; Container-Datei derselben Container-ID hat denselben Hash | 1 oder 2 |
-| 4. Snapshot-Syntax | `caddy validate` läuft mit lokal vorhandenem `caddy:2.8.4` gegen den privaten Kandidaten-Snapshot | 1 |
+| 4. Snapshot-Syntax | `caddy validate` läuft mit lokal vorhandenem `caddy:2.8.4` gegen den privaten Kandidaten-Snapshot | 1 oder 2 |
 | 5. Genau ein Adapt | `caddy adapt` läuft genau einmal; stdout wird als private JSON-Datei gespeichert, stderr getrennt protokolliert; JSON ist nicht leer und parsebar | 2 |
-| 6. Kanonischer Caddy-Vertrag | `validate_caddy_contract.py --adapted-json` prüft Admin-Bindung, Hostmatrix, Upstream `weltgewebe-api:8080`, `/api`-Redirect, Basemap, Cache-Header und Routenreihenfolge | 1 oder 2 |
+| 6. Kanonischer Caddy-Vertrag | `validate_caddy_contract.py --adapted-json` prüft Admin-Bindung, Hostmatrix, Upstream `weltgewebe-api:8080`, `/api`-Redirect, Basemap, Cache-/CORS-Header und Routenreihenfolge | 1 oder 2 |
 | 7. Admin-Boundary | `check_admin_boundary.sh --container-id "$CADDY_CONTAINER_ID"` prüft dieselbe Containerinstanz: Admin lokal erreichbar, Listener nur `127.0.0.1:2019`, kein 2019-Port in Compose, Runtime oder Host | 1 oder 2 |
 | 8. Rechecks vor Mutation | Kandidaten-Snapshot und Adapt-JSON werden erneut gehasht; Live-Hash wird wiederholt; Compose-Service-ID muss weiterhin dieselbe Container-ID ergeben | 1 oder 2 |
-| 9. Backup + In-place-Write | Backup-Pfad wird kollisionsfrei angelegt; anschließend werden ausschließlich die Snapshot-Bytes mit `cat > "$LIVE_FILE"` in den bestehenden Bind-Mount-Inode geschrieben | 1 oder 255 |
-| 10. Post-Write-Beweis | Container-ID wird erneut bestätigt; Host-Hash und Container-Hash müssen dem Snapshot entsprechen; `caddy validate` läuft im Container gegen `/etc/caddy/Caddyfile` | 1 oder 255 |
+| 9. Backup + In-place-Write | Backup-Pfad wird kollisionsfrei angelegt; der Backup-Hash muss dem geprüften Anfangs-Hash entsprechen; erst danach werden ausschließlich die Snapshot-Bytes mit `cat > "$LIVE_FILE"` in den bestehenden Bind-Mount-Inode geschrieben | 1, 2 oder 255 |
+| 10. Post-Write-Beweis | Container-ID wird erneut bestätigt; Host-Hash und Container-Hash müssen dem Snapshot entsprechen; `caddy validate` läuft im Container gegen `/etc/caddy/Caddyfile` | 1, 2 oder 255 |
 
 ### Exit-Codes
 
@@ -28,16 +28,20 @@ bricht das Skript ab, bevor es die Live-Datei verändert.
 |------|-----------|
 | 0 | Erfolg oder dokumentierter No-op |
 | 1 | Vertragsverletzung oder erkannte Drift |
-| 2 | Diagnose nicht möglich, z. B. fehlendes Tool, fehlendes lokales Caddy-Image, ungültiges JSON oder keine Container-ID |
+| 2 | Diagnose nicht möglich, z. B. fehlendes Tool, fehlendes lokales Caddy-Image, ungültiges JSON, Docker-Startfehler oder keine Container-ID |
 | 255 | Rollback wurde versucht, konnte aber nicht vollständig bewiesen werden |
 
-`caddy validate`-Syntaxfehler werden im Sync als Vertragsverletzung (`1`) behandelt. `caddy adapt`-Fehler,
-leere Adapt-Ausgabe und nicht parsebares JSON sind Diagnosefehler (`2`). Validatoren und Boundary-Guard
-geben ihre dokumentierten Exits `1` und `2` weiter.
+`caddy validate`-Syntaxfehler werden im Sync als Vertragsverletzung (`1`) behandelt. Kann Docker den
+Validierungscontainer nicht starten, etwa mit Exit `125`, ist das ein Diagnosefehler (`2`). `caddy adapt`-Fehler,
+leere Adapt-Ausgabe und nicht parsebares JSON sind ebenfalls Diagnosefehler (`2`). Validatoren und
+Boundary-Guard geben ihre dokumentierten Exits `1` und `2` weiter.
 
 > [!IMPORTANT]
 > `sync_caddyfile.sh` führt **keinen** `caddy reload` durch. Ein Reload ist ein separater manueller Schritt
 > und erst nach vollständigem Sync- oder Rollback-Beweis zulässig.
+
+Die Einführung oder Verschärfung einer Content-Security-Policy ist bewusst nicht Teil dieses Patches. Sie
+benötigt einen separaten Browser-/Runtime-Beweis für API-, Karten-, Bild- und Worker-Ressourcen.
 
 ## Begriffe
 
@@ -153,10 +157,18 @@ sudo docker exec "$CADDY_CONTAINER_ID" getent hosts weltgewebe-api
 
 ## Manual Reload
 
-Only run this after the sync or rollback proof above has passed:
+Only run this after the sync or rollback proof above has passed. Resolve Compose again immediately before
+reload and require the same single container ID that was verified:
 
 ```bash
-sudo docker exec "$CADDY_CONTAINER_ID" \
+RELOAD_CONTAINER_ID="$(
+  sudo docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" ps --quiet "$CADDY_SERVICE"
+)"
+test -n "$RELOAD_CONTAINER_ID"
+test "$(printf '%s\n' "$RELOAD_CONTAINER_ID" | sed '/^[[:space:]]*$/d' | wc -l)" -eq 1
+test "$RELOAD_CONTAINER_ID" = "$CADDY_CONTAINER_ID"
+
+sudo docker exec "$RELOAD_CONTAINER_ID" \
   caddy reload \
     --adapter caddyfile \
     --config /etc/caddy/Caddyfile
@@ -175,6 +187,8 @@ BACKUP_FILE="/opt/heimgewebe/edge/Caddyfile.bak.<suffix>"
 CADDY_CONTAINER_ID="$(
   sudo docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" ps --quiet "$CADDY_SERVICE"
 )"
+test -n "$CADDY_CONTAINER_ID"
+test "$(printf '%s\n' "$CADDY_CONTAINER_ID" | sed '/^[[:space:]]*$/d' | wc -l)" -eq 1
 BACKUP_HASH="$(sudo sha256sum "$BACKUP_FILE" | awk '{print $1}')"
 
 sudo sh -c 'cat "$1" > "$2"' sh "$BACKUP_FILE" /opt/heimgewebe/edge/Caddyfile
@@ -182,19 +196,40 @@ sudo sh -c 'cat "$1" > "$2"' sh "$BACKUP_FILE" /opt/heimgewebe/edge/Caddyfile
 HOST_HASH="$(sudo sha256sum /opt/heimgewebe/edge/Caddyfile | awk '{print $1}')"
 test "$HOST_HASH" = "$BACKUP_HASH"
 
+ROLLBACK_CONTAINER_ID="$(
+  sudo docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" ps --quiet "$CADDY_SERVICE"
+)"
+test -n "$ROLLBACK_CONTAINER_ID"
+test "$(printf '%s\n' "$ROLLBACK_CONTAINER_ID" | sed '/^[[:space:]]*$/d' | wc -l)" -eq 1
+test "$ROLLBACK_CONTAINER_ID" = "$CADDY_CONTAINER_ID"
+
 CONTAINER_HASH="$(
-  sudo docker exec "$CADDY_CONTAINER_ID" sha256sum /etc/caddy/Caddyfile | awk '{print $1}'
+  sudo docker exec "$ROLLBACK_CONTAINER_ID" sha256sum /etc/caddy/Caddyfile | awk '{print $1}'
 )"
 test "$CONTAINER_HASH" = "$BACKUP_HASH"
 
-sudo docker exec "$CADDY_CONTAINER_ID" \
+sudo docker exec "$ROLLBACK_CONTAINER_ID" \
   caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile
 
 sudo docker logs edge-caddy --tail 100
 curl -I https://weltgewebe.home.arpa
 ```
 
-Reload only after these rollback checks pass.
+Reload only after these rollback checks pass. Immediately before that reload, resolve Compose once more:
+
+```bash
+RELOAD_CONTAINER_ID="$(
+  sudo docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" ps --quiet "$CADDY_SERVICE"
+)"
+test -n "$RELOAD_CONTAINER_ID"
+test "$(printf '%s\n' "$RELOAD_CONTAINER_ID" | sed '/^[[:space:]]*$/d' | wc -l)" -eq 1
+test "$RELOAD_CONTAINER_ID" = "$ROLLBACK_CONTAINER_ID"
+
+sudo docker exec "$RELOAD_CONTAINER_ID" \
+  caddy reload \
+    --adapter caddyfile \
+    --config /etc/caddy/Caddyfile
+```
 
 ## Cross-Repo-Konkurrenzfall
 

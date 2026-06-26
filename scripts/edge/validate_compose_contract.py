@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-"""
-validate_compose_contract.py — Structural Docker Compose contract validator.
+"""Structural Docker Compose contract validator.
 
-Reads rendered Compose config JSON from stdin or --json.
+Reads rendered Compose config JSON from stdin or ``--json``.
 
 Exit codes:
     0 — contract satisfied
     1 — contract violation
     2 — diagnosis not possible (bad input / parse failure)
 """
+
 import argparse
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 
@@ -20,11 +21,11 @@ EXPECTED_IMAGE = "caddy:2.8.4"
 EXPECTED_NETWORKS = {"edge", "heimnet", "weltgewebe_default"}
 EXPECTED_PORTS = {(80, 80, "tcp"), (443, 443, "tcp")}
 REQUIRED_READONLY_BINDS = {
-    "/etc/caddy/Caddyfile",
-    "/srv/weltgewebe-web",
-    "/srv/weltgewebe-basemap",
-    "/srv/weltgewebe-map-style",
+    "/srv/weltgewebe-web": "/opt/weltgewebe/apps/web/build",
+    "/srv/weltgewebe-basemap": "/opt/weltgewebe/build/basemap",
+    "/srv/weltgewebe-map-style": "/opt/weltgewebe/map-style",
 }
+CADDYFILE_BIND_TARGET = "/etc/caddy/Caddyfile"
 REQUIRED_NAMED_VOLUMES = {
     "/data": "edge_caddy_data",
     "/config": "edge_caddy_config",
@@ -34,7 +35,7 @@ REQUIRED_NAMED_VOLUMES = {
 def die(code: int, msg: str) -> None:
     label = "CONTRACT VIOLATION" if code == 1 else "DIAGNOSTIC FAILURE"
     print(f"{label}: {msg}", file=sys.stderr)
-    sys.exit(code)
+    raise SystemExit(code)
 
 
 def as_int(value: Any, label: str) -> int:
@@ -47,7 +48,7 @@ def as_int(value: Any, label: str) -> int:
 def load_data(path: str | None) -> dict[str, Any]:
     if path:
         try:
-            raw = open(path, encoding="utf-8").read()
+            raw = Path(path).read_text(encoding="utf-8")
         except OSError as exc:
             die(2, f"Cannot read JSON file: {exc}")
     else:
@@ -57,9 +58,13 @@ def load_data(path: str | None) -> dict[str, Any]:
         die(2, "Empty input: no Compose JSON received")
 
     try:
-        return json.loads(raw)
+        data = json.loads(raw)
     except json.JSONDecodeError as exc:
         die(2, f"Compose JSON parse error: {exc}")
+
+    if not isinstance(data, dict):
+        die(2, "Compose JSON root must be an object")
+    return data
 
 
 def actual_volume_name(top_volumes: dict[str, Any], source: str) -> str:
@@ -69,55 +74,71 @@ def actual_volume_name(top_volumes: dict[str, Any], source: str) -> str:
     return source
 
 
+def normalized_volume(
+    entry: Any,
+    top_volumes: dict[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    if isinstance(entry, dict):
+        target = entry.get("target")
+        if not target:
+            die(2, f"Volume entry without target: {entry!r}")
+        source = str(entry.get("source", ""))
+        entry_type = str(
+            entry.get("type", "volume" if source in top_volumes else "bind")
+        )
+        read_only = bool(
+            entry.get("read_only")
+            or entry.get("readonly")
+            or entry.get("mode") == "ro"
+        )
+        return str(target), {
+            "source": source,
+            "actual_name": actual_volume_name(top_volumes, source),
+            "type": entry_type,
+            "read_only": read_only,
+            "raw": entry,
+        }
+
+    if isinstance(entry, str):
+        parts = entry.split(":")
+        if len(parts) < 2:
+            die(2, f"Cannot parse string volume entry: {entry!r}")
+        source = parts[0]
+        target = parts[1]
+        mode = parts[2:] if len(parts) > 2 else []
+        read_only = "ro" in mode
+        entry_type = "volume" if source in top_volumes else "bind"
+        return target, {
+            "source": source,
+            "actual_name": actual_volume_name(top_volumes, source),
+            "type": entry_type,
+            "read_only": read_only,
+            "raw": entry,
+        }
+
+    die(2, f"Unknown volume format: {entry!r}")
+
+
 def normalize_service_volumes(
-    volumes: list[Any],
+    volumes: Any,
     top_volumes: dict[str, Any],
 ) -> dict[str, dict[str, Any]]:
+    if not isinstance(volumes, list):
+        die(2, "Service volumes must be a list")
+
     result: dict[str, dict[str, Any]] = {}
     for entry in volumes:
-        if isinstance(entry, dict):
-            target = entry.get("target")
-            if not target:
-                die(2, f"Volume entry without target: {entry!r}")
-            source = str(entry.get("source", ""))
-            entry_type = str(entry.get("type", "volume" if source in top_volumes else "bind"))
-            read_only = bool(
-                entry.get("read_only")
-                or entry.get("readonly")
-                or entry.get("mode") == "ro"
-            )
-            result[str(target)] = {
-                "source": source,
-                "actual_name": actual_volume_name(top_volumes, source),
-                "type": entry_type,
-                "read_only": read_only,
-                "raw": entry,
-            }
-            continue
-
-        if isinstance(entry, str):
-            parts = entry.split(":")
-            if len(parts) < 2:
-                die(2, f"Cannot parse string volume entry: {entry!r}")
-            source = parts[0]
-            target = parts[1]
-            mode = parts[2:] if len(parts) > 2 else []
-            read_only = "ro" in mode
-            entry_type = "volume" if source in top_volumes else "bind"
-            result[target] = {
-                "source": source,
-                "actual_name": actual_volume_name(top_volumes, source),
-                "type": entry_type,
-                "read_only": read_only,
-                "raw": entry,
-            }
-            continue
-
-        die(2, f"Unknown volume format: {entry!r}")
+        target, normalized = normalized_volume(entry, top_volumes)
+        if target in result:
+            die(1, f"Duplicate mount target: {target}")
+        result[target] = normalized
     return result
 
 
-def normalize_ports(ports: list[Any]) -> set[tuple[int, int, str]]:
+def normalize_ports(ports: Any) -> set[tuple[int, int, str]]:
+    if not isinstance(ports, list):
+        die(2, "Service ports must be a list")
+
     mappings: set[tuple[int, int, str]] = set()
     for entry in ports:
         if isinstance(entry, dict):
@@ -154,6 +175,26 @@ def service_network_names(networks: Any) -> set[str]:
     if networks in (None, ""):
         return set()
     die(2, f"Unknown networks format: {networks!r}")
+
+
+def require_readonly_bind(
+    service_volumes: dict[str, dict[str, Any]],
+    target: str,
+    expected_source: str | None,
+) -> None:
+    volume = service_volumes.get(target)
+    if volume is None:
+        die(1, f"Missing required read-only mount at {target}")
+    if volume["type"] != "bind":
+        die(1, f"Mount at {target} must be a bind mount, got {volume['type']!r}")
+    if not volume["read_only"]:
+        die(1, f"Mount at {target} must be read-only")
+    if expected_source is not None and volume["source"] != expected_source:
+        die(
+            1,
+            f"Bind mounted at {target} must use source {expected_source!r}, "
+            f"got {volume['source']!r}",
+        )
 
 
 def validate(data: dict[str, Any], service_name: str) -> None:
@@ -200,10 +241,11 @@ def validate(data: dict[str, Any], service_name: str) -> None:
     print("OK networks=edge,heimnet,weltgewebe_default")
 
     top_networks = data.get("networks", {})
-    if isinstance(top_networks, dict):
-        missing_top_networks = EXPECTED_NETWORKS - set(top_networks)
-        if missing_top_networks:
-            die(1, f"Missing top-level networks: {sorted(missing_top_networks)}")
+    if not isinstance(top_networks, dict):
+        die(2, "Top-level networks must be an object")
+    missing_top_networks = EXPECTED_NETWORKS - set(top_networks)
+    if missing_top_networks:
+        die(1, f"Missing top-level networks: {sorted(missing_top_networks)}")
 
     top_volumes = data.get("volumes", {})
     if not isinstance(top_volumes, dict):
@@ -219,15 +261,10 @@ def validate(data: dict[str, Any], service_name: str) -> None:
 
     service_volumes = normalize_service_volumes(service.get("volumes", []), top_volumes)
 
-    for target in REQUIRED_READONLY_BINDS:
-        volume = service_volumes.get(target)
-        if volume is None:
-            die(1, f"Missing required read-only mount at {target}")
-        if not volume["read_only"]:
-            die(1, f"Mount at {target} must be read-only")
-        if volume["type"] != "bind":
-            die(1, f"Mount at {target} must be a bind mount, got {volume['type']!r}")
-    print("OK read-only bind mounts")
+    require_readonly_bind(service_volumes, CADDYFILE_BIND_TARGET, None)
+    for target, source in REQUIRED_READONLY_BINDS.items():
+        require_readonly_bind(service_volumes, target, source)
+    print("OK exact read-only bind mounts")
 
     for target, expected_name in REQUIRED_NAMED_VOLUMES.items():
         volume = service_volumes.get(target)
@@ -241,7 +278,9 @@ def validate(data: dict[str, Any], service_name: str) -> None:
             )
         if volume["type"] != "volume":
             die(1, f"Mount at {target} must be a named volume, got {volume['type']!r}")
-    print("OK named volumes=/data,/config")
+        if volume["read_only"]:
+            die(1, f"Named volume mounted at {target} must remain writable")
+    print("OK writable named volumes=/data,/config")
 
     print("OK all Compose contract checks passed")
 

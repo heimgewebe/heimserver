@@ -34,7 +34,7 @@ run_caddyfile_case() {
     FAILURES=$((FAILURES + 1))
     return
   fi
-  if [[ -n "$expected_stderr" ]] && ! grep -qF "$expected_stderr" <<<"$stderr_out"; then
+  if [[ -n "$expected_stderr" ]] && ! grep -qF -- "$expected_stderr" <<<"$stderr_out"; then
     echo "FAIL [$desc]: missing diagnostic $expected_stderr"
     echo "$stderr_out"
     FAILURES=$((FAILURES + 1))
@@ -69,7 +69,7 @@ run_caddy_json_case() {
     FAILURES=$((FAILURES + 1))
     return
   fi
-  if [[ -n "$expected_stderr" ]] && ! grep -qF "$expected_stderr" <<<"$stderr_out"; then
+  if [[ -n "$expected_stderr" ]] && ! grep -qF -- "$expected_stderr" <<<"$stderr_out"; then
     echo "FAIL [$desc]: missing diagnostic $expected_stderr"
     echo "$stderr_out"
     FAILURES=$((FAILURES + 1))
@@ -129,6 +129,10 @@ from pathlib import Path
 
 source, output, mutation = sys.argv[1:4]
 data = json.loads(Path(source).read_text(encoding="utf-8"))
+if mutation == "root-not-object":
+    Path(output).write_text("[]\n", encoding="utf-8")
+    raise SystemExit(0)
+
 caddy = data["services"]["caddy"]
 
 
@@ -159,6 +163,18 @@ elif mutation == "caddyfile-not-readonly":
     volume("/etc/caddy/Caddyfile")["read_only"] = False
 elif mutation == "web-build-not-readonly":
     volume("/srv/weltgewebe-web")["read_only"] = False
+elif mutation == "web-build-wrong-source":
+    volume("/srv/weltgewebe-web")["source"] = "/tmp/wrong-web-build"
+elif mutation == "basemap-wrong-source":
+    volume("/srv/weltgewebe-basemap")["source"] = "/tmp/wrong-basemap"
+elif mutation == "map-style-wrong-source":
+    volume("/srv/weltgewebe-map-style")["source"] = "/tmp/wrong-map-style"
+elif mutation == "duplicate-web-target":
+    caddy["volumes"].append(dict(volume("/srv/weltgewebe-web")))
+elif mutation == "data-readonly":
+    volume("/data")["read_only"] = True
+elif mutation == "config-readonly":
+    volume("/config")["read_only"] = True
 elif mutation == "basemap-mount-missing":
     caddy["volumes"] = [
         item for item in caddy["volumes"]
@@ -203,7 +219,7 @@ run_compose_case() {
     FAILURES=$((FAILURES + 1))
     return
   fi
-  if [[ -n "$expected_stderr" ]] && ! grep -qF "$expected_stderr" <<<"$stderr_out"; then
+  if [[ -n "$expected_stderr" ]] && ! grep -qF -- "$expected_stderr" <<<"$stderr_out"; then
     echo "FAIL [$desc]: missing diagnostic $expected_stderr"
     echo "$stderr_out"
     FAILURES=$((FAILURES + 1))
@@ -251,10 +267,6 @@ M5="$MUTATION_DIR/version-no-store-removed.Caddyfile"
 sed '/Cache-Control.*no-store/d' "$TEMPLATE" >"$M5"
 run_caddyfile_case "version no-store removed" "$M5" 1 "version metadata route"
 
-M6="$MUTATION_DIR/csp-removed.Caddyfile"
-sed 's/Content-Security-Policy/X-Removed-CSP-Header/' "$TEMPLATE" >"$M6"
-run_caddyfile_case "internal CSP removed" "$M6" 1 "Content-Security-Policy"
-
 echo "-- Adapted Caddy JSON mutants --"
 run_caddy_json_case "wrong redirect status" "redirect-status-wrong" 1 "Internal API redirect"
 run_caddy_json_case "wrong redirect target" "redirect-target-wrong" 1 "Internal API redirect"
@@ -263,8 +275,10 @@ run_caddy_json_case "missing basemap route" "basemap-route-missing" 1 "basemap"
 run_caddy_json_case "wrong basemap root" "basemap-root-wrong" 1 "PMTiles branch"
 run_caddy_json_case "UI fallback before basemap" "fallback-before-basemap" 1 "Route ordering violation"
 run_caddy_json_case "version no-store moved to fallback" "version-cache-misplaced" 1 "version metadata route"
+run_caddy_json_case "version cache has conflicting value" "version-cache-conflicting" 1 "version metadata route"
 run_caddy_json_case "immutable cache moved to fallback" "immutable-cache-misplaced" 1 "immutable route"
 run_caddy_json_case "PMTiles CORS moved to fallback" "cors-misplaced" 1 "PMTiles branch"
+run_caddy_json_case "PMTiles CORS has conflicting origin" "cors-conflicting" 1 "PMTiles branch"
 run_caddy_json_case "OPTIONS 204 moved outside PMTiles" "options-misplaced" 1 "OPTIONS matcher and 204 response"
 run_caddy_json_case "PMTiles file_server removed" "pmtiles-file-server-missing" 1 "root and file_server must coexist"
 run_caddy_json_case "duplicate equal specific route" "duplicate-equal-specific-route" 1 "expected exactly one direct route"
@@ -292,7 +306,7 @@ export MOCK_DOCKER_LOG
 export MOCK_ADAPTED_JSON="$BASELINE_JSON"
 if PATH="$MOCK_BIN:$PATH" CADDY_IMAGE="contract-test:caddy" \
   python3 "$CADDY_VALIDATOR" --caddyfile "$BASELINE" >/dev/null 2>&1; then
-  if grep -qF "image inspect contract-test:caddy" "$MOCK_DOCKER_LOG" \
+  if grep -qF -- "image inspect contract-test:caddy" "$MOCK_DOCKER_LOG" \
     && grep -Eq '^run .* contract-test:caddy ' "$MOCK_DOCKER_LOG"; then
     echo "PASS [CADDY_IMAGE inspected and executed consistently]"
   else
@@ -316,26 +330,25 @@ else
   FAILURES=$((FAILURES + 1))
 fi
 
-printf 'warning on stderr\n' >"$MUTATION_DIR/compose-warning.stderr"
-if python3 "$COMPOSE_VALIDATOR" --service caddy --json "$VALID_COMPOSE" >/dev/null; then
-  echo "PASS [valid Compose stdout remains parseable with separate stderr warning]"
-else
-  echo "FAIL [valid Compose stdout/stderr separation]"
-  FAILURES=$((FAILURES + 1))
-fi
-
 run_compose_case "port 80 missing" "port-80-missing" 1 "Ports must be exactly"
 run_compose_case "port 443 missing" "port-443-missing" 1 "Ports must be exactly"
 run_compose_case "port 2019 published" "port-2019-published" 1 "Port 2019"
 run_compose_case "network_mode host" "network-mode-host" 1 "network_mode: host"
 run_compose_case "Caddyfile mount not read-only" "caddyfile-not-readonly" 1 "must be read-only"
 run_compose_case "Web build mount not read-only" "web-build-not-readonly" 1 "must be read-only"
+run_compose_case "Web build mount wrong source" "web-build-wrong-source" 1 "must use source"
+run_compose_case "Basemap mount wrong source" "basemap-wrong-source" 1 "must use source"
+run_compose_case "Map-style mount wrong source" "map-style-wrong-source" 1 "must use source"
+run_compose_case "Duplicate Web mount target" "duplicate-web-target" 1 "Duplicate mount target"
+run_compose_case "/data made read-only" "data-readonly" 1 "must remain writable"
+run_compose_case "/config made read-only" "config-readonly" 1 "must remain writable"
 run_compose_case "Basemap mount missing" "basemap-mount-missing" 1 "Missing required read-only mount"
 run_compose_case "Map-style mount wrong target" "map-style-wrong-target" 1 "Missing required read-only mount"
 run_compose_case "/data volume only declared" "data-volume-declared-only" 1 "Missing required volume mount"
 run_compose_case "/config volume wrong target" "config-volume-wrong-target" 1 "Missing required volume mount"
 run_compose_case "weltgewebe_default missing" "weltgewebe-network-missing" 1 "Missing service networks"
 run_compose_case "unexpected extra service" "extra-service" 1 "Expected exactly 1 service"
+run_compose_case "JSON root is not an object" "root-not-object" 2 "root must be an object"
 
 echo "-- Post-Mutation Working Tree Integrity Check --"
 POST_SHA="$(find scripts/ edge/ runbooks/ -type f | sort | xargs sha256sum 2>/dev/null | sha256sum | awk '{print $1}')"

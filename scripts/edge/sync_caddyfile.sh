@@ -14,6 +14,7 @@ CADDY_IMAGE="${CADDY_IMAGE:-caddy:2.8.4}"
 LIVE_FILE="${LIVE_FILE:-$EDGE_DIR/Caddyfile}"
 CANDIDATE_FILE="${CANDIDATE_FILE:-$REPO_ROOT/edge/Caddyfile.template}"
 LOCK_FILE="${LOCK_FILE:-/run/lock/heimserver-edge-caddy-sync.lock}"
+COMMAND_TIMEOUT_SECONDS="${EDGE_COMMAND_TIMEOUT_SECONDS:-30}"
 
 ADMIN_BOUNDARY_CHECK="${ADMIN_BOUNDARY_CHECK:-$SCRIPT_DIR/check_admin_boundary.sh}"
 CADDY_CONTRACT_VALIDATOR="${CADDY_CONTRACT_VALIDATOR:-$SCRIPT_DIR/validate_caddy_contract.py}"
@@ -24,6 +25,7 @@ SNAPSHOT_ROOT=""
 CANDIDATE_SNAPSHOT=""
 ADAPTED_JSON=""
 BACKUP_FILE=""
+BACKUP_SHA256=""
 INITIAL_LIVE_SHA256=""
 CANDIDATE_SHA256=""
 ADAPTED_SHA256=""
@@ -55,8 +57,12 @@ hash_file() {
   sha256sum "$1" | awk '{print $1}'
 }
 
+run_with_timeout() {
+  timeout --foreground "${COMMAND_TIMEOUT_SECONDS}s" "$@"
+}
+
 compose() {
-  docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" "$@"
+  run_with_timeout docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" "$@"
 }
 
 is_container_id() {
@@ -121,7 +127,7 @@ container_caddyfile_hash() {
 
   set +e
   run_capture "$stdout_file" "$stderr_file" \
-    docker exec "$CADDY_CONTAINER_ID" sha256sum /etc/caddy/Caddyfile
+    run_with_timeout docker exec "$CADDY_CONTAINER_ID" sha256sum /etc/caddy/Caddyfile
   rc=$?
   set -e
 
@@ -192,7 +198,7 @@ cleanup_or_rollback() {
       rollback_ok=0
     fi
 
-    if ! docker exec "$CADDY_CONTAINER_ID" \
+    if ! run_with_timeout docker exec "$CADDY_CONTAINER_ID" \
       caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile; then
       echo "CRITICAL: rollback Caddy validation failed" >&2
       rollback_ok=0
@@ -209,6 +215,11 @@ cleanup_or_rollback() {
     exit 255
   fi
 
+  if [[ $rc -ne 0 && $MUTATION_STARTED -eq 0 && -n "$BACKUP_FILE" && -f "$BACKUP_FILE" ]]; then
+    rm -f -- "$BACKUP_FILE" || true
+    BACKUP_FILE=""
+  fi
+
   rm -rf -- "$SNAPSHOT_ROOT"
   exit "$rc"
 }
@@ -219,6 +230,11 @@ require_cmd sha256sum
 require_cmd awk
 require_cmd flock
 require_cmd mktemp
+require_cmd timeout
+
+if [[ ! "$COMMAND_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+  sysfail "EDGE_COMMAND_TIMEOUT_SECONDS must be a positive integer"
+fi
 
 umask 077
 SNAPSHOT_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/heimserver-caddy-snapshot.XXXXXX")"
@@ -233,6 +249,13 @@ fi
 [[ -f "$LIVE_FILE" ]] || fail "live Caddyfile is missing"
 [[ -f "$CANDIDATE_FILE" ]] || sysfail "candidate Caddyfile is missing or not a regular file"
 
+CANDIDATE_SNAPSHOT="$SNAPSHOT_ROOT/Caddyfile"
+ADAPTED_JSON="$SNAPSHOT_ROOT/Caddyfile.adapted.json"
+cp -- "$CANDIDATE_FILE" "$CANDIDATE_SNAPSHOT"
+chmod 0444 "$CANDIDATE_SNAPSHOT"
+CANDIDATE_SHA256="$(hash_file "$CANDIDATE_SNAPSHOT")"
+record_event "snapshot"
+
 CADDY_CONTAINER_ID="$(resolve_caddy_container_id)"
 echo "CADDY_CONTAINER_ID=$CADDY_CONTAINER_ID"
 
@@ -246,23 +269,17 @@ if [[ "$CURRENT_CONTAINER_SHA256" != "$INITIAL_LIVE_SHA256" ]]; then
   fail "host and container Caddyfiles already diverge"
 fi
 
-CANDIDATE_SNAPSHOT="$SNAPSHOT_ROOT/Caddyfile"
-ADAPTED_JSON="$SNAPSHOT_ROOT/Caddyfile.adapted.json"
-cp -- "$CANDIDATE_FILE" "$CANDIDATE_SNAPSHOT"
-chmod 0444 "$CANDIDATE_SNAPSHOT"
-CANDIDATE_SHA256="$(hash_file "$CANDIDATE_SNAPSHOT")"
-
 if [[ "$INITIAL_LIVE_SHA256" == "$CANDIDATE_SHA256" ]]; then
   NO_CHANGES=1
 fi
 
-if ! docker image inspect "$CADDY_IMAGE" >/dev/null 2>&1; then
+if ! run_with_timeout docker image inspect "$CADDY_IMAGE" >/dev/null 2>&1; then
   sysfail "Caddy Docker image not found locally: $CADDY_IMAGE"
 fi
 
 echo "Validating candidate snapshot syntax with $CADDY_IMAGE..."
 set +e
-docker run --rm \
+run_with_timeout docker run --rm \
   --pull=never \
   --network none \
   -v "$SNAPSHOT_ROOT:/candidate:ro" \
@@ -272,7 +289,9 @@ docker run --rm \
   --config /candidate/Caddyfile
 SYNTAX_RC=$?
 set -e
-if [[ $SYNTAX_RC -ne 0 ]]; then
+if [[ $SYNTAX_RC -eq 124 || $SYNTAX_RC -eq 125 ]]; then
+  sysfail "candidate syntax validation could not start (rc=$SYNTAX_RC)"
+elif [[ $SYNTAX_RC -ne 0 ]]; then
   fail "candidate syntax validation failed (rc=$SYNTAX_RC)"
 fi
 record_event "syntax"
@@ -280,7 +299,7 @@ record_event "syntax"
 echo "Adapting candidate snapshot once with $CADDY_IMAGE..."
 ADAPT_STDERR="$SNAPSHOT_ROOT/caddy-adapt.stderr"
 set +e
-docker run --rm \
+run_with_timeout docker run --rm \
   --pull=never \
   --network none \
   -v "$SNAPSHOT_ROOT:/candidate:ro" \
@@ -309,7 +328,7 @@ record_event "adapt"
 
 echo "Running canonical Caddy contract validation on adapted JSON..."
 set +e
-python3 "$CADDY_CONTRACT_VALIDATOR" --adapted-json "$ADAPTED_JSON"
+run_with_timeout python3 "$CADDY_CONTRACT_VALIDATOR" --adapted-json "$ADAPTED_JSON"
 CONTRACT_RC=$?
 set -e
 if [[ $CONTRACT_RC -eq 1 || $CONTRACT_RC -eq 2 ]]; then
@@ -324,7 +343,7 @@ verify_adapted_hash "contract validation"
 
 echo "Running Admin Boundary Guard on resolved container..."
 set +e
-bash "$ADMIN_BOUNDARY_CHECK" --container-id "$CADDY_CONTAINER_ID"
+run_with_timeout bash "$ADMIN_BOUNDARY_CHECK" --container-id "$CADDY_CONTAINER_ID"
 GUARD_RC=$?
 set -e
 if [[ $GUARD_RC -eq 1 || $GUARD_RC -eq 2 ]]; then
@@ -355,7 +374,13 @@ fi
 LIVE_DIR="$(dirname -- "$LIVE_FILE")"
 LIVE_BASE="$(basename -- "$LIVE_FILE")"
 BACKUP_FILE="$(mktemp "$LIVE_DIR/$LIVE_BASE.bak.XXXXXX")" || sysfail "could not allocate backup file"
-cp -p -- "$LIVE_FILE" "$BACKUP_FILE"
+if ! cp -p -- "$LIVE_FILE" "$BACKUP_FILE"; then
+  sysfail "could not copy the live Caddyfile into the rollback backup"
+fi
+BACKUP_SHA256="$(hash_file "$BACKUP_FILE")"
+if [[ "$BACKUP_SHA256" != "$INITIAL_LIVE_SHA256" ]]; then
+  fail "backup does not match the reviewed live Caddyfile"
+fi
 record_event "backup"
 
 MUTATION_STARTED=1
@@ -376,11 +401,13 @@ if [[ "$CONTAINER_SHA256" != "$CANDIDATE_SHA256" ]]; then
 fi
 
 set +e
-docker exec "$CADDY_CONTAINER_ID" \
+run_with_timeout docker exec "$CADDY_CONTAINER_ID" \
   caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile
 POST_VALIDATE_RC=$?
 set -e
-if [[ $POST_VALIDATE_RC -ne 0 ]]; then
+if [[ $POST_VALIDATE_RC -eq 124 || $POST_VALIDATE_RC -eq 125 ]]; then
+  sysfail "post-write Caddy validation could not run (rc=$POST_VALIDATE_RC)"
+elif [[ $POST_VALIDATE_RC -ne 0 ]]; then
   fail "post-write Caddy validation failed (rc=$POST_VALIDATE_RC)"
 fi
 record_event "validate"

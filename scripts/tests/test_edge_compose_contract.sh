@@ -48,9 +48,6 @@ PY
 
 python3 "$VALIDATOR" --service "$CADDY_SERVICE" --json "$COMPOSE_JSON_FILE"
 
-python3 "$SCRIPT_DIR/test_edge_noop_proof.py"
-python3 "$SCRIPT_DIR/test_edge_ipv4_only.py"
-
 echo "Compose stderr was captured separately:"
 sed 's/^/  /' "$COMPOSE_STDERR_FILE"
 echo "Edge Compose contract assertions passed"

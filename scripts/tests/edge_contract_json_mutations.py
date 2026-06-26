@@ -189,6 +189,21 @@ def remove_header(route, header_name):
     return removed
 
 
+def append_header_value(route, header_name, extra_value):
+    for node in iter_routes(route):
+        for handler in node.get("handle", []):
+            if handler.get("handler") != "headers":
+                continue
+            response_set = handler.get("response", {}).get("set", {})
+            for key, raw_values in response_set.items():
+                if key.lower() != header_name.lower():
+                    continue
+                values = raw_values if isinstance(raw_values, list) else [raw_values]
+                response_set[key] = [*values, extra_value]
+                return
+    raise SystemExit(f"header not found: {header_name}")
+
+
 def append_headers_to_web_fallback(route, values):
     target = None
     for node in iter_routes(route):
@@ -298,6 +313,14 @@ def mutate(data, mutation):
             )
         return
 
+    if mutation == "version-cache-conflicting":
+        append_header_value(version, "Cache-Control", "public, max-age=60")
+        return
+
+    if mutation == "cors-conflicting":
+        append_header_value(pmtiles, "Access-Control-Allow-Origin", "foreign-origin")
+        return
+
     if mutation == "version-cache-misplaced":
         removed = remove_header(version, "Cache-Control")
         values = {key: raw_values for key, raw_values in removed}
@@ -368,8 +391,10 @@ def main():
             "basemap-root-wrong",
             "fallback-before-basemap",
             "version-cache-misplaced",
+            "version-cache-conflicting",
             "immutable-cache-misplaced",
             "cors-misplaced",
+            "cors-conflicting",
             "options-misplaced",
             "pmtiles-file-server-missing",
             "duplicate-equal-specific-route",
