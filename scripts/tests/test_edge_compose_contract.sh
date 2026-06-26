@@ -13,6 +13,7 @@ trap 'rm -rf "$TEST_DIR"' EXIT
 
 cp "$TEMPLATE" "$TEST_DIR/docker-compose.yml"
 touch "$TEST_DIR/Caddyfile"
+EXPECTED_CADDYFILE_SOURCE="${EXPECTED_CADDYFILE_SOURCE:-$TEST_DIR/Caddyfile}"
 
 compose_cmd=(
   docker compose
@@ -46,7 +47,10 @@ from pathlib import Path
 json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 PY
 
-python3 "$VALIDATOR" --service "$CADDY_SERVICE" --json "$COMPOSE_JSON_FILE"
+python3 "$VALIDATOR" \
+  --service "$CADDY_SERVICE" \
+  --expected-caddyfile-source "$EXPECTED_CADDYFILE_SOURCE" \
+  --json "$COMPOSE_JSON_FILE"
 
 echo "Compose stderr was captured separately:"
 sed 's/^/  /' "$COMPOSE_STDERR_FILE"

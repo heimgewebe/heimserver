@@ -197,7 +197,11 @@ def require_readonly_bind(
         )
 
 
-def validate(data: dict[str, Any], service_name: str) -> None:
+def validate(
+    data: dict[str, Any],
+    service_name: str,
+    expected_caddyfile_source: str,
+) -> None:
     services = data.get("services")
     if not isinstance(services, dict):
         die(2, "Compose JSON has no services object")
@@ -261,7 +265,11 @@ def validate(data: dict[str, Any], service_name: str) -> None:
 
     service_volumes = normalize_service_volumes(service.get("volumes", []), top_volumes)
 
-    require_readonly_bind(service_volumes, CADDYFILE_BIND_TARGET, None)
+    require_readonly_bind(
+        service_volumes,
+        CADDYFILE_BIND_TARGET,
+        expected_caddyfile_source,
+    )
     for target, source in REQUIRED_READONLY_BINDS.items():
         require_readonly_bind(service_volumes, target, source)
     print("OK exact read-only bind mounts")
@@ -293,8 +301,20 @@ def main() -> None:
         default=os.environ.get("CADDY_SERVICE", "caddy"),
         help="Expected Caddy Compose service ID",
     )
+    parser.add_argument(
+        "--expected-caddyfile-source",
+        required=True,
+        help="Expected host source bound read-only to /etc/caddy/Caddyfile",
+    )
     args = parser.parse_args()
-    validate(load_data(args.json), args.service)
+    expected_caddyfile_source = str(
+        Path(args.expected_caddyfile_source).resolve()
+    )
+    validate(
+        load_data(args.json),
+        args.service,
+        expected_caddyfile_source,
+    )
 
 
 if __name__ == "__main__":

@@ -84,6 +84,7 @@ with tempfile.TemporaryDirectory() as tmp:
     env = os.environ.copy()
     env["PATH"] = f"{bindir}:{env['PATH']}"
     env["CADDY_SERVICE"] = "caddy"
+    env["EXPECTED_CADDYFILE_SOURCE"] = "/tmp/Caddyfile"
 
     result = subprocess.run(
         ["bash", str(COMPOSE_TEST)],

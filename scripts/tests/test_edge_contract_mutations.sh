@@ -78,6 +78,64 @@ run_caddy_json_case() {
   echo "PASS [$desc] rc=$actual_rc"
 }
 
+run_caddy_json_document_case() {
+  local desc="$1"
+  local payload="$2"
+  local expected_rc="$3"
+  local expected_stderr="$4"
+  local input="$MUTATION_DIR/caddy-document-${desc//[^a-zA-Z0-9]/-}.json"
+  local actual_rc=0 stderr_out
+
+  printf '%s\n' "$payload" >"$input"
+  stderr_out="$(python3 "$CADDY_VALIDATOR" --adapted-json "$input" 2>&1 >/dev/null)" || actual_rc=$?
+
+  if [[ "$actual_rc" -ne "$expected_rc" ]]; then
+    echo "FAIL [$desc]: expected rc $expected_rc, got $actual_rc"
+    echo "$stderr_out"
+    FAILURES=$((FAILURES + 1))
+    return
+  fi
+  if ! grep -qF -- "$expected_stderr" <<<"$stderr_out"; then
+    echo "FAIL [$desc]: missing diagnostic $expected_stderr"
+    echo "$stderr_out"
+    FAILURES=$((FAILURES + 1))
+    return
+  fi
+  if grep -qF -- "Traceback" <<<"$stderr_out"; then
+    echo "FAIL [$desc]: leaked Python traceback"
+    echo "$stderr_out"
+    FAILURES=$((FAILURES + 1))
+    return
+  fi
+  echo "PASS [$desc] rc=$actual_rc"
+}
+
+run_caddy_timeout_case() {
+  local value="$1"
+  local actual_rc=0 stderr_out
+
+  stderr_out="$(EDGE_SUBPROCESS_TIMEOUT_SECONDS="$value" python3 "$CADDY_VALIDATOR" --help 2>&1 >/dev/null)" || actual_rc=$?
+  if [[ "$actual_rc" -ne 2 ]]; then
+    echo "FAIL [timeout value $value]: expected rc 2, got $actual_rc"
+    echo "$stderr_out"
+    FAILURES=$((FAILURES + 1))
+    return
+  fi
+  if ! grep -qF -- "must be a positive integer" <<<"$stderr_out"; then
+    echo "FAIL [timeout value $value]: missing controlled diagnostic"
+    echo "$stderr_out"
+    FAILURES=$((FAILURES + 1))
+    return
+  fi
+  if grep -qF -- "Traceback" <<<"$stderr_out"; then
+    echo "FAIL [timeout value $value]: leaked Python traceback"
+    echo "$stderr_out"
+    FAILURES=$((FAILURES + 1))
+    return
+  fi
+  echo "PASS [timeout value $value rejected with rc=2]"
+}
+
 write_valid_compose_json() {
   local path="$1"
   cat >"$path" <<'JSON'
@@ -161,6 +219,8 @@ elif mutation == "network-mode-host":
     caddy["network_mode"] = "host"
 elif mutation == "caddyfile-not-readonly":
     volume("/etc/caddy/Caddyfile")["read_only"] = False
+elif mutation == "caddyfile-wrong-source":
+    volume("/etc/caddy/Caddyfile")["source"] = "/tmp/unrelated-Caddyfile"
 elif mutation == "web-build-not-readonly":
     volume("/srv/weltgewebe-web")["read_only"] = False
 elif mutation == "web-build-wrong-source":
@@ -211,7 +271,10 @@ run_compose_case() {
 
   write_valid_compose_json "$base"
   mutate_compose_json "$base" "$mutant" "$mutation"
-  stderr_out="$(python3 "$COMPOSE_VALIDATOR" --service caddy --json "$mutant" 2>&1 >/dev/null)" || actual_rc=$?
+  stderr_out="$(python3 "$COMPOSE_VALIDATOR" \
+    --service caddy \
+    --expected-caddyfile-source /tmp/Caddyfile \
+    --json "$mutant" 2>&1 >/dev/null)" || actual_rc=$?
 
   if [[ "$actual_rc" -ne "$expected_rc" ]]; then
     echo "FAIL [$desc]: expected rc $expected_rc, got $actual_rc"
@@ -266,6 +329,14 @@ run_caddyfile_case "wrong basemap root" "$M4" 1 "PMTiles branch"
 M5="$MUTATION_DIR/version-no-store-removed.Caddyfile"
 sed '/Cache-Control.*no-store/d' "$TEMPLATE" >"$M5"
 run_caddyfile_case "version no-store removed" "$M5" 1 "version metadata route"
+
+echo "-- Caddy validator diagnostic inputs --"
+run_caddy_json_document_case "JSON root array" "[]" 2 "root must be an object"
+run_caddy_json_document_case "JSON root string" '"not-an-object"' 2 "root must be an object"
+run_caddy_json_document_case "JSON root null" "null" 2 "root must be an object"
+run_caddy_timeout_case "invalid"
+run_caddy_timeout_case "0"
+run_caddy_timeout_case "-1"
 
 echo "-- Adapted Caddy JSON mutants --"
 run_caddy_json_case "wrong redirect status" "redirect-status-wrong" 1 "Internal API redirect"
@@ -323,7 +394,10 @@ fi
 echo "-- Compose mutants --"
 VALID_COMPOSE="$MUTATION_DIR/compose-valid.json"
 write_valid_compose_json "$VALID_COMPOSE"
-if python3 "$COMPOSE_VALIDATOR" --service caddy --json "$VALID_COMPOSE" >/dev/null; then
+if python3 "$COMPOSE_VALIDATOR" \
+  --service caddy \
+  --expected-caddyfile-source /tmp/Caddyfile \
+  --json "$VALID_COMPOSE" >/dev/null; then
   echo "PASS [valid Compose contract]"
 else
   echo "FAIL [valid Compose contract]"
@@ -335,6 +409,7 @@ run_compose_case "port 443 missing" "port-443-missing" 1 "Ports must be exactly"
 run_compose_case "port 2019 published" "port-2019-published" 1 "Port 2019"
 run_compose_case "network_mode host" "network-mode-host" 1 "network_mode: host"
 run_compose_case "Caddyfile mount not read-only" "caddyfile-not-readonly" 1 "must be read-only"
+run_compose_case "Caddyfile mount wrong source" "caddyfile-wrong-source" 1 "must use source"
 run_compose_case "Web build mount not read-only" "web-build-not-readonly" 1 "must be read-only"
 run_compose_case "Web build mount wrong source" "web-build-wrong-source" 1 "must use source"
 run_compose_case "Basemap mount wrong source" "basemap-wrong-source" 1 "must use source"
@@ -349,6 +424,38 @@ run_compose_case "/config volume wrong target" "config-volume-wrong-target" 1 "M
 run_compose_case "weltgewebe_default missing" "weltgewebe-network-missing" 1 "Missing service networks"
 run_compose_case "unexpected extra service" "extra-service" 1 "Expected exactly 1 service"
 run_compose_case "JSON root is not an object" "root-not-object" 2 "root must be an object"
+
+echo "-- Runbook fail-closed command blocks --"
+if python3 - "runbooks/edge.sync.md" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+blocks = re.findall(r"```bash\n(.*?)```", text, flags=re.DOTALL)
+mutation_blocks = [
+    block
+    for block in blocks
+    if "caddy reload" in block
+    or "cat \"$1\" > \"$2\"" in block
+]
+if len(mutation_blocks) != 3:
+    raise SystemExit(
+        f"expected three manual reload/rollback mutation blocks, "
+        f"found {len(mutation_blocks)}"
+    )
+for index, block in enumerate(mutation_blocks, start=1):
+    if not block.lstrip().startswith("set -euo pipefail\n"):
+        raise SystemExit(
+            f"manual mutation block {index} lacks strict shell mode"
+        )
+PY
+then
+  echo "PASS [manual reload and rollback blocks fail closed]"
+else
+  echo "FAIL [manual reload and rollback blocks are not fail closed]"
+  FAILURES=$((FAILURES + 1))
+fi
 
 echo "-- Post-Mutation Working Tree Integrity Check --"
 POST_SHA="$(find scripts/ edge/ runbooks/ -type f | sort | xargs sha256sum 2>/dev/null | sha256sum | awk '{print $1}')"

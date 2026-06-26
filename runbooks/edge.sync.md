@@ -113,6 +113,8 @@ sudo EDGE_DIR=/opt/heimgewebe/edge \
 Resolve and bind the current container ID:
 
 ```bash
+set -euo pipefail
+
 EDGE_DIR=/opt/heimgewebe/edge
 COMPOSE_FILE=/opt/heimgewebe/edge/docker-compose.yml
 CADDY_SERVICE=caddy
@@ -161,6 +163,8 @@ Only run this after the sync or rollback proof above has passed. Resolve Compose
 reload and require the same single container ID that was verified:
 
 ```bash
+set -euo pipefail
+
 RELOAD_CONTAINER_ID="$(
   sudo docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" ps --quiet "$CADDY_SERVICE"
 )"
@@ -179,6 +183,8 @@ sudo docker exec "$RELOAD_CONTAINER_ID" \
 If a post-sync check aborts, the script attempts rollback automatically. For manual rollback:
 
 ```bash
+set -euo pipefail
+
 EDGE_DIR=/opt/heimgewebe/edge
 COMPOSE_FILE=/opt/heimgewebe/edge/docker-compose.yml
 CADDY_SERVICE=caddy
@@ -215,9 +221,12 @@ sudo docker logs edge-caddy --tail 100
 curl -I https://weltgewebe.home.arpa
 ```
 
-Reload only after these rollback checks pass. Immediately before that reload, resolve Compose once more:
+Reload only after these rollback checks pass. Immediately before that reload, resolve Compose once more.
+The strict shell mode below guarantees that any failed identity check aborts before `caddy reload`:
 
 ```bash
+set -euo pipefail
+
 RELOAD_CONTAINER_ID="$(
   sudo docker compose --project-directory "$EDGE_DIR" -f "$COMPOSE_FILE" ps --quiet "$CADDY_SERVICE"
 )"

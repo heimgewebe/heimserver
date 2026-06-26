@@ -23,12 +23,28 @@ from typing import Any, Optional
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 CADDY_IMAGE = os.environ.get("CADDY_IMAGE", "caddy:2.8.4")
-SUBPROCESS_TIMEOUT_SECONDS = int(os.environ.get("EDGE_SUBPROCESS_TIMEOUT_SECONDS", "30"))
 
 
 def die(code: int, msg: str) -> None:
     print(f"{'CONTRACT VIOLATION' if code == 1 else 'DIAGNOSTIC FAILURE'}: {msg}", file=sys.stderr)
     sys.exit(code)
+
+
+def positive_int_env(name: str, default: int) -> int:
+    raw = os.environ.get(name, str(default))
+    try:
+        value = int(raw)
+    except ValueError:
+        die(2, f"{name} must be a positive integer, got {raw!r}")
+    if value <= 0:
+        die(2, f"{name} must be a positive integer, got {raw!r}")
+    return value
+
+
+SUBPROCESS_TIMEOUT_SECONDS = positive_int_env(
+    "EDGE_SUBPROCESS_TIMEOUT_SECONDS",
+    30,
+)
 
 
 def adapt_caddyfile(caddyfile_path: str) -> dict:
@@ -77,17 +93,23 @@ def adapt_caddyfile(caddyfile_path: str) -> dict:
         die(2, f"caddy adapt failed (rc={result.returncode}): {result.stderr.strip()}")
 
     try:
-        return json.loads(result.stdout)
+        data = json.loads(result.stdout)
     except json.JSONDecodeError as e:
         die(2, f"caddy adapt output is not valid JSON: {e}")
+    if not isinstance(data, dict):
+        die(2, "caddy adapt JSON root must be an object")
+    return data
 
 
 def load_json_file(path: str) -> dict:
     try:
         with open(path, encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
         die(2, f"Cannot load JSON from {path}: {e}")
+    if not isinstance(data, dict):
+        die(2, "Adapted Caddy JSON root must be an object")
+    return data
 
 
 # ── Structural helpers ─────────────────────────────────────────────────────────
