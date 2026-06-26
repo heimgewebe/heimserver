@@ -74,8 +74,15 @@ docker network inspect weltgewebe_default >/dev/null 2>&1 || {
 ```bash
 sudo cp edge/docker-compose.yml.template /opt/heimgewebe/edge/docker-compose.yml
 
-LIVE_HASH="$(sudo sha256sum /opt/heimgewebe/edge/Caddyfile | awk '{print $1}')"
-sudo EXPECTED_LIVE_SHA256="$LIVE_HASH" bash scripts/edge/sync_caddyfile.sh
+# Use a SHA-256 recorded during an earlier explicit review or deployment
+# manifest. Do not derive the expected value from the current live file here.
+REVIEWED_LIVE_SHA256="<reviewed-live-sha256>"
+[[ "$REVIEWED_LIVE_SHA256" =~ ^[0-9a-f]{64}$ ]] || {
+  echo "Set REVIEWED_LIVE_SHA256 to the previously reviewed live hash." >&2
+  exit 1
+}
+sudo EXPECTED_LIVE_SHA256="$REVIEWED_LIVE_SHA256" \
+  bash scripts/edge/sync_caddyfile.sh
 ```
 
 The sync writes only the validated private snapshot to `/opt/heimgewebe/edge/Caddyfile`.
