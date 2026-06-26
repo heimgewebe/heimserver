@@ -27,6 +27,21 @@ cmp --silent "$ROOT/scripts/heimberry/weltgewebe_ddns.py" "$PROGRAM"
 cmp --silent "$ROOT/ops/systemd/weltgewebe-ddns.service" "$SERVICE"
 cmp --silent "$ROOT/ops/systemd/weltgewebe-ddns.timer" "$TIMER"
 
+if grep -q '^ConditionFileIsExecutable=' "$SERVICE"; then
+  echo "unexpected executable condition" >&2
+  exit 1
+fi
+if grep -q '^ConditionPathExists=' "$SERVICE"; then
+  echo "unexpected path condition" >&2
+  exit 1
+fi
+grep -q '^TimeoutStartSec=360$' "$SERVICE"
+
+service_start_line="$(grep -n '^systemctl start weltgewebe-ddns.service$' "$BUNDLE" | cut -d: -f1)"
+timer_enable_line="$(grep -n '^systemctl enable --now weltgewebe-ddns.timer$' "$BUNDLE" | cut -d: -f1)"
+[[ -n "$service_start_line" && -n "$timer_enable_line" ]]
+((service_start_line < timer_enable_line))
+
 if DESTDIR="$TMP/root" "$BUNDLE" --activate >/dev/null 2>&1; then
   echo "expected --activate to be rejected with DESTDIR" >&2
   exit 1

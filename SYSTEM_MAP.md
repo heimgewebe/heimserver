@@ -8,13 +8,13 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [constitution.md](architecture/constitution.md) | `constitution` | - | active | 2026-06-25 | `ops/checks/preflight.sh` |
+| [constitution.md](architecture/constitution.md) | `constitution` | - | active | 2026-06-25 | `ops/checks/preflight.sh`, `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
 | [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
-| [naming.md](architecture/naming.md) | `naming` | - | active | 2026-06-25 | `ops/checks/preflight.sh` |
+| [naming.md](architecture/naming.md) | `naming` | - | active | 2026-06-25 | `ops/checks/preflight.sh`, `scripts/tests/test_caddy_template.py` |
 | [network.md](architecture/network.md) | `network` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
 | [glossary.md](architecture/glossary.md) | `glossary` | - | active | 2026-03-11 | - |
-| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | active | 2026-06-25 | - |
+| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | active | 2026-06-25 | `ops/checks/preflight.sh`, `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
 | [nodes/heimberry.md](architecture/nodes/heimberry.md) | `node-heimberry` | - | active | 2026-04-28 | - |
 | [nodes/heimserver.md](architecture/nodes/heimserver.md) | `node-heimserver` | - | active | 2026-04-28 | - |
 | [nodes/heim-pc.md](architecture/nodes/heim-pc.md) | `node-heim-pc` | - | active | 2026-04-28 | - |

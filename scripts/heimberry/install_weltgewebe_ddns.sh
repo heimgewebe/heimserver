@@ -145,8 +145,8 @@ done
 
 systemd-analyze verify "$SERVICE_PATH" "$TIMER_PATH"
 systemctl daemon-reload
-systemctl enable --now weltgewebe-ddns.timer
 systemctl start weltgewebe-ddns.service
+systemctl enable --now weltgewebe-ddns.timer
 systemctl is-active --quiet weltgewebe-ddns.timer || fail "timer activation failed"
 
 log "timer enabled and immediate update run completed"

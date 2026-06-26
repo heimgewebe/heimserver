@@ -65,19 +65,24 @@ auslösen. Für PR-Prüfungen werden ausschließlich Unit-Tests, Staging mit
 
 Ein Lauf:
 
-1. ermittelt die WAN-IPv4 unabhängig über IPify und OpenDNS,
-2. verwirft private, reservierte, Loopback-, Link-Local- und CGNAT-Adressen,
-3. bricht bei widersprüchlichen WAN-Quellen ohne Provider-Write ab,
-4. fragt drei autoritative INWX-Nameserver für alle drei Hostnamen ab,
-5. bricht bei DNS-Transport-, Timeout- oder Command-Fehlern fail-closed ab,
-6. behandelt leere, aber erfolgreich abgefragte A-Record-Antworten als Drift,
-7. schreibt nur für betroffene Hosts über den INWX-DynDNS-Endpunkt,
-8. verifiziert anschließend den autoritativen Zustand,
-9. schreibt einen atomaren Status unter `/var/lib/weltgewebe-ddns/state.json`,
-10. protokolliert strukturierte JSON-Ereignisse in journald.
+1. validiert alle drei Credential-Dateien, bevor Netzwerkzugriffe beginnen,
+2. ermittelt die WAN-IPv4 unabhängig über IPify und OpenDNS,
+3. verwirft private, reservierte, Loopback-, Link-Local- und CGNAT-Adressen,
+4. bricht bei widersprüchlichen WAN-Quellen ohne Provider-Write ab,
+5. fragt drei autoritative INWX-Nameserver für alle drei Hostnamen parallel ab,
+6. bricht bei DNS-Protokoll-, Transport-, Timeout- oder Command-Fehlern fail-closed ab,
+7. behandelt leere, aber erfolgreich abgefragte A-Record-Antworten als Drift,
+8. schreibt nur für betroffene Hosts über den INWX-DynDNS-Endpunkt,
+9. verifiziert anschließend den autoritativen Zustand,
+10. schreibt einen atomaren Status unter `/var/lib/weltgewebe-ddns/state.json`,
+11. protokolliert strukturierte JSON-Ereignisse in journald.
 
 Ein Dateilock verhindert parallele Läufe. Der Timer startet alle fünf Minuten
-mit Zufallsversatz und führt verpasste Läufe nach dem Boot nach.
+mit Zufallsversatz und führt verpasste Läufe nach dem Boot nach. Die neun
+Nameserver-/Host-Abfragen eines Prüfschritts laufen parallel. Aus den im Code
+festgelegten Netzwerkzeitlimits ergibt sich ein Worst-Case-Budget von 237
+Sekunden; die systemd-Grenze beträgt 360 Sekunden und enthält damit 123 Sekunden
+Reserve. Ein Unit-Test bindet beide Werte aneinander.
 
 ## Installation
 
@@ -102,8 +107,10 @@ Nach Prüfung der extern provisionierten Dateien aktivieren:
 sudo scripts/heimberry/install_weltgewebe_ddns.sh --activate
 ```
 
-`--activate` lädt systemd neu, aktiviert den Timer und führt einen unmittelbaren
-Lauf aus. Ohne diese Option wird kein Dienst gestartet.
+`--activate` lädt systemd neu und führt zuerst einen unmittelbaren Lauf aus.
+Nur wenn dieser Lauf erfolgreich war, wird der Timer aktiviert. Fehlende oder
+mehrzeilige Credentials führen dadurch zu einem sichtbaren Servicefehler statt
+zu einem still übersprungenen Lauf. Ohne diese Option wird kein Dienst gestartet.
 
 ## Read-only-Prüfung
 
@@ -151,7 +158,9 @@ Repository geschrieben.
 - `dyndns.wan_consensus_failed`: WAN-Quellen fehlen oder widersprechen sich;
   kein Provider-Write.
 - `dyndns.authoritative_dns_failed`: Autoritative DNS-Abfrage ist technisch
-  fehlgeschlagen; kein Provider-Write.
+  fehlgeschlagen oder liefert keinen sicher klassifizierbaren DNS-Status;
+  kein Provider-Write. Dazu zählen insbesondere `SERVFAIL`, `REFUSED`,
+  `FORMERR`, `NOTAUTH`, fehlende Statuszeilen und unerwartete Answer-Records.
 - `dyndns.update_failed`: Transport oder Providerantwort ist fehlgeschlagen.
 - `dyndns.verification_failed`: Der autoritative Zielzustand wurde nicht
   bestätigt.

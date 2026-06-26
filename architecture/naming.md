@@ -10,6 +10,7 @@ last_reviewed: 2026-06-25
 depends_on: []
 verifies_with:
   - ops/checks/preflight.sh
+  - scripts/tests/test_caddy_template.py
 ---
 
 # naming.md

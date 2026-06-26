@@ -3,10 +3,6 @@ Description=Weltgewebe INWX DynDNS updater
 Documentation=https://weltgewebe.net/
 Wants=network-online.target
 After=network-online.target
-ConditionFileIsExecutable=/usr/local/sbin/weltgewebe-ddns
-ConditionPathExists=/etc/weltgewebe-ddns/weltgewebe.net.password
-ConditionPathExists=/etc/weltgewebe-ddns/www.weltgewebe.net.password
-ConditionPathExists=/etc/weltgewebe-ddns/api.weltgewebe.net.password
 
 [Service]
 Type=oneshot
@@ -15,7 +11,7 @@ Group=root
 UMask=0077
 
 ExecStart=/usr/local/sbin/weltgewebe-ddns
-TimeoutStartSec=180
+TimeoutStartSec=360
 
 StateDirectory=weltgewebe-ddns
 StateDirectoryMode=0700

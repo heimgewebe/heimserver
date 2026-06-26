@@ -179,4 +179,29 @@ else
     fail "Test 6 Failed: Did not detect violation in mixed output"
 fi
 
+# TEST 7: LAN bind -> VIOLATION
+log "Running Test 7: LAN bind (192.168.178.10:5432)..."
+cat <<EOF > "$MOCK_BIN/ss"
+#!/bin/bash
+echo "LISTEN 0 0 192.168.178.10:5432 0.0.0.0:* users:((\"postgres\",pid=123,fd=4))"
+EOF
+chmod +x "$MOCK_BIN/ss"
+OUTPUT=$(bash "$SCRIPT" 2>&1)
+echo "$OUTPUT" | grep -q "VIOLATION" || fail "Test 7 Failed: Did not reject LAN bind"
+log "PASS: Detects VIOLATION on LAN bind"
+
+# TEST 8: IPv6 loopback -> ALLOW
+log "Running Test 8: IPv6 loopback ([::1]:8080)..."
+cat <<EOF > "$MOCK_BIN/ss"
+#!/bin/bash
+echo "LISTEN 0 0 [::1]:8080 [::]:* users:((\"local-app\",pid=123,fd=4))"
+EOF
+chmod +x "$MOCK_BIN/ss"
+OUTPUT=$(bash "$SCRIPT" 2>&1)
+if echo "$OUTPUT" | grep -q "VIOLATION"; then
+    fail "Test 8 Failed: False positive on IPv6 loopback"
+fi
+echo "$OUTPUT" | grep -q "localhost-only (Allowed" || fail "Test 8 Failed: Did not allow IPv6 loopback"
+log "PASS: Allows IPv6 loopback"
+
 echo "ALL PREFLIGHT LOGIC TESTS PASSED."

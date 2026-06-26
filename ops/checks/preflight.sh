@@ -16,6 +16,51 @@ say() { printf "\n== %s ==\n" "$*"; }
 ok()  { printf "PASS (heuristic): %s\n" "$*"; }
 warn(){ printf "WARN (manual verify): %s\n" "$*" >&2; }
 
+check_direct_service_ports() {
+  local listeners_8080_5432
+  local has_violation=0
+  local has_unknown=0
+  local line
+  local local_field
+
+  listeners_8080_5432="$(ss -lntup 2>/dev/null | grep -E ':(8080|5432)\b' || true)"
+
+  if [ -z "$listeners_8080_5432" ]; then
+    ok "App Ports (8080/5432) internal only (Correct)"
+    return
+  fi
+
+  while IFS= read -r line; do
+    if printf '%s\n' "$line" | grep -q "docker-proxy"; then
+      has_violation=1
+      break
+    fi
+
+    local_field="$(printf '%s\n' "$line" | awk '{print $4}')"
+
+    case "$local_field" in
+      0.0.0.0:*|\[::\]:*|:::*|\*:*)
+        has_violation=1
+        break
+        ;;
+      127.0.0.1:*|\[::1\]:*|::1:*)
+        continue
+        ;;
+      *)
+        has_unknown=1
+        ;;
+    esac
+  done <<< "$listeners_8080_5432"
+
+  if [ "$has_violation" -eq 1 ]; then
+    warn "App Ports (8080/5432) PUBLICLY exposed (0.0.0.0/::/*/docker-proxy)! VIOLATION."
+  elif [ "$has_unknown" -eq 1 ]; then
+    warn "App Ports (8080/5432) exposed on non-loopback (likely LAN)! VIOLATION."
+  else
+    ok "App Ports (8080/5432) active but localhost-only (Allowed for dev tools)."
+  fi
+}
+
 say "invariants (static analysis)"
 if [ -f "scripts/ci/check-runbook-invariants.sh" ]; then
   bash scripts/ci/check-runbook-invariants.sh || exit 1
@@ -65,6 +110,9 @@ if command -v ss >/dev/null 2>&1; then
   else
     ok "No host listener on :2019"
   fi
+
+  echo "Check: direct App/Admin/DB ports host-exposed?"
+  check_direct_service_ports
 else
   warn "ss not available"
 fi
@@ -178,73 +226,8 @@ if [ -d "$EDGE_DIR" ]; then
         warn "Skip: Docker checks (daemon unreachable)"
     fi
 
-    # 2. Port Matrix Guard (Strict Internal Policy)
+    # 2. Edge-local port drift checks
     if command -v ss >/dev/null 2>&1; then
-        # Check 1: App Ports (8080/5432) -> Invariant Violation if PUBLICLY exposed or via docker-proxy
-        # Logic:
-        # - WARN if docker-proxy on 8080/5432 (published container port).
-        # - WARN if listening on 0.0.0.0 or [::] (public exposure).
-        # - ALLOW if listening ONLY on 127.0.0.1 (e.g. code-server ssh tunnel).
-
-        # Robust filtering to detect exposure
-        # We look for ANY listener on 8080/5432.
-        # If found, we check if it is NOT loopback (127.0.0.1 or ::1).
-        # OR if it is docker-proxy (regardless of bind, usually implies publish).
-
-        # Force list context by echo to avoid grep failing on empty input
-        listeners_8080_5432=$(ss -lntup | grep -E ':(8080|5432)\b' || true)
-
-        if [ -n "$listeners_8080_5432" ]; then
-            # Deterministic Classification per line
-            # Default to OK, switch to VIOLATION or WARN if found
-
-            has_violation=0
-            has_unknown=0
-
-            # Read line by line
-            while IFS= read -r line; do
-                # 1. docker-proxy -> VIOLATION (checked on full line for process name)
-                if echo "$line" | grep -q "docker-proxy"; then
-                    has_violation=1
-                    break
-                fi
-
-                # Extract Local Address field (usually 4th column in ss -lntup)
-                # Use printf for safer variable expansion
-                local_field=$(printf '%s\n' "$line" | awk '{print $4}')
-
-                # 2. Public Binds (0.0.0.0, *, :::, [::]) -> VIOLATION
-                # Check ONLY the local address field to avoid matching peer addresses
-                if echo "$local_field" | grep -F "0.0.0.0:" >/dev/null 2>&1 || \
-                   echo "$local_field" | grep -F "[::]:" >/dev/null 2>&1 || \
-                   echo "$local_field" | grep -F ":::" >/dev/null 2>&1 || \
-                   echo "$local_field" | grep -F "*:" >/dev/null 2>&1; then
-                    has_violation=1
-                    break
-                fi
-
-                # 3. Localhost Binds (127.0.0.1, ::1) -> OK (Continue)
-                if echo "$local_field" | grep -F "127.0.0.1:" >/dev/null 2>&1 || \
-                   echo "$local_field" | grep -F "::1:" >/dev/null 2>&1; then
-                    continue
-                fi
-
-                # 4. If neither -> Unknown (e.g. LAN IP) -> Treat as WARN/VIOLATION context dependent
-                has_unknown=1
-
-            done <<< "$listeners_8080_5432"
-
-            if [ "$has_violation" -eq 1 ]; then
-                 warn "App Ports (8080/5432) PUBLICLY exposed (0.0.0.0/::/*/docker-proxy)! VIOLATION."
-            elif [ "$has_unknown" -eq 1 ]; then
-                 warn "App Ports (8080/5432) exposed on non-loopback (likely LAN)! VIOLATION."
-            else
-                 ok "App Ports (8080/5432) active but localhost-only (Allowed for dev tools)."
-            fi
-        else
-            ok "App Ports (8080/5432) internal only (Correct)"
-        fi
-
         # Check 2: Drift Detection (9081)
         if ss -lntup | grep -E ':9081\b' >/dev/null 2>&1; then
             warn "Port 9081 exposed! This is legacy drift (Strict Policy: 9081 removed)."

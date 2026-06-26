@@ -6,13 +6,16 @@ import importlib.util
 import io
 import json
 import pathlib
+import re
 import stat
 import subprocess
 import tempfile
 import unittest
 from unittest import mock
 
-MODULE_PATH = pathlib.Path(__file__).parents[1] / "heimberry" / "weltgewebe_ddns.py"
+REPO_ROOT = pathlib.Path(__file__).parents[2]
+MODULE_PATH = REPO_ROOT / "scripts" / "heimberry" / "weltgewebe_ddns.py"
+SERVICE_PATH = REPO_ROOT / "ops" / "systemd" / "weltgewebe-ddns.service"
 SPEC = importlib.util.spec_from_file_location("weltgewebe_ddns", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 DDNS = importlib.util.module_from_spec(SPEC)
@@ -67,6 +70,52 @@ class WeltgewebeDdnsTests(unittest.TestCase):
                     path.write_text(content, encoding="utf-8")
                     with mock.patch.object(DDNS, "CONFIG_DIR", config_dir):
                         self.assertEqual(DDNS.read_password("weltgewebe.net"), "secret")
+
+    def test_validate_credentials_reads_all_exact_hosts(self) -> None:
+        with mock.patch.object(DDNS, "read_password", return_value="secret") as read_password:
+            DDNS.validate_credentials()
+
+        self.assertEqual(
+            [call.args for call in read_password.call_args_list],
+            [(host,) for host in DDNS.HOSTS],
+        )
+
+    def test_service_timeout_covers_declared_worst_case_budget(self) -> None:
+        service = SERVICE_PATH.read_text(encoding="utf-8")
+        match = re.search(r"^TimeoutStartSec=(\d+)$", service, flags=re.MULTILINE)
+        self.assertIsNotNone(match)
+        timeout_seconds = int(match.group(1))
+        self.assertGreaterEqual(
+            timeout_seconds,
+            DDNS.worst_case_runtime_seconds() + DDNS.SERVICE_TIMEOUT_BUFFER_SECONDS,
+        )
+        self.assertNotIn("ConditionFileIsExecutable=", service)
+        self.assertNotIn("ConditionPathExists=", service)
+
+    def test_authoritative_state_queries_every_pair(self) -> None:
+        def answer(nameserver: str, host: str) -> tuple[str, ...]:
+            self.assertIn(nameserver, DDNS.NAMESERVERS)
+            self.assertIn(host, DDNS.HOSTS)
+            return ("1.1.1.1",)
+
+        with mock.patch.object(DDNS, "query_a_record", side_effect=answer) as query:
+            state = DDNS.authoritative_state()
+
+        self.assertEqual(
+            state,
+            {
+                nameserver: {host: ("1.1.1.1",) for host in DDNS.HOSTS}
+                for nameserver in DDNS.NAMESERVERS
+            },
+        )
+        self.assertEqual(
+            {call.args for call in query.call_args_list},
+            {
+                (nameserver, host)
+                for nameserver in DDNS.NAMESERVERS
+                for host in DDNS.HOSTS
+            },
+        )
 
     def test_collect_mismatches_reports_exact_nameserver_host_pair(self) -> None:
         expected = "1.1.1.1"
@@ -212,6 +261,27 @@ class WeltgewebeDdnsTests(unittest.TestCase):
                 DDNS.query_a_record("ns.inwx.de", "weltgewebe.net")
             self.assertEqual(raised.exception.code, 4)
 
+    def test_main_config_failure_stops_before_network_access(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime_dir = pathlib.Path(tmp) / "run"
+            runtime_dir.mkdir()
+
+            with (
+                mock.patch.object(DDNS, "LOCK_FILE", runtime_dir / "lock"),
+                mock.patch.object(DDNS, "validate_credentials", side_effect=SystemExit(2)),
+                mock.patch.object(DDNS, "determine_wan_ip") as determine_wan_ip,
+                mock.patch.object(DDNS, "authoritative_state") as authoritative_state,
+                mock.patch.object(DDNS, "update_host") as update_host,
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                with self.assertRaises(SystemExit) as raised:
+                    DDNS.main()
+                self.assertEqual(raised.exception.code, 2)
+
+        determine_wan_ip.assert_not_called()
+        authoritative_state.assert_not_called()
+        update_host.assert_not_called()
+
     def test_main_no_change_does_not_call_provider(self) -> None:
         expected = "1.1.1.1"
         state = {
@@ -225,6 +295,7 @@ class WeltgewebeDdnsTests(unittest.TestCase):
 
             with (
                 mock.patch.object(DDNS, "LOCK_FILE", runtime_dir / "lock"),
+                mock.patch.object(DDNS, "validate_credentials"),
                 mock.patch.object(DDNS, "determine_wan_ip", return_value=expected),
                 mock.patch.object(DDNS, "authoritative_state", return_value=state),
                 mock.patch.object(DDNS, "update_host") as update_host,
@@ -247,6 +318,7 @@ class WeltgewebeDdnsTests(unittest.TestCase):
 
             with (
                 mock.patch.object(DDNS, "LOCK_FILE", runtime_dir / "lock"),
+                mock.patch.object(DDNS, "validate_credentials"),
                 mock.patch.object(DDNS, "determine_wan_ip", side_effect=SystemExit(3)),
                 mock.patch.object(DDNS, "authoritative_state") as authoritative_state,
                 mock.patch.object(DDNS, "update_host") as update_host,
@@ -266,6 +338,7 @@ class WeltgewebeDdnsTests(unittest.TestCase):
 
             with (
                 mock.patch.object(DDNS, "LOCK_FILE", runtime_dir / "lock"),
+                mock.patch.object(DDNS, "validate_credentials"),
                 mock.patch.object(DDNS, "determine_wan_ip", return_value="1.1.1.1"),
                 mock.patch.object(DDNS, "authoritative_state", side_effect=SystemExit(4)),
                 mock.patch.object(DDNS, "update_host") as update_host,
@@ -294,6 +367,7 @@ class WeltgewebeDdnsTests(unittest.TestCase):
 
             with (
                 mock.patch.object(DDNS, "LOCK_FILE", runtime_dir / "lock"),
+                mock.patch.object(DDNS, "validate_credentials"),
                 mock.patch.object(DDNS, "determine_wan_ip", return_value=expected),
                 mock.patch.object(DDNS, "authoritative_state", side_effect=[stale, current]),
                 mock.patch.object(DDNS, "update_host", return_value="good") as update_host,
@@ -332,6 +406,7 @@ class WeltgewebeDdnsTests(unittest.TestCase):
 
             with (
                 mock.patch.object(DDNS, "LOCK_FILE", runtime_dir / "lock"),
+                mock.patch.object(DDNS, "validate_credentials"),
                 mock.patch.object(DDNS, "determine_wan_ip", return_value=expected),
                 mock.patch.object(DDNS, "authoritative_state", side_effect=[empty, current]),
                 mock.patch.object(DDNS, "update_host", return_value="good") as update_host,

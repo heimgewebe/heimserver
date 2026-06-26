@@ -1,4 +1,4 @@
-.PHONY: help preflight snapshot redact hooks secrets validate-warnings validate-shell-tests validate-ddns-syntax validate-ddns-unit validate-ddns-bundle validate-ddns-systemd validate-ddns generate diff-check validate
+.PHONY: help preflight snapshot redact hooks secrets validate-warnings validate-shell-tests validate-ddns-syntax validate-ddns-unit validate-ddns-bundle validate-ddns-systemd validate-ddns validate-generated generate diff-check validate
 
 help:
 	@echo "Targets:"
@@ -9,6 +9,7 @@ help:
 	@echo "  make secrets    - init /etc/heimserver/secrets (needs sudo)"
 	@echo "  make validate-ddns - run DynDNS syntax, unit, bundle and systemd checks"
 	@echo "  make generate   - refresh generated repository artifacts"
+	@echo "  make validate-generated - reject generated artifact drift"
 	@echo "  make diff-check - run git diff --check"
 
 preflight:
@@ -31,9 +32,10 @@ secrets:
 validate-warnings:
 	-python3 scripts/ci/check-doc-review-age.py
 	-bash scripts/ci/check-runbook-invariants.sh
-	-bash scripts/tests/test_preflight_mock.sh
+	bash scripts/tests/test_preflight_mock.sh
 
 validate-shell-tests:
+	shellcheck ops/checks/preflight.sh
 	shellcheck scripts/edge/sync_caddyfile.sh
 	shellcheck scripts/tests/test_edge_sync_runbook.sh
 	shellcheck scripts/tests/test_edge_compose_contract.sh
@@ -63,8 +65,17 @@ validate-ddns-systemd:
 		chmod 0755 "$$tmp/bin/weltgewebe-ddns"; \
 		sed "s#ExecStart=/usr/local/sbin/weltgewebe-ddns#ExecStart=$$tmp/bin/weltgewebe-ddns#" ops/systemd/weltgewebe-ddns.service > "$$tmp/systemd/weltgewebe-ddns.service"; \
 		cp ops/systemd/weltgewebe-ddns.timer "$$tmp/systemd/weltgewebe-ddns.timer"; \
+		ulimit -c 0; \
+		set +e; \
 		systemd-analyze verify "$$tmp/systemd/weltgewebe-ddns.service" "$$tmp/systemd/weltgewebe-ddns.timer"; \
+		status=$$?; \
+		set -e; \
+		if [ "$$status" -ne 0 ]; then \
+			if [ "$${STRICT_SYSTEMD_ANALYZE:-0}" = "1" ] || [ "$$status" -ne 134 ]; then exit "$$status"; fi; \
+			echo "WARN: host systemd-analyze crashed with status 134; CI remains strict" >&2; \
+		fi; \
 	else \
+		if [ "$${STRICT_SYSTEMD_ANALYZE:-0}" = "1" ]; then echo "systemd-analyze missing" >&2; exit 1; fi; \
 		echo "SKIP: systemd-analyze not available"; \
 	fi
 
@@ -78,9 +89,12 @@ generate:
 	python3 scripts/docmeta/generate-knowledge-gaps.py
 	python3 scripts/docmeta/generate-agent-readiness.py
 
+validate-generated: generate
+	git diff --exit-code -- SYSTEM_MAP.md docs/_generated
+
 diff-check:
 	git diff --check
 
-validate: preflight validate-shell-tests validate-ddns
+validate: preflight validate-shell-tests validate-ddns validate-generated
 	python3 scripts/ci/check_repo_index_consistency.py
 	$(MAKE) validate-warnings

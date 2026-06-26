@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import concurrent.futures
 import datetime as dt
 import fcntl
 import ipaddress
@@ -40,6 +41,26 @@ NAMESERVERS = (
 OPENER = urllib.request.build_opener(
     urllib.request.ProxyHandler({})
 )
+
+
+WAN_HTTP_TIMEOUT_SECONDS = 10
+WAN_DNS_TIMEOUT_SECONDS = 8
+AUTHORITATIVE_QUERY_TIMEOUT_SECONDS = 8
+PROVIDER_UPDATE_TIMEOUT_SECONDS = 20
+VERIFICATION_ATTEMPTS = 12
+VERIFICATION_DELAY_SECONDS = 5
+SERVICE_TIMEOUT_BUFFER_SECONDS = 60
+
+
+def worst_case_runtime_seconds() -> int:
+    authoritative_batches = 1 + VERIFICATION_ATTEMPTS
+    return (
+        WAN_HTTP_TIMEOUT_SECONDS
+        + WAN_DNS_TIMEOUT_SECONDS
+        + authoritative_batches * AUTHORITATIVE_QUERY_TIMEOUT_SECONDS
+        + len(HOSTS) * PROVIDER_UPDATE_TIMEOUT_SECONDS
+        + (VERIFICATION_ATTEMPTS - 1) * VERIFICATION_DELAY_SECONDS
+    )
 
 
 def log(event: str, **fields: object) -> None:
@@ -130,7 +151,7 @@ def validate_public_ipv4(value: str) -> str:
 
 def determine_wan_ip() -> str:
     try:
-        ipify = http_text(IPIFY_URL, timeout=10)
+        ipify = http_text(IPIFY_URL, timeout=WAN_HTTP_TIMEOUT_SECONDS)
     except (urllib.error.URLError, TimeoutError, OSError) as error:
         abort(
             3,
@@ -153,7 +174,7 @@ def determine_wan_ip() -> str:
             check=False,
             capture_output=True,
             text=True,
-            timeout=8,
+            timeout=WAN_DNS_TIMEOUT_SECONDS,
         )
     except (OSError, subprocess.TimeoutExpired) as error:
         abort(
@@ -352,7 +373,7 @@ def query_a_record(
             check=False,
             capture_output=True,
             text=True,
-            timeout=8,
+            timeout=AUTHORITATIVE_QUERY_TIMEOUT_SECONDS,
         )
     except subprocess.TimeoutExpired:
         abort(
@@ -390,13 +411,33 @@ def query_a_record(
 
 
 def authoritative_state() -> dict[str, dict[str, tuple[str, ...]]]:
-    return {
-        nameserver: {
-            host: query_a_record(nameserver, host)
-            for host in HOSTS
+    state: dict[str, dict[str, tuple[str, ...]]] = {
+        nameserver: {} for nameserver in NAMESERVERS
+    }
+    pairs = [
+        (nameserver, host)
+        for nameserver in NAMESERVERS
+        for host in HOSTS
+    ]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(pairs)) as executor:
+        futures = {
+            executor.submit(query_a_record, nameserver, host): (nameserver, host)
+            for nameserver, host in pairs
         }
+        for future in concurrent.futures.as_completed(futures):
+            nameserver, host = futures[future]
+            state[nameserver][host] = future.result()
+
+    return {
+        nameserver: {host: state[nameserver][host] for host in HOSTS}
         for nameserver in NAMESERVERS
     }
+
+
+def validate_credentials() -> None:
+    for host in HOSTS:
+        read_password(host)
 
 
 def collect_mismatches(
@@ -449,7 +490,7 @@ def update_host(host: str, wan_ip: str) -> str:
     )
 
     try:
-        with OPENER.open(request, timeout=20) as response:
+        with OPENER.open(request, timeout=PROVIDER_UPDATE_TIMEOUT_SECONDS) as response:
             body = response.read(1024).decode(
                 "utf-8",
                 errors="replace",
@@ -563,6 +604,7 @@ def main() -> int:
                 "Ein anderer Lauf ist bereits aktiv",
             )
 
+        validate_credentials()
         wan_ip = determine_wan_ip()
         initial_state = authoritative_state()
         initial_mismatches = collect_mismatches(
@@ -595,7 +637,7 @@ def main() -> int:
         for host in hosts_requiring_update(initial_mismatches):
             update_host(host, wan_ip)
 
-        for attempt in range(1, 13):
+        for attempt in range(1, VERIFICATION_ATTEMPTS + 1):
             state = authoritative_state()
             mismatches = collect_mismatches(
                 state,
@@ -625,8 +667,8 @@ def main() -> int:
                 mismatches=mismatches,
             )
 
-            if attempt < 12:
-                time.sleep(5)
+            if attempt < VERIFICATION_ATTEMPTS:
+                time.sleep(VERIFICATION_DELAY_SECONDS)
 
         abort(
             7,

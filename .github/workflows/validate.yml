@@ -1,0 +1,46 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  repository-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install --yes shellcheck
+
+      - name: DynDNS validation
+        env:
+          STRICT_SYSTEMD_ANALYZE: "1"
+        run: make validate-ddns
+
+      - name: Preflight regression tests
+        run: bash scripts/tests/test_preflight_mock.sh
+
+      - name: Shellcheck DynDNS bundle
+        run: |
+          shellcheck ops/checks/preflight.sh
+          shellcheck scripts/heimberry/install_weltgewebe_ddns.sh
+          shellcheck scripts/tests/test_ddns_bundle.sh
+
+      - name: Repository index consistency
+        run: python3 scripts/ci/check_repo_index_consistency.py
+
+      - name: Generated artifact reproducibility
+        run: make validate-generated
+
+      - name: Diff hygiene
+        run: git diff --check
