@@ -45,7 +45,7 @@
 | [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | - | active | 2026-03-07 | - |
 | [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | - | deprecated | 2026-04-28 | - |
 | [heimberry-bootstrap.md](runbooks/heimberry-bootstrap.md) | `runbook-heimberry-bootstrap` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
-| [weltgewebe-dyndns.md](runbooks/weltgewebe-dyndns.md) | `runbook-weltgewebe-dyndns` | - | active | 2026-06-25 | `scripts/tests/test_weltgewebe_ddns.py`, `scripts/tests/test_ddns_bundle.sh` |
+| [weltgewebe-dyndns.md](runbooks/weltgewebe-dyndns.md) | `runbook-weltgewebe-dyndns` | - | deprecated | 2026-07-16 | `scripts/tests/test_weltgewebe_ddns.py`, `scripts/tests/test_ddns_bundle.sh` |
 | [dns-migration.md](runbooks/dns-migration.md) | `runbook-dns-migration` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
 | [tailscale-migration.md](runbooks/tailscale-migration.md) | `runbook-tailscale-migration` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
 

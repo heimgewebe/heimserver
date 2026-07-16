@@ -11,6 +11,7 @@ SOURCE_TIMER="$REPO_ROOT/ops/systemd/weltgewebe-ddns.timer"
 DESTDIR="${DESTDIR:-}"
 ACTIVATE=0
 CHECK_ONLY=0
+RETIRE=0
 ALLOW_ANY_HOST="${WELTGEWEBE_DDNS_ALLOW_ANY_HOST:-0}"
 
 PROGRAM_PATH="$DESTDIR/usr/local/sbin/weltgewebe-ddns"
@@ -18,22 +19,20 @@ SERVICE_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.service"
 TIMER_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.timer"
 CONFIG_DIR="$DESTDIR/etc/weltgewebe-ddns"
 
-HOSTS=(
-  "weltgewebe.net"
-  "www.weltgewebe.net"
-  "api.weltgewebe.net"
-)
 
 usage() {
   cat <<'EOF'
-Usage: scripts/heimberry/install_weltgewebe_ddns.sh [--activate | --check]
+Usage: scripts/heimberry/install_weltgewebe_ddns.sh [--check | --retire]
 
-Without an option, install or refresh the program and systemd unit files but do
-not start the timer. --activate additionally validates credential metadata,
-reloads systemd, enables the timer and performs one immediate update run.
---check performs a read-only file drift comparison against the installed files.
+Without an option, install or refresh the archived program and systemd unit
+files but do not start the timer. --check performs a read-only file drift
+comparison. --retire disables the legacy timer, removes its explicit activation
+marker and clears the historical service failure state without deleting
+credentials.
 
-DESTDIR may be set for staging and tests. Activation is disabled with DESTDIR.
+The former --activate path is intentionally refused: Weltgewebe production now
+runs on the public VPS wg-prod-1. DESTDIR may be set for staging and tests;
+--retire is unavailable with DESTDIR.
 EOF
 }
 
@@ -54,6 +53,9 @@ while (($# > 0)); do
     --check)
       ((CHECK_ONLY += 1))
       ;;
+    --retire)
+      ((RETIRE += 1))
+      ;;
     -h|--help)
       usage
       exit 0
@@ -66,8 +68,12 @@ while (($# > 0)); do
   shift
 done
 
-if ((ACTIVATE > 1 || CHECK_ONLY > 1 || (ACTIVATE == 1 && CHECK_ONLY == 1))); then
-  fail "choose exactly one of --activate or --check"
+if ((ACTIVATE > 1 || CHECK_ONLY > 1 || RETIRE > 1 || ACTIVATE + CHECK_ONLY + RETIRE > 1)); then
+  fail "choose exactly one of --activate, --check or --retire"
+fi
+
+if ((ACTIVATE == 1)); then
+  fail "--activate is retired: canonical Weltgewebe production runs on wg-prod-1"
 fi
 
 for source in "$SOURCE_PROGRAM" "$SOURCE_SERVICE" "$SOURCE_TIMER"; do
@@ -80,8 +86,23 @@ if [[ -z "$DESTDIR" ]]; then
   if [[ "$ALLOW_ANY_HOST" != "1" && "$(hostname -s)" != "heimberry" ]]; then
     fail "refusing live installation outside heimberry; use WELTGEWEBE_DDNS_ALLOW_ANY_HOST=1 only for a reviewed exception"
   fi
-elif ((ACTIVATE == 1)); then
-  fail "--activate is unavailable with DESTDIR"
+elif ((RETIRE == 1)); then
+  fail "--retire is unavailable with DESTDIR"
+fi
+
+if ((RETIRE == 1)); then
+  rm -f -- "$CONFIG_DIR/ENABLE_RETIRED_RUNTIME"
+  systemctl daemon-reload
+  systemctl disable --now weltgewebe-ddns.timer
+  systemctl reset-failed weltgewebe-ddns.service || true
+  if systemctl is-enabled --quiet weltgewebe-ddns.timer; then
+    fail "legacy timer is still enabled"
+  fi
+  if systemctl is-active --quiet weltgewebe-ddns.timer; then
+    fail "legacy timer is still active"
+  fi
+  log "legacy DynDNS runtime retired; credentials preserved"
+  exit 0
 fi
 
 compare_file() {
@@ -135,18 +156,4 @@ if ((ACTIVATE == 0)); then
   exit 0
 fi
 
-for host in "${HOSTS[@]}"; do
-  credential="$CONFIG_DIR/$host.password"
-  [[ -f "$credential" ]] || fail "credential file missing: $credential"
-  [[ "$(stat -c '%u:%g' "$credential")" == "0:0" ]] || fail "credential must be owned by root:root: $credential"
-  [[ "$(stat -c '%a' "$credential")" == "600" ]] || fail "credential must have mode 0600: $credential"
-  [[ -s "$credential" ]] || fail "credential file is empty: $credential"
-done
-
-systemd-analyze verify "$SERVICE_PATH" "$TIMER_PATH"
-systemctl daemon-reload
-systemctl start weltgewebe-ddns.service
-systemctl enable --now weltgewebe-ddns.timer
-systemctl is-active --quiet weltgewebe-ddns.timer || fail "timer activation failed"
-
-log "timer enabled and immediate update run completed"
+fail "unreachable activation path"

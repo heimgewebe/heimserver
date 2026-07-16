@@ -21,7 +21,6 @@ _No actionable epistemic gaps detected._
 - Reference review signal: `ops-runbook-weltgewebe-stack` (`runbooks/ops.runbook.weltgewebe-stack.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `ops-runbook-heimserver-edge` (`runbooks/ops.runbook.heimserver-edge.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `runbook-heimberry-bootstrap` (`runbooks/heimberry-bootstrap.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
-- Reference review signal: `runbook-weltgewebe-dyndns` (`runbooks/weltgewebe-dyndns.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `runbook-dns-migration` (`runbooks/dns-migration.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `runbook-tailscale-migration` (`runbooks/tailscale-migration.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `docs.decisions.0001` (`docs/decisions/0001-adopt-agentic-blueprint.md`) has no detected incoming references. (reference_policy=optional (explicitly set))
