@@ -1,4 +1,5 @@
 [Unit]
+ConditionPathExists=/etc/weltgewebe-ddns/ENABLE_RETIRED_RUNTIME
 Description=Weltgewebe INWX DynDNS updater
 Documentation=https://weltgewebe.net/
 Wants=network-online.target

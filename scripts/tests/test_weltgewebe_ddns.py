@@ -90,7 +90,10 @@ class WeltgewebeDdnsTests(unittest.TestCase):
             DDNS.worst_case_runtime_seconds() + DDNS.SERVICE_TIMEOUT_BUFFER_SECONDS,
         )
         self.assertNotIn("ConditionFileIsExecutable=", service)
-        self.assertNotIn("ConditionPathExists=", service)
+        self.assertIn(
+            "ConditionPathExists=/etc/weltgewebe-ddns/ENABLE_RETIRED_RUNTIME",
+            service,
+        )
 
     def test_authoritative_state_queries_every_pair(self) -> None:
         def answer(nameserver: str, host: str) -> tuple[str, ...]:

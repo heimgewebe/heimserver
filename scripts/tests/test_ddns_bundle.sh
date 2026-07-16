@@ -31,16 +31,21 @@ if grep -q '^ConditionFileIsExecutable=' "$SERVICE"; then
   echo "unexpected executable condition" >&2
   exit 1
 fi
-if grep -q '^ConditionPathExists=' "$SERVICE"; then
-  echo "unexpected path condition" >&2
-  exit 1
-fi
+grep -q '^ConditionPathExists=/etc/weltgewebe-ddns/ENABLE_RETIRED_RUNTIME$' "$SERVICE"
+grep -q '^ConditionPathExists=/etc/weltgewebe-ddns/ENABLE_RETIRED_RUNTIME$' "$TIMER"
 grep -q '^TimeoutStartSec=360$' "$SERVICE"
 
-service_start_line="$(grep -n '^systemctl start weltgewebe-ddns.service$' "$BUNDLE" | cut -d: -f1)"
-timer_enable_line="$(grep -n '^systemctl enable --now weltgewebe-ddns.timer$' "$BUNDLE" | cut -d: -f1)"
-[[ -n "$service_start_line" && -n "$timer_enable_line" ]]
-((service_start_line < timer_enable_line))
+if grep -q '^systemctl start weltgewebe-ddns.service$' "$BUNDLE"; then
+  echo "legacy activation command must not remain" >&2
+  exit 1
+fi
+if grep -q '^systemctl enable --now weltgewebe-ddns.timer$' "$BUNDLE"; then
+  echo "legacy timer enable command must not remain" >&2
+  exit 1
+fi
+grep -q '^  systemctl daemon-reload$' "$BUNDLE"
+grep -q '^  systemctl disable --now weltgewebe-ddns.timer$' "$BUNDLE"
+grep -Fq "  rm -f -- \"\$CONFIG_DIR/ENABLE_RETIRED_RUNTIME\"" "$BUNDLE"
 
 if DESTDIR="$TMP/root" "$BUNDLE" --activate >/dev/null 2>&1; then
   echo "expected --activate to be rejected with DESTDIR" >&2

@@ -1,15 +1,10 @@
-# Heimberry operations scripts
+# Heimberry scripts
 
-Repository-owned programs that are installed on Heimberry. Runtime values stay outside Git.
+`weltgewebe_ddns.py` is retained as a historical, fail-closed recovery artifact.
+The public Weltgewebe runtime now lives on `wg-prod-1`; Heimberry must not update
+its public A records.
 
-## Weltgewebe DynDNS
-
-`weltgewebe_ddns.py` reconciles the three allowed public Weltgewebe A records only after two independent WAN sources agree and every authoritative INWX query completed successfully.
-
-The existing Heimberry runtime contract is one root-owned password file per hostname under `/etc/weltgewebe-ddns/`:
-
-- `weltgewebe.net.password`
-- `www.weltgewebe.net.password`
-- `api.weltgewebe.net.password`
-
-The installer validates only credential metadata. It does not migrate the format, read the secret values, activate systemd, or start the updater unless `--activate` is explicit.
+`install_weltgewebe_ddns.sh --retire` disables the legacy timer while preserving
+root-owned credentials. `--activate` is intentionally rejected. Both systemd
+units require `/etc/weltgewebe-ddns/ENABLE_RETIRED_RUNTIME`, which is absent in
+the supported retired state.
