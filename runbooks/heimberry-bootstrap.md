@@ -4,8 +4,8 @@ role: runbooks
 status: deprecated
 canonicality: explanatory
 doc_type: runbook
-title: Heimberry Bootstrap Runbook
-summary: Minimaler Bootstrap für Heimberry als Truth Layer
+title: Historical Heimberry Bootstrap Runbook
+summary: Historischer minimaler Bootstrap für Heimberry im früheren Truth-Layer-Modell
 last_reviewed: 2026-07-26
 depends_on:
   - architecture/heimnetz-2026.md

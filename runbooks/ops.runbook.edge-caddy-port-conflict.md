@@ -4,8 +4,8 @@ role: runbooks
 status: deprecated
 canonicality: explanatory
 doc_type: runbook
-title: Caddy Port Conflict Runbook
-summary: Steps to resolve Caddy port conflicts
+title: Historical Caddy Port Conflict Runbook
+summary: Historical steps used to resolve Caddy port conflicts
 last_reviewed: 2026-07-26
 depends_on:
   - architecture/networking/port-matrix.md

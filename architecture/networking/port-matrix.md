@@ -4,8 +4,8 @@ role: norm
 status: deprecated
 canonicality: explanatory
 doc_type: architecture
-title: Port Matrix
-summary: Formal port ownership specification
+title: Historical Port Matrix
+summary: Historical port ownership specification for the former Heimserver and gateway layout
 last_reviewed: 2026-07-26
 depends_on:
   - architecture/network.md

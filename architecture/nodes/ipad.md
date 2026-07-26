@@ -4,8 +4,8 @@ role: norm
 status: deprecated
 canonicality: explanatory
 doc_type: architecture
-title: Node Role - iPad (Access Layer)
-summary: Verbindliche Rollenbeschreibung für iPad als zustandslosen Zugriffsknoten
+title: Historical Node Role - iPad (Access Layer)
+summary: Historische Rollenbeschreibung für iPad im früheren zustandslosen Zugriffsmodell
 last_reviewed: 2026-07-26
 depends_on:
   - heimnetz-2026

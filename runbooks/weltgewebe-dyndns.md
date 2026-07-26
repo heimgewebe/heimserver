@@ -4,8 +4,8 @@ role: runbooks
 status: deprecated
 canonicality: explanatory
 doc_type: runbook
-title: Weltgewebe DynDNS auf Heimberry
-summary: Historischer, fail-closed stillgelegter INWX-DynDNS-Pfad; Produktion läuft auf wg-prod-1
+title: Historischer Weltgewebe-DynDNS-Pfad auf Heimberry
+summary: Historischer stillgelegter und fail-closed gesicherter INWX-DynDNS-Pfad; Produktion lief später auf wg-prod-1
 last_reviewed: 2026-07-26
 depends_on:
   - constitution

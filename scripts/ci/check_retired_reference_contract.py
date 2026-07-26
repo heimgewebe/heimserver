@@ -19,6 +19,13 @@ HISTORICAL_ZONES = {"norm", "reality", "action", "runbooks"}
 BANNER = "Historische Referenz — nicht ausführen."
 FORBIDDEN_STANDARD_CHECK = "ops/checks/preflight.sh"
 STATIC_CHECK = "scripts/ci/check_retired_reference_contract.py"
+HISTORICAL_METADATA_PREFIXES = (
+    "Historical ",
+    "Historische ",
+    "Historischer ",
+    "Historisches ",
+    "Supersedierte ",
+)
 FORBIDDEN_CURRENT_MARKERS = (
     "Status: Operativ kanonisch",
     "⛔️ OPERATIVES DOKUMENT · KANONISCH",
@@ -58,6 +65,10 @@ def main() -> int:
             errors.append(f"{path}: status must be deprecated or archived")
         if frontmatter.get("canonicality") != "explanatory":
             errors.append(f"{path}: canonicality must be explanatory")
+        for field in ("title", "summary"):
+            value = str(frontmatter.get(field, ""))
+            if not value.startswith(HISTORICAL_METADATA_PREFIXES):
+                errors.append(f"{path}: {field} is not explicitly historical: {value}")
         verifies = frontmatter.get("verifies_with") or []
         if FORBIDDEN_STANDARD_CHECK in verifies:
             errors.append(f"{path}: host-reading preflight remains a verifier")

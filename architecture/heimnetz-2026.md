@@ -4,8 +4,8 @@ role: norm
 status: deprecated
 canonicality: explanatory
 doc_type: architecture
-title: "Historische Blaupause: Heimnetz 2026+"
-summary: "Supersedierte Zielarchitektur für den früheren kombinierten Einsatz von Heimserver und Heimberry."
+title: Historische Blaupause: Heimnetz 2026+
+summary: Supersedierte Zielarchitektur für den früheren kombinierten Einsatz von Heimserver und Heimberry
 last_reviewed: 2026-07-26
 depends_on:
   - constitution

@@ -4,8 +4,8 @@ role: norm
 status: deprecated
 canonicality: explanatory
 doc_type: architecture
-title: Node Role - Heim-PC (Interaction Layer)
-summary: Verbindliche Rollenbeschreibung für Heim-PC als Entwicklungs- und Interaktionsknoten
+title: Historical Node Role - Heim-PC (Interaction Layer)
+summary: Historische Rollenbeschreibung für Heim-PC im früheren Entwicklungs- und Interaktionsmodell
 last_reviewed: 2026-07-26
 depends_on:
   - heimnetz-2026

@@ -5,8 +5,8 @@ doc_role: entry
 status: deprecated
 canonicality: explanatory
 doc_type: reference
-title: Runbooks Index
-summary: Entrypoint for execution guides
+title: Historical Runbooks Index
+summary: Historical index of superseded execution guides
 last_reviewed: 2026-07-26
 depends_on: []
 verifies_with:

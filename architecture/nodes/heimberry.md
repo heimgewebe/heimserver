@@ -4,8 +4,8 @@ role: norm
 status: deprecated
 canonicality: explanatory
 doc_type: architecture
-title: Node Role - Heimberry (Truth Layer)
-summary: Verbindliche Rollenbeschreibung für Heimberry als DNS/Truth-Knoten
+title: Historical Node Role - Heimberry (Truth Layer)
+summary: Historische Rollenbeschreibung für Heimberry im früheren DNS- und Truth-Layer-Modell
 last_reviewed: 2026-07-26
 depends_on:
   - heimnetz-2026

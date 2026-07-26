@@ -4,8 +4,8 @@ role: runbooks
 status: deprecated
 canonicality: explanatory
 doc_type: runbook
-title: Tailscale Migration Runbook
-summary: Übergang vom WireGuard-Primärmodell auf Tailscale-Zielmodell
+title: Historical Tailscale Migration Runbook
+summary: Historischer Übergang vom früheren WireGuard-Primärmodell zum Tailscale-Zielmodell
 last_reviewed: 2026-07-26
 depends_on:
   - architecture/heimnetz-2026.md

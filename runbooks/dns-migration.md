@@ -4,8 +4,8 @@ role: runbooks
 status: deprecated
 canonicality: explanatory
 doc_type: runbook
-title: DNS Migration Runbook (Heimserver -> Heimberry)
-summary: Migrationsablauf für die DNS-Truth-Autorität auf Heimberry
+title: Historical DNS Migration Runbook (Heimserver -> Heimberry)
+summary: Historischer Migrationsablauf für die frühere DNS-Truth-Verlagerung auf Heimberry
 last_reviewed: 2026-07-26
 depends_on:
   - architecture/heimnetz-2026.md

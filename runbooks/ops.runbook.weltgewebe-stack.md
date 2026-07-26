@@ -4,8 +4,8 @@ role: runbooks
 status: deprecated
 canonicality: explanatory
 doc_type: runbook
-title: Weltgewebe Stack Runbook
-summary: Operations for Weltgewebe app stack
+title: Historical Weltgewebe Stack Runbook
+summary: Historical operations for the former Weltgewebe app stack on Heimserver
 last_reviewed: 2026-07-26
 depends_on:
   - architecture/naming.md

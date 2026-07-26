@@ -5,8 +5,8 @@ reference_policy: optional
 status: deprecated
 canonicality: explanatory
 doc_type: policy
-title: Operations Policy
-summary: Operational procedures protocol
+title: Historical Operations Policy
+summary: Historical operational procedures from the former Heimserver service layer
 last_reviewed: 2026-07-26
 depends_on:
   - runtime/runtime.md

@@ -4,8 +4,8 @@ role: reality
 status: deprecated
 canonicality: explanatory
 doc_type: status
-title: Runtime Index (Aggregator)
-summary: Aggregierter Runtime-Status über Heimnetz-Layer
+title: Historical Runtime Index (Aggregator)
+summary: Historischer aggregierter Runtime-Status des früheren Heimnetz-Layer-Modells
 last_reviewed: 2026-07-26
 depends_on:
   - architecture/constitution.md

@@ -4,8 +4,8 @@ role: norm
 status: deprecated
 canonicality: explanatory
 doc_type: architecture
-title: Naming Architecture (Layer Model)
-summary: Canonical naming conventions for Heimnetz layer separation
+title: Historical Naming Architecture (Layer Model)
+summary: Historical naming conventions from the former Heimnetz layer model
 last_reviewed: 2026-07-26
 depends_on: []
 verifies_with:

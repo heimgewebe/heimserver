@@ -4,8 +4,8 @@ role: runbooks
 status: deprecated
 canonicality: explanatory
 doc_type: runbook
-title: Heimserver Edge Runbook
-summary: Operations for Heimserver Edge gateway
+title: Historical Heimserver Edge Runbook
+summary: Historical operations for the former Heimserver edge gateway
 last_reviewed: 2026-07-26
 depends_on:
   - architecture/network.md
