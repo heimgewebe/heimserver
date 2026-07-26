@@ -9,8 +9,7 @@ title: Historical Runbooks Index
 summary: Historical index of superseded execution guides
 last_reviewed: 2026-07-26
 depends_on: []
-verifies_with:
-  - scripts/ci/check-runbook-invariants.sh
+verifies_with: []
 ---
 
 > **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.

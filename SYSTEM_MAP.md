@@ -8,13 +8,13 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [constitution.md](architecture/constitution.md) | `constitution` | - | deprecated | 2026-07-26 | `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
+| [constitution.md](architecture/constitution.md) | `constitution` | - | deprecated | 2026-07-26 | - |
 | [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
-| [naming.md](architecture/naming.md) | `naming` | - | deprecated | 2026-07-26 | `scripts/tests/test_caddy_template.py` |
+| [naming.md](architecture/naming.md) | `naming` | - | deprecated | 2026-07-26 | - |
 | [network.md](architecture/network.md) | `network` | - | deprecated | 2026-07-26 | - |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | deprecated | 2026-07-26 | - |
 | [glossary.md](architecture/glossary.md) | `glossary` | - | active | 2026-03-11 | - |
-| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | deprecated | 2026-07-26 | `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
+| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | deprecated | 2026-07-26 | - |
 | [nodes/heimberry.md](architecture/nodes/heimberry.md) | `node-heimberry` | - | deprecated | 2026-07-26 | - |
 | [nodes/heimserver.md](architecture/nodes/heimserver.md) | `node-heimserver` | - | deprecated | 2026-07-26 | - |
 | [nodes/heim-pc.md](architecture/nodes/heim-pc.md) | `node-heim-pc` | - | deprecated | 2026-07-26 | - |
@@ -25,29 +25,38 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [runtime.md](runtime/runtime.md) | `runtime` | - | deprecated | 2026-07-26 | `ops/audit/collect.sh` |
+| [runtime.md](runtime/runtime.md) | `runtime` | - | deprecated | 2026-07-26 | - |
+| [heimberry.md](runtime/heimberry.md) | `runtime-heimberry` | - | deprecated | 2026-07-26 | - |
+| [heimserver.md](runtime/heimserver.md) | `runtime-heimserver` | - | deprecated | 2026-07-26 | - |
 
 ## Zone: ACTION
 **Path:** `operations/`
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [operations.md](operations/operations.md) | `operations` | - | deprecated | 2026-07-26 | `ops/audit/collect.sh` |
+| [operations.md](operations/operations.md) | `operations` | - | deprecated | 2026-07-26 | - |
 
 ## Zone: RUNBOOKS
 **Path:** `runbooks/`
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [index.md](runbooks/index.md) | `runbooks-index` | entry | deprecated | 2026-07-26 | `scripts/ci/check-runbook-invariants.sh` |
+| [index.md](runbooks/index.md) | `runbooks-index` | entry | deprecated | 2026-07-26 | - |
 | [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
 | [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | - | deprecated | 2026-07-26 | - |
 | [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | - | deprecated | 2026-07-26 | - |
 | [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | - | deprecated | 2026-07-26 | - |
 | [heimberry-bootstrap.md](runbooks/heimberry-bootstrap.md) | `runbook-heimberry-bootstrap` | - | deprecated | 2026-07-26 | - |
-| [weltgewebe-dyndns.md](runbooks/weltgewebe-dyndns.md) | `runbook-weltgewebe-dyndns` | - | deprecated | 2026-07-26 | `scripts/tests/test_weltgewebe_ddns.py`, `scripts/tests/test_ddns_bundle.sh` |
+| [weltgewebe-dyndns.md](runbooks/weltgewebe-dyndns.md) | `runbook-weltgewebe-dyndns` | - | deprecated | 2026-07-26 | - |
 | [dns-migration.md](runbooks/dns-migration.md) | `runbook-dns-migration` | - | deprecated | 2026-07-26 | - |
 | [tailscale-migration.md](runbooks/tailscale-migration.md) | `runbook-tailscale-migration` | - | deprecated | 2026-07-26 | - |
+| [dns-pihole-wildcard.md](runbooks/dns-pihole-wildcard.md) | `ops.dns-pihole-wildcard-home-arpa` | - | deprecated | 2026-07-26 | - |
+| [edge.sync.md](runbooks/edge.sync.md) | `runbook-edge-sync` | - | deprecated | 2026-07-26 | - |
+| [ops.runbook.leitstand-gateway.md](runbooks/ops.runbook.leitstand-gateway.md) | `ops-runbook-leitstand-gateway` | - | deprecated | 2026-07-26 | - |
+| [pki-rotation.md](runbooks/pki-rotation.md) | `runbook-pki-rotation` | - | deprecated | 2026-07-26 | - |
+| [preflight.md](runbooks/preflight.md) | `runbook-preflight` | - | deprecated | 2026-07-26 | - |
+| [wireguard-rotation.md](runbooks/wireguard-rotation.md) | `runbook-wireguard-rotation` | - | deprecated | 2026-07-26 | - |
+| [CHANGELOG.md](runbooks/CHANGELOG.md) | `runbooks-changelog` | - | archived | 2026-07-26 | - |
 
 ## Zone: DECISIONS
 **Path:** `docs/decisions/`
@@ -74,6 +83,8 @@ Documents that depend on others:
 - **nodes/heim-pc.md** depends on: `heimnetz-2026`
 - **nodes/ipad.md** depends on: `heimnetz-2026`
 - **runtime.md** depends on: `architecture/constitution.md`, `architecture/network.md`
+- **heimberry.md** depends on: `architecture/heimnetz-2026.md`, `architecture/nodes/heimberry.md`
+- **heimserver.md** depends on: `architecture/heimnetz-2026.md`, `architecture/nodes/heimserver.md`
 - **operations.md** depends on: `runtime/runtime.md`
 - **ops.runbook.edge-caddy-port-conflict.md** depends on: `architecture/networking/port-matrix.md`, `runbooks/index.md`
 - **ops.runbook.weltgewebe-stack.md** depends on: `architecture/naming.md`, `architecture/networking/port-matrix.md`

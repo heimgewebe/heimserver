@@ -1,56 +1,69 @@
-# Ops Runbook: Leitstand Gateway
+---
+id: ops-runbook-leitstand-gateway
+role: runbooks
+status: deprecated
+canonicality: explanatory
+doc_type: runbook
+title: Historical Leitstand Gateway Runbook
+summary: Historische Betriebsbeschreibung des früheren Leitstand-Gateways auf Heimserver
+last_reviewed: 2026-07-26
+depends_on: []
+verifies_with: []
+---
 
-## Canonicality
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
-Dieses Dokument ist die kanonische operative Quelle für das Leitstand Gateway auf dem Heimserver.
+# Historical Ops Runbook: Leitstand Gateway
 
-Abgeleitete Darstellungen (z. B. im Leitstand-Repository) dürfen keine eigenständigen operativen Details zum Gateway-Betrieb auf dem Heimserver enthalten und müssen auf dieses Runbook verweisen.
+## Historical canonicality
+
+Dieses Dokument war die kanonische operative Quelle für das frühere Leitstand-Gateway auf Heimserver und besitzt heute keine Betriebsautorität.
+
+Frühere abgeleitete Darstellungen sollten auf dieses Runbook verweisen. Diese historische Beziehung begründet heute keine Verweis-, Sync- oder Betriebsanforderung.
 
 ## Synchronisation
 
-Änderungen an diesem Runbook gelten als führend. Abgeleitete Dokumente (wie im Leitstand-Repository) müssen angepasst werden, bevor operative Änderungen am Gateway als vollständig abgeschlossen gelten. Im PR-Review-Prozess ist aktiv zu prüfen, ob ein Sync-PR im Leitstand-Repo erforderlich ist. Zielzustand: CI- oder Guard-Mechanismen (z.B. WGX) erkennen und blockieren diesen strukturellen Drift maschinell.
+Änderungen an diesem Runbook galten früher als führend. Heute begründet es weder eine Sync-Pflicht noch eine operative Änderung; aktuelle Gateway-Wahrheit muss aus dem zuständigen aktiven Repository und frischen Runtime-Reads stammen.
 
-Scope: Operativer Gateway-Betrieb für Leitstand-UI. API-Routing ist derzeit nicht aktiv.
+Historischer Scope: früherer Gateway-Betrieb für die Leitstand-UI; diese Aussage beschreibt keinen aktuellen Runtime-Status.
 
 ## Status
 
-Die Leitstand-API ist derzeit nicht Bestandteil des Gateway-Betriebs (kein Reverse Proxy Upstream definiert).
+Historischer Snapshot: Die Leitstand-API war damals nicht Bestandteil des Gateway-Betriebs.
 
-## Architektur
+## Historische Architektur
 
-Ziel: **ein Gateway, aktuell nur UI (Leitstand)**.
-Weltgewebe ist optional (erfordert Upstream + explizite Aktivierung).
+Früheres Ziel: **ein Gateway, damals nur UI (Leitstand)**.
+Weltgewebe war optional und hätte einen Upstream sowie eine explizite Aktivierung erfordert.
 
-## Non-Goals
+## Frühere Non-Goals
 
 - Kein direkter Containerzugriff
 - Kein öffentlicher Internetzugang
 - Kein API-Routing
 
-## Acceptance Criteria
+## Frühere Acceptance Criteria
 
-Zur Verifikation der Gateway-Konfiguration (auszuführen von einem Client im LAN/WireGuard):
+Die folgenden Befehle dokumentieren ausschließlich die damalige Verifikation und sind nicht auszuführen:
 
-1. **Redirect Check:** `curl -fsS -I http://leitstand.heimgewebe.home.arpa` → Muss `308 Permanent Redirect` auf HTTPS liefern.
-2. **UI Check:** `curl -fsS -I --cacert <EDGE_CA_PATH> https://leitstand.heimgewebe.home.arpa/` (z.B. `/opt/heimgewebe/edge/edge-ca.crt`) → Muss `200 OK` liefern.
-3. **Optionaler Health Check (nur falls vom Leitstand-Service bereitgestellt):** `curl -fsS -I --cacert <EDGE_CA_PATH> https://leitstand.heimgewebe.home.arpa/health` → Erwartet `200 OK` (nicht-contractual, andernfalls ignorieren).
-4. **Public Exposure Guard:** Ein Aufruf über das öffentliche Internet darf nicht öffentlich auflösbar oder erreichbar sein (nur LAN/WireGuard).
+1. **Redirect Check:** Erwartet wurde `308 Permanent Redirect` auf HTTPS.
+2. **UI Check:** Erwartet wurde `200 OK` über den damaligen internen CA-Pfad.
+3. **Optionaler Health Check:** Erwartet wurde, sofern bereitgestellt, `200 OK`; dies war nicht vertraglich.
+4. **Public Exposure Guard:** Der damalige Zielzustand erlaubte nur LAN/WireGuard, keinen öffentlichen Zugriff.
 
-## DNS Konfiguration
+## Historische DNS-Konfiguration
 
-Die DNS-Einträge werden über Pi-hole Templates bereitgestellt.
+Die DNS-Einträge wurden über Pi-hole-Templates bereitgestellt.
 
-**Schritte:**
-1. Kopiere `infra/pihole/99-heimgewebe.conf.example` in die Pi-hole Konfiguration (z.B. `/etc/dnsmasq.d/` im Volume).
-2. Ersetze `<GATEWAY_IP>` durch die IP des Heimservers (z.B. `192.168.178.46`).
+**Frühere Schritte:**
+1. Das Template `infra/pihole/99-heimgewebe.conf.example` wurde in die damalige Pi-hole-Konfiguration kopiert.
+2. `<GATEWAY_IP>` wurde durch die damalige Heimserver-IP ersetzt.
 
-Für Weltgewebe (Optional):
-1. Kopiere `infra/pihole/optional/99-weltgewebe.conf.example` in die Pi-hole Konfiguration.
-2. Ersetze `<GATEWAY_IP>`.
+Für Weltgewebe wurde optional das historische Template `infra/pihole/optional/99-weltgewebe.conf.example` im selben früheren Ablauf verwendet.
 
-## Caddy Konfiguration
+## Historische Caddy-Konfiguration
 
-Die Konfiguration muss mit `infra/caddy/Caddyfile.prod` übereinstimmen.
+Die damalige Konfiguration sollte mit `infra/caddy/Caddyfile.prod` übereinstimmen.
 
 ```caddy
 http://leitstand.heimgewebe.home.arpa {
@@ -59,16 +72,16 @@ http://leitstand.heimgewebe.home.arpa {
 
 https://leitstand.heimgewebe.home.arpa {
   encode zstd gzip
-  # Service-Name muss dem Compose-Service entsprechen.
+  # Der Service-Name entsprach dem damaligen Compose-Service.
   # see infra/compose/compose.prod.yml
   reverse_proxy leitstand:3000
   tls internal
 }
 ```
 
-## Root Redirect
+## Historischer Root-Redirect
 
-Zusätzlich ist ein Root-Redirect aktiv:
+Zusätzlich war damals ein Root-Redirect vorgesehen:
 
 ```caddy
 http://heimgewebe.home.arpa {

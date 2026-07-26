@@ -61,6 +61,16 @@
       "zone": "reality"
     },
     {
+      "id": "runtime-heimberry",
+      "path": "runtime/heimberry.md",
+      "zone": "reality"
+    },
+    {
+      "id": "runtime-heimserver",
+      "path": "runtime/heimserver.md",
+      "zone": "reality"
+    },
+    {
       "id": "operations",
       "path": "operations/operations.md",
       "zone": "action"
@@ -108,6 +118,41 @@
     {
       "id": "runbook-tailscale-migration",
       "path": "runbooks/tailscale-migration.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "ops.dns-pihole-wildcard-home-arpa",
+      "path": "runbooks/dns-pihole-wildcard.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "runbook-edge-sync",
+      "path": "runbooks/edge.sync.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "ops-runbook-leitstand-gateway",
+      "path": "runbooks/ops.runbook.leitstand-gateway.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "runbook-pki-rotation",
+      "path": "runbooks/pki-rotation.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "runbook-preflight",
+      "path": "runbooks/preflight.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "runbook-wireguard-rotation",
+      "path": "runbooks/wireguard-rotation.md",
+      "zone": "runbooks"
+    },
+    {
+      "id": "runbooks-changelog",
+      "path": "runbooks/CHANGELOG.md",
       "zone": "runbooks"
     },
     {
@@ -180,6 +225,26 @@
     {
       "source": "runtime",
       "target": "network",
+      "type": "depends_on"
+    },
+    {
+      "source": "runtime-heimberry",
+      "target": "heimnetz-2026",
+      "type": "depends_on"
+    },
+    {
+      "source": "runtime-heimberry",
+      "target": "node-heimberry",
+      "type": "depends_on"
+    },
+    {
+      "source": "runtime-heimserver",
+      "target": "heimnetz-2026",
+      "type": "depends_on"
+    },
+    {
+      "source": "runtime-heimserver",
+      "target": "node-heimserver",
       "type": "depends_on"
     },
     {

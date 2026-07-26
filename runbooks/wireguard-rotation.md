@@ -1,4 +1,19 @@
-# Runbook: WireGuard Rotation (ohne Keys in Git)
+---
+id: runbook-wireguard-rotation
+role: runbooks
+status: deprecated
+canonicality: explanatory
+doc_type: runbook
+title: Historical WireGuard Rotation Runbook
+summary: Historische Anleitung für die frühere WireGuard-Schlüsselrotation
+last_reviewed: 2026-07-26
+depends_on: []
+verifies_with: []
+---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
+
+# Historical Runbook: WireGuard Rotation
 
 > **Status: historical / migration-state**
 >
@@ -9,7 +24,7 @@
 ## Ziel
 Keys rotieren, ohne dass Git jemals private Keys sieht.
 
-## Kanonischer Secrets-Pfad
+## Früher verwendeter Secrets-Pfad
 - `/etc/heimserver/secrets/wireguard/`
 
 ## Grobablauf (Server)

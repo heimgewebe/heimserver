@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "${ALLOW_HISTORICAL_HOST_READ:-}" != "1" ]; then
+  printf '%s\n' "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" >&2
+  exit 2
+fi
+
 # Snapshot: schreibt einen Audit-Snapshot (Textdateien).
 # Default-Zielpfad: ops/audit/snapshots/<timestamp> (innerhalb des Repos, aber git-ignored)
 #
