@@ -1,4 +1,4 @@
-purpose: Definition of machine-readable operational boundaries for agents interacting with Heimserver infrastructure.
+purpose: Definition of machine-readable boundaries for preserving the retired Heimserver repository as historical evidence.
 
 read_order:
   - repo.meta.yaml
@@ -7,8 +7,10 @@ read_order:
   - docs/index.md
 
 documentation_update_rules:
-  - "Changes to architecture requires explicit verification via operations."
-  - "Changes to runtime.md require a preflight.sh output or a committed snapshot artifact to prove the real state."
+  - "Heimserver is retired; no file in this repository may reactivate device, service, exposure, recovery or infrastructure authority."
+  - "Current infrastructure truth is external: heimgewebe/infra INFRA_CONSTITUTION.md plus fresh runtime reads."
+  - "Historical architecture changes require source-bound review and may not establish current infrastructure authority."
+  - "runtime/ contains point-in-time historical evidence and may not be presented as current state without a new external runtime observation."
 
 safe_read_paths:
   - architecture/

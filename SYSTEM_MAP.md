@@ -8,15 +8,15 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [constitution.md](architecture/constitution.md) | `constitution` | - | active | 2026-06-25 | `ops/checks/preflight.sh`, `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
+| [constitution.md](architecture/constitution.md) | `constitution` | - | deprecated | 2026-07-26 | `ops/checks/preflight.sh`, `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
 | [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
 | [naming.md](architecture/naming.md) | `naming` | - | active | 2026-06-25 | `ops/checks/preflight.sh`, `scripts/tests/test_caddy_template.py` |
-| [network.md](architecture/network.md) | `network` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
+| [network.md](architecture/network.md) | `network` | - | deprecated | 2026-07-26 | `ops/checks/preflight.sh` |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
 | [glossary.md](architecture/glossary.md) | `glossary` | - | active | 2026-03-11 | - |
-| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | active | 2026-06-25 | `ops/checks/preflight.sh`, `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
+| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | deprecated | 2026-07-26 | `ops/checks/preflight.sh`, `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
 | [nodes/heimberry.md](architecture/nodes/heimberry.md) | `node-heimberry` | - | active | 2026-04-28 | - |
-| [nodes/heimserver.md](architecture/nodes/heimserver.md) | `node-heimserver` | - | active | 2026-04-28 | - |
+| [nodes/heimserver.md](architecture/nodes/heimserver.md) | `node-heimserver` | - | deprecated | 2026-07-26 | - |
 | [nodes/heim-pc.md](architecture/nodes/heim-pc.md) | `node-heim-pc` | - | active | 2026-04-28 | - |
 | [nodes/ipad.md](architecture/nodes/ipad.md) | `node-ipad` | - | active | 2026-04-28 | - |
 
@@ -61,7 +61,7 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [index.md](docs/index.md) | `docs.index` | entry | active | 2026-04-28 | - |
+| [index.md](docs/index.md) | `docs.index` | entry | active | 2026-07-26 | - |
 
 ## Dependencies
 Documents that depend on others:

@@ -1,14 +1,8 @@
 # heimserver
 
-Dieses Repo ist das operative Rückgrat (Ops-Orakel) für das Heimnetz.
-Der Repository-Name bleibt historisch `heimserver`, die Zielsemantik ist jedoch ein Layer-Modell:
+> **Status: außer Betrieb / historische Referenz.** Der physische Heimserver besitzt keine aktive Rolle, Exposition, Autorität oder Recovery-Abhängigkeit. Die aktuelle Infrastrukturverfassung liegt in [`heimgewebe/infra@e1245b5…:INFRA_CONSTITUTION.md`](https://github.com/heimgewebe/infra/blob/e1245b502393edcdb42d0f20317c8a5a2c2defbe/INFRA_CONSTITUTION.md).
 
-- **Heimberry = Truth Layer** (DNS/Resolver/Truth)
-- **Heimserver = Service Layer** (Caddy, interne PKI, App-Container)
-- **Heim-PC = Interaction Layer**
-- **iPad = Access Layer**
-
-Siehe kanonisch: [`architecture/heimnetz-2026.md`](architecture/heimnetz-2026.md).
+Dieses private Repository bleibt erhalten, damit frühere Betriebsverträge, Sicherheitsüberlegungen, Runbooks und Runtime-Belege nachvollziehbar bleiben. Es ist kein Ops-Orakel, kein Service-Layer und keine Quelle für aktuellen Laufzeitstatus. Historische Anweisungen dürfen nicht ohne einen neuen, dienstgebundenen und reviewten Vertrag ausgeführt werden.
 
 ## Einstiegspunkte
 
@@ -26,17 +20,17 @@ Die Orientierung in diesem Repository ist in drei Ebenen strukturiert:
 
 ## Struktur & Hierarchie
 
-Das Repo folgt einer strikten Trennung zwischen Norm (Soll), Realität (Ist) und Handlung (Tun):
+Das Repo bewahrt die frühere Trennung zwischen Norm, beobachteter Realität und Handlung als historische Evidenz:
 
 1.  **[`architecture/`](architecture/)** (Die Verfassung)
     *   Normative Regeln, Netzplanung, Naming-Konventionen.
-    *   Hier steht, *wie es sein muss*.
+    *   Hier steht, *wie die frühere Architektur beabsichtigt war*.
 2.  **[`runtime/`](runtime/)** (Die Realität)
     *   Der beobachtete Ist-Zustand des Systems (Ports, Container, Routen).
-    *   Hier steht, *was aktuell läuft*.
+    *   Hier stehen zeitgebundene frühere Beobachtungen; sie belegen keinen aktuellen Laufzustand.
 3.  **[`operations/`](operations/)** (Die Handlung)
     *   Protokolle, Checks und operative Eingriffe.
-    *   Hier steht, *was getan wird*.
+    *   Hier stehen frühere Eingriffe; sie sind ohne neuen Vertrag nicht auszuführen.
 
 Zusätzlich:
 *   `runbooks/`: Konkrete Handlungsanweisungen (Step-by-Step).
@@ -66,26 +60,13 @@ Repo-Policy:
 - Repo bleibt privat.
 - Audit-Snapshots liegen im Repo-Baum unter `ops/audit/snapshots/`, sind aber git-ignored (nicht getrackt).
 
-## Quickstart
+## Prüfung der historischen Referenz
 
-Hooks installieren (empfohlen):
-
-    bash ops/install-hooks.sh
-
-Preflight laufen lassen:
-
-    bash ops/checks/preflight.sh
-
-Secrets-Pfad initialisieren (Server):
-
-    sudo bash ops/init-secrets-path.sh
-
-Snapshot redacted kopieren (vor dem Teilen prüfen):
-
-    bash ops/checks/redact_snapshot.sh ops/audit/snapshots/<ts>
+Vor Änderungen werden ausschließlich repositorylokale, nichtmutierende Konsistenzchecks ausgeführt. Serverinitialisierung, Secrets-Erzeugung, Deployment, Netzwerk- oder Dienständerung sind nicht Teil des Standardpfads.
 
 ## Repo-Intention
 
-Dieses Repo ist ein Ops-Orakel:
-- Doku ist nur dann wertvoll, wenn sie durch Checks **verifizierbar** ist.
-- Templates statt Schlüssel: Komfort ohne Selbstsabotage.
+Dieses Repo ist eine historische Referenz:
+- Historische Aussagen bleiben datei- und commitgebunden nachvollziehbar.
+- Aktuelle Infrastrukturwahrheit kommt aus `heimgewebe/infra` und frischen Runtime-Reads.
+- Templates bleiben erhalten; Schlüssel und Secrets bleiben außerhalb von Git.

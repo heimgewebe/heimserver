@@ -1,12 +1,12 @@
 ---
 id: network
 role: norm
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: architecture
-title: Network Architecture (Layer Model)
-summary: Canonical network rules and migration layout for Heimnetz layers
-last_reviewed: 2026-04-28
+title: Historical Network Architecture (Layer Model)
+summary: Historical network rules and migration layout for the former Heimserver layer
+last_reviewed: 2026-07-26
 depends_on: []
 verifies_with:
   - ops/checks/preflight.sh
@@ -14,13 +14,16 @@ verifies_with:
 
 # network.md
 
-Kanonische Netz- und Transportarchitektur
+> **Historische Referenz.** Dieses Dokument beschreibt die frühere Heimserver-Architektur. Heimserver ist außer Betrieb und besitzt keine aktive Rolle, Exposition, Autorität oder Recovery-Abhängigkeit. Der aktuelle Zielzustand liegt in [`heimgewebe/infra@e1245b5…:INFRA_CONSTITUTION.md`](https://github.com/heimgewebe/infra/blob/e1245b502393edcdb42d0f20317c8a5a2c2defbe/INFRA_CONSTITUTION.md). Die folgenden Inhalte dürfen nicht als heutige Betriebsfreigabe gelesen oder ausgeführt werden.
+
+
+Historische Netz- und Transportarchitektur
 ⛔️ ENTHÄLT SICHERHEITSRELEVANTE STRUKTUR
 ⛔️ NICHT VERÖFFENTLICHEN
 
 Stand: 2026-04-28
 Scope: Heimnetz (Layer-Modell)
-Dokumentklasse: ARCHITEKTUR · KANONISCH
+Dokumentklasse: ARCHITEKTUR · HISTORISCHE REFERENZ
 
 **Sicherheits-Policy (Repo-Status):**
 Dieses Dokument enthält sicherheitsrelevante Strukturen.
@@ -38,7 +41,7 @@ Destabilisierung:
 Das Problem war nie „DNS kaputt“.
 Das Problem war „Splitbrain durch falsche AllowedIPs und duale DNS-Wahrheiten“.
 
-## 1.1 Rollenanker (kanonisch)
+## 1.1 Früherer Rollenanker
 
 - Heimberry = Truth Layer (DNS/Resolver)
 - Heimserver = Service Layer (Caddy, interne PKI, Apps)

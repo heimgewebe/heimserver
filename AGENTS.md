@@ -1,26 +1,33 @@
 # AGENTS.md
 
 ## Zweck
-Ziel: Dieses Repo dient primär als Orientierung + Operationalisierung für Agents. Es enthält explizite Policy-Regeln in `agent-policy.yaml` und Repo-Metadaten in `repo.meta.yaml`.
-Dieses Repo ist das operative Rückgrat (Ops-Orakel) für den Heimserver und verwaltet die Infrastruktur des Weltgewebe Application Stacks.
+Ziel: Dieses Repo dient primär der Orientierung und beweissicheren Erhaltung historischer Heimserver-Verträge. Es enthält explizite Policy-Regeln in `agent-policy.yaml` und Repo-Metadaten in `repo.meta.yaml`.
+Dieses Repo ist eine historische private Betriebs- und Vertragsreferenz. Heimserver ist außer Betrieb; das Repository besitzt keine aktive Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität.
+
+## Aktuelle Autoritätsgrenze
+
+- Kanonischer aktueller Zielzustand: `heimgewebe/infra` `INFRA_CONSTITUTION.md`.
+- Heimserver: außer Betrieb; keine aktive Rolle, Exposition oder Autorität.
+- Historische Runtime-Belege begründen keine heutige Erreichbarkeit oder Betriebsfreigabe.
+- Änderungen dürfen den Host weder in Fleet, SSH, DNS, systemd, Cockpit noch Recovery zurückführen.
 
 ## Zuerst lesen
-Dieses Repo folgt einer strikten Trennung zwischen Norm (Soll) und Realität (Ist).
+Dieses Repo bewahrt die frühere Trennung zwischen Norm und Realität als historische Evidenz. Aktuelle Infrastrukturwahrheit liegt in `heimgewebe/infra` und in frischen Runtime-Reads.
 - **Repo-Policy (Privat vs. Public):** Dauerhaft privat. Reale IPs, Subnetze und Pfade sind im Repo erlaubt, um die operative Realität abzubilden. Niemals Keys, Secrets, Zertifikate (Private Keys), Logs oder unredacted Snapshots committen. Repo darf niemals public geschaltet werden; wenn doch, ist das ein Security Incident.
 - **Secrets-Shadow-Pfad:** Private Keys/Root-CA Keys liegen niemals in Git, sondern auf dem Server (z.B. `/etc/heimserver/secrets`). Repo enthält nur Dateinamen-Konventionen, Templates, Runbooks und Checks.
 - **Minimal-Workflow für Agents:**
-  1) Preflight laufen lassen: `bash ops/checks/preflight.sh`
-  2) Drift prüfen: Vergleiche Output mit `runtime/runtime.md`
-  3) Wenn Änderungen nötig: Entsprechendes Dokument (`runtime/runtime.md` oder `architecture/constitution.md`) aktualisieren und Runbooks referenzieren.
+  1) Repository- und Dokumentvertragschecks ausführen.
+  2) Historische Aussagen nur gegen ihre gebundene Quelle bewerten; `runtime/` ist kein aktueller Statusfeed.
+  3) Keine Runbooks, Deployments, Netzwerk- oder Dienstoperationen aus diesem Repository ausführen. Eine Reaktivierung benötigt einen neuen Bureau-Task, einen dienstgebundenen Infra-Vertrag und frische Runtime-Belege.
 
 ## Kanonische Quellen
-- **Runtime (IST-Zustand):** `runtime/runtime.md`
-- **Kontext (Architektur):** `architecture/constitution.md`
+- **Historische Runtime-Evidenz:** `runtime/runtime.md`
+- **Historische Architektur:** `architecture/constitution.md`
 - **Netz-Architektur:** `architecture/network.md`
 - **Namens-Architektur:** `architecture/naming.md`
-- **Operative Checks:** `ops/checks/preflight.sh`
-- **Operatives Protokoll:** `operations/operations.md`
-- **Runbooks:** `runbooks/`
+- **Historische/Repositorylokale Checks:** `ops/checks/preflight.sh`
+- **Historisches Operationsprotokoll:** `operations/operations.md`
+- **Historische Runbooks:** `runbooks/`
 - **Templates:** `security/templates/`
 
 ## Erkennungsregeln

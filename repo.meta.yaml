@@ -1,10 +1,11 @@
 repo_name: heimserver
 repo_type: ops
-role: Ops-Orakel, Trust-Pivot, Edge-Gateway-Konfiguration
-status: active
+role: Historische Betriebs- und Vertragsreferenz
+status: retired-reference
 summary: >
-  Operational deployment, enforcement, and health monitoring of the Weltgewebe application stack.
-  Defines the canonical truth for infrastructure, networking, and security boundaries.
+  Historical private reference for the former Heimserver service layer, deployment contracts,
+  security reasoning and runtime evidence. It has no active device, service, exposure, recovery
+  or infrastructure authority; current infrastructure truth is owned by heimgewebe/infra.
 
 primary_languages:
   - markdown
