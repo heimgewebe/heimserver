@@ -18,8 +18,8 @@ verifies_with:
 
 # runtime.md (Aggregator)
 
-Status: Operativ kanonisch
-Scope: Aggregator für Laufzeit-Realität im Layer-Modell (nicht Architekturvision)
+Status: Historischer Snapshot; nicht aktuell
+Scope: Frühere Aggregation der damaligen Laufzeit-Realität im Layer-Modell
 
 ## Runtime-Dokumente (Drafts / experimental)
 

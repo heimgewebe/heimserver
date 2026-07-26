@@ -18,8 +18,8 @@ verifies_with:
 
 # operations.md
 
-Betriebs- und Eingriffsprotokoll
-⛔️ OPERATIVES DOKUMENT · KANONISCH
+Historisches Betriebs- und Eingriffsprotokoll
+⛔️ HISTORISCHES OPERATIVES DOKUMENT · NICHT AUSFÜHREN
 
 Stand: 2026-02-13
 Scope: Heimserver · Heimgewebe · WireGuard · Pi-hole · Caddy

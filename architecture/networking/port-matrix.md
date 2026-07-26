@@ -16,7 +16,7 @@ verifies_with: []
 
 # Port-Matrix Heimserver & Gateway-Ownership
 
-**Dokumentklasse:** ARCHITEKTUR · INVARIANTE
+**Dokumentklasse:** HISTORISCHE ARCHITEKTUR · FRÜHERE INVARIANTE
 **Stand:** 2026-02-25
 **Scope:** Host-Namespace Ports (TCP/UDP)
 

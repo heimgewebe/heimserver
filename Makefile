@@ -6,7 +6,7 @@ help:
 	@echo "  make snapshot   - explicit historical host read (requires ALLOW_HISTORICAL_HOST_READ=1)"
 	@echo "  make redact     - create redacted snapshot copy (review before sharing)"
 	@echo "  make hooks      - install git hooks (local clone)"
-	@echo "  make secrets    - init /etc/heimserver/secrets (needs sudo)"
+	@echo "  make secrets    - blocked while Heimserver is retired"
 	@echo "  make validate-ddns - run DynDNS syntax, unit, bundle and systemd checks"
 	@echo "  make generate   - refresh generated repository artifacts"
 	@echo "  make validate-generated - reject generated artifact drift"

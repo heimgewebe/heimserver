@@ -15,10 +15,10 @@ verifies_with: []
 
 > **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
-# Heimberry Bootstrap (Truth Layer)
+# Historischer Heimberry Bootstrap (Truth Layer)
 
 ## Ziel
-Heimberry als kanonischen DNS-/Truth-Knoten betriebsbereit machen.
+Früherer Zielzustand: Heimberry als damaligen DNS-/Truth-Knoten betriebsbereit machen.
 
 ## Minimalablauf
 1. Basis-Host bereitstellen (OS + Netzwerk).

@@ -17,7 +17,7 @@ verifies_with:
 
 # Runbooks Index
 
-Diese Runbooks sind operative Abläufe (Recovery/Rotation/Änderungen).
+Diese Dateien bewahren frühere operative Abläufe (Recovery/Rotation/Änderungen); sie sind nicht auszuführen.
 
 ## Basis
 - `preflight.md` — Checks vor/nach Änderungen

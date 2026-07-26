@@ -19,6 +19,13 @@ HISTORICAL_ZONES = {"norm", "reality", "action", "runbooks"}
 BANNER = "Historische Referenz — nicht ausführen."
 FORBIDDEN_STANDARD_CHECK = "ops/checks/preflight.sh"
 STATIC_CHECK = "scripts/ci/check_retired_reference_contract.py"
+FORBIDDEN_CURRENT_MARKERS = (
+    "Status: Operativ kanonisch",
+    "⛔️ OPERATIVES DOKUMENT · KANONISCH",
+    "## Rolle (kanonisch)",
+    "Scope: Kanonische Wahrheit",
+    "Kanonische Namens- und Adressierungsarchitektur",
+)
 
 
 def _read(path: str) -> str:
@@ -54,8 +61,12 @@ def main() -> int:
         verifies = frontmatter.get("verifies_with") or []
         if FORBIDDEN_STANDARD_CHECK in verifies:
             errors.append(f"{path}: host-reading preflight remains a verifier")
-        if BANNER not in full_path.read_text(encoding="utf-8"):
+        document_text = full_path.read_text(encoding="utf-8")
+        if BANNER not in document_text:
             errors.append(f"{path}: historical non-execution banner missing")
+        for marker in FORBIDDEN_CURRENT_MARKERS:
+            if marker in document_text:
+                errors.append(f"{path}: current-authority marker remains: {marker}")
 
     checks = manifest.get("checks", [])
     if FORBIDDEN_STANDARD_CHECK in checks:
@@ -89,6 +100,11 @@ def main() -> int:
             errors.append(f"repo.meta.yaml: historical source remains canonical: {forbidden_source}")
     if "historical_reference_sources:" not in repo_meta:
         errors.append("repo.meta.yaml: historical_reference_sources missing")
+    for section_name in ("safe_read_paths", "guarded_write_paths"):
+        section = repo_meta.split(f"{section_name}:", 1)[-1].split("\n\n", 1)[0]
+        for required_path in ("architecture/", "runtime/"):
+            if f"  - {required_path}" not in section:
+                errors.append(f"repo.meta.yaml: {required_path} missing from {section_name}")
 
     makefile = _read("Makefile")
     preflight_section = makefile.split("preflight:", 1)[-1].split("\nsnapshot:", 1)[0]

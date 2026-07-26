@@ -15,10 +15,10 @@ verifies_with: []
 
 > **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
-# DNS Migration: Heimserver → Heimberry
+# Historische DNS-Migration: Heimserver → Heimberry
 
 ## Ziel
-DNS-Truth von Heimserver auf Heimberry verlagern, ohne Dual-Authority.
+Früherer Zielzustand: DNS-Truth von Heimserver auf Heimberry verlagern, ohne Dual-Authority.
 
 ## Minimalablauf
 1. Heimberry DNS-Funktion validieren.

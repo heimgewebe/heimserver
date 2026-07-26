@@ -15,10 +15,10 @@ verifies_with: []
 
 > **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
-# Tailscale Migration (Primary Overlay)
+# Historische Tailscale-Migration (Primary Overlay)
 
 ## Ziel
-Tailscale als primären Overlay-/Access-Pfad etablieren.
+Früherer Zielzustand: Tailscale als primären Overlay-/Access-Pfad etablieren.
 
 ## Minimalablauf
 1. Tailscale auf relevanten Knoten/Clients aktivieren.

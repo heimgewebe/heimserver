@@ -54,6 +54,8 @@ generated_artifacts:
 safe_read_paths:
   - README.md
   - AGENTS.md
+  - architecture/
+  - runtime/
   - runbooks/
   - manifest/
   - docs/
@@ -61,6 +63,8 @@ safe_read_paths:
   - SYSTEM_MAP.md
 
 guarded_write_paths:
+  - architecture/
+  - runtime/
   - runbooks/
   - manifest/repo-index.yaml
   - ops/checks/

@@ -16,7 +16,7 @@ verifies_with:
 
 # naming.md
 
-Kanonische Namens- und Adressierungsarchitektur
+Historisch kanonische Namens- und Adressierungsarchitektur
 ⛔️ ARCHITEKTURDOKUMENT · NICHT ÖFFENTLICH
 
 Stand: 2026-04-28

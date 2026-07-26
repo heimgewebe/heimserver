@@ -14,9 +14,9 @@ verifies_with: []
 
 > **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
-# Heimberry — Truth Layer
+# Historische Rolle: Heimberry — Truth Layer
 
-## Rolle (kanonisch)
+## Frühere Rolle (damals kanonisch)
 - Primärer und einziger Truth-Knoten für DNS im Heimnetz (`home.arpa`)
 - Pi-hole + Unbound + Tailscale DNS-Integration
 

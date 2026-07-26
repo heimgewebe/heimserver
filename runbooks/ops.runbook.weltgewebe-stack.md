@@ -14,9 +14,9 @@ depends_on:
 
 > **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
-# Ops Runbook: Weltgewebe Stack
+# Historisches Ops Runbook: Weltgewebe Stack
 
-Scope: Kanonische Wahrheit und operative Checks für den Weltgewebe-Stack auf dem Heimserver.
+Scope: Historische Beschreibung früherer Checks für den damaligen Weltgewebe-Stack auf dem Heimserver.
 
 ## 1. Architektur-Entscheidung: Vollwertiger Stack & Lokale UI
 
