@@ -12,7 +12,6 @@ _No major terminology gaps detected (Glossary is present)._
 _No actionable epistemic gaps detected._
 
 ## Reference Review Signals (Contextual)
-- Reference review signal: `node-heimserver` (`architecture/nodes/heimserver.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `node-heim-pc` (`architecture/nodes/heim-pc.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `node-ipad` (`architecture/nodes/ipad.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `operations` (`operations/operations.md`) has no detected incoming references. (reference_policy=optional (explicitly set))

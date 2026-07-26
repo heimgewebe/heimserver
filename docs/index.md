@@ -6,18 +6,18 @@ role: docs
 doc_role: entry
 status: active
 canonicality: canonical
-last_reviewed: 2026-04-28
-summary: Zentrale Einstiegs- und Orientierungsseite für die gesamte Dokumentation.
+last_reviewed: 2026-07-26
+summary: Zentrale Einstiegsseite in die historische Heimserver-Betriebs- und Vertragsreferenz.
 ---
 
 # Heimnetz Documentation Index (Repo: `heimserver`)
 
-Dieses Dokument bildet den zentralen Einstieg in die strukturierte Dokumentation des Repositories.
+Dieses Dokument erschließt historische Heimserver-Architektur, Runtime-Belege und Runbooks. Es ist keine Betriebsanleitung für einen aktiven Host. Der aktuelle Zielzustand liegt in der Infra-Verfassung; Heimserver ist außer Betrieb.
 
 ## 📖 Lesereihenfolge
 1. **[Architektur & Norm](#architektur--norm)** - Verstehe die Regeln, Netzwerke und Kern-Konzepte.
-2. **[Runtime & Realität](#runtime--realität)** - Betrachte den aktuellen Systemzustand.
-3. **[Operationen & Runbooks](#operationen--runbooks)** - Lerne wie man eingreift und Handlungsabläufe ausführt.
+2. **[Runtime & Realität](#runtime--realität)** - Betrachte zeitgebundene historische Beobachtungen, nicht den aktuellen Systemzustand.
+3. **[Operationen & Runbooks](#operationen--runbooks)** - Lies frühere Handlungsabläufe ausschließlich als historische Evidenz.
 4. **[Entscheidungen (Decisions)](#entscheidungen-decisions)** - Erfahre das "Warum" hinter Änderungen am System.
 
 ## 🧭 Generierte Orientierung
@@ -41,7 +41,7 @@ Das Observatorium liefert generierte Übersichten zum agentischen Gesundheitszus
 ## 🏗️ Kern-Dokumentgruppen
 
 ### Architektur & Norm
-Hier stehen die Regeln, nach denen die Infrastruktur zu funktionieren hat. Lese dies, um das "Warum" zu verstehen.
+Hier stehen die früheren Regeln und Begründungen. Sie sind durch die aktuelle Infra-Verfassung supersediert.
 - [Constitution](../architecture/constitution.md)
 - [Naming Conventions](../architecture/naming.md)
 - [Network Layout](../architecture/network.md)
@@ -54,13 +54,13 @@ Hier stehen die Regeln, nach denen die Infrastruktur zu funktionieren hat. Lese 
 - [Node: iPad (Access Layer)](../architecture/nodes/ipad.md)
 
 ### Runtime & Realität
-Hier dokumentieren wir in Snapshots, wie die Knoten *tatsächlich* laufen.
+Hier liegen zeitgebundene Snapshots früherer Laufzustände; sie belegen keinen heutigen Betrieb.
 - [Runtime Status](../runtime/runtime.md)
 - [Runtime Draft: Heimberry](../runtime/heimberry.md) *(derived/experimental, bis Snapshot-Belege vorliegen)*
 - [Runtime Draft: Heimserver](../runtime/heimserver.md) *(derived/experimental, bis Snapshot-Belege vorliegen)*
 
 ### Operationen & Runbooks
-Hier steht, wie wir eingreifen, wenn das System drifftet oder Updates braucht.
+Hier stehen frühere Eingriffe. Ohne neuen dienstgebundenen Vertrag dürfen sie nicht ausgeführt werden.
 - [Operations Policy](../operations/operations.md)
 - [Runbooks Index](../runbooks/index.md)
 

@@ -1,12 +1,12 @@
 ---
 id: constitution
 role: norm
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: architecture
-title: Heimnetz Constitution (Repo: heimserver)
-summary: Canonical rules and context for the Heimnetz layer model
-last_reviewed: 2026-06-25
+title: Historische Heimnetz Constitution (Repo: heimserver)
+summary: Historische Regeln und Begründungen des früheren Heimnetz-Layer-Modells
+last_reviewed: 2026-07-26
 depends_on: []
 verifies_with:
   - ops/checks/preflight.sh
@@ -16,10 +16,13 @@ verifies_with:
 
 # constitution.md
 
+> **Historische Referenz.** Dieses Dokument beschreibt die frühere Heimserver-Architektur. Heimserver ist außer Betrieb und besitzt keine aktive Rolle, Exposition, Autorität oder Recovery-Abhängigkeit. Der aktuelle Zielzustand liegt in [`heimgewebe/infra@e1245b5…:INFRA_CONSTITUTION.md`](https://github.com/heimgewebe/infra/blob/e1245b502393edcdb42d0f20317c8a5a2c2defbe/INFRA_CONSTITUTION.md). Die folgenden Inhalte dürfen nicht als heutige Betriebsfreigabe gelesen oder ausgeführt werden.
+
+
 Version 4.1 · Layer-Modell-Konsolidierung
 Stand: 2026-04-28
 Repo: heimserver (historischer Name)
-Dokumentklasse: ARCHITEKTUR · KANONISCH
+Dokumentklasse: ARCHITEKTUR · HISTORISCHE REFERENZ
 
 ## 0. Identität & Zweck
 
@@ -35,7 +38,7 @@ DNS-Truth liegt kanonisch auf Heimberry.
 Hinweis: Bestimmte Deployments (z.B. Weltgewebe/Leitstand/API) laufen aktuell nur für die Entwicklungs- und Integrationsphase auf diesem Heimserver und können später migrieren; die Sicherheits- und Kohärenzprinzipien bleiben unverändert.
 
 **Scope:**
-Dieses Dokument definiert die unverhandelbaren Grundsätze (Verfassung).
+Dieses Dokument bewahrt die früheren Grundsätze und begründet keine aktuelle Verfassung.
 Details befinden sich in den spezifischen Kanon-Dokumenten.
 
 ---

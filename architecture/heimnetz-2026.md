@@ -1,12 +1,12 @@
 ---
 id: heimnetz-2026
 role: norm
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: architecture
-title: "Blaupause: Heimnetz 2026+ (Deterministische Layer-Architektur, gehärtet & durchsetzbar)"
-summary: "Kanonische Zielarchitektur für den kombinierten Einsatz von Heimserver und Heimberry."
-last_reviewed: 2026-06-25
+title: "Historische Blaupause: Heimnetz 2026+"
+summary: "Supersedierte Zielarchitektur für den früheren kombinierten Einsatz von Heimserver und Heimberry."
+last_reviewed: 2026-07-26
 depends_on:
   - constitution
   - network
@@ -18,12 +18,14 @@ verifies_with:
   - scripts/tests/test_preflight_mock.sh
   - scripts/tests/test_caddy_template.py
 ---
-# **Blaupause: Heimnetz 2026+ (Deterministische Layer-Architektur, gehärtet & durchsetzbar)**
+# Historische Blaupause: Heimnetz 2026+
+
+> **Historische Referenz.** Dieses Dokument beschreibt die frühere Heimserver-Architektur. Heimserver ist außer Betrieb und besitzt keine aktive Rolle, Exposition, Autorität oder Recovery-Abhängigkeit. Der aktuelle Zielzustand liegt in [`heimgewebe/infra@e1245b5…:INFRA_CONSTITUTION.md`](https://github.com/heimgewebe/infra/blob/e1245b502393edcdb42d0f20317c8a5a2c2defbe/INFRA_CONSTITUTION.md). Die folgenden Inhalte dürfen nicht als heutige Betriebsfreigabe gelesen oder ausgeführt werden.
+
 
 > **Status-Hinweis:**
-> Dieses Dokument beschreibt die **Zielarchitektur (Blueprint)**.
-> Es ersetzt **nicht** die aktuell gültigen Invarianten in `constitution.md` und `network.md`,
-> sondern definiert den angestrebten Endzustand.
+> Dieses Dokument beschreibt einen supersedierten früheren Blueprint.
+> Es definiert keinen angestrebten oder ausführbaren Endzustand mehr.
 
 ---
 ## 0. Leitprinzipien (kanonisch, präzisiert)
