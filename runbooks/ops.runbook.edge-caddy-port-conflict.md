@@ -1,18 +1,19 @@
 ---
 id: ops.runbook.edge-caddy-port-conflict
 role: runbooks
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: runbook
 title: Caddy Port Conflict Runbook
 summary: Steps to resolve Caddy port conflicts
-last_reviewed: 2026-02-25
+last_reviewed: 2026-07-26
 depends_on:
   - architecture/networking/port-matrix.md
   - runbooks/index.md
-verifies_with:
-  - ops/checks/preflight.sh
+verifies_with: []
 ---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
 # ops.runbook.edge-caddy-port-conflict
 

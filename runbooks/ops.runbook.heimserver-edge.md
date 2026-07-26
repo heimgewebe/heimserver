@@ -2,11 +2,11 @@
 id: ops-runbook-heimserver-edge
 role: runbooks
 status: deprecated
-canonicality: canonical
+canonicality: explanatory
 doc_type: runbook
 title: Heimserver Edge Runbook
 summary: Operations for Heimserver Edge gateway
-last_reviewed: 2026-04-28
+last_reviewed: 2026-07-26
 depends_on:
   - architecture/network.md
   - architecture/networking/port-matrix.md
@@ -15,6 +15,8 @@ deprecated_by:
   - runbook-dns-migration
   - runbook-tailscale-migration
 ---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
 # Heimserver-Edge-Dokumentation (Netzwerk, Gateway, Container)
 

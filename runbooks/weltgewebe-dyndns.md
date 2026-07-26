@@ -6,7 +6,7 @@ canonicality: explanatory
 doc_type: runbook
 title: Weltgewebe DynDNS auf Heimberry
 summary: Historischer, fail-closed stillgelegter INWX-DynDNS-Pfad; Produktion läuft auf wg-prod-1
-last_reviewed: 2026-07-16
+last_reviewed: 2026-07-26
 depends_on:
   - constitution
   - naming
@@ -14,6 +14,8 @@ verifies_with:
   - scripts/tests/test_weltgewebe_ddns.py
   - scripts/tests/test_ddns_bundle.sh
 ---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
 # Weltgewebe DynDNS auf Heimberry
 

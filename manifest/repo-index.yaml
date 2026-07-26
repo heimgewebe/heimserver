@@ -43,7 +43,7 @@ zones:
       - index.md
 
 checks:
-  - ops/checks/preflight.sh
+  - scripts/ci/check_retired_reference_contract.py
   - scripts/ci/check-runbook-invariants.sh
   - scripts/ci/check_repo_index_consistency.py
   - scripts/ci/check-doc-review-age.py

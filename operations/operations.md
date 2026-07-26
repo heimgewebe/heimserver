@@ -2,17 +2,19 @@
 id: operations
 role: action
 reference_policy: optional
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: policy
 title: Operations Policy
 summary: Operational procedures protocol
-last_reviewed: 2026-06-25
+last_reviewed: 2026-07-26
 depends_on:
   - runtime/runtime.md
 verifies_with:
   - ops/audit/collect.sh
 ---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
 # operations.md
 

@@ -8,9 +8,10 @@ title: Historical Network Architecture (Layer Model)
 summary: Historical network rules and migration layout for the former Heimserver layer
 last_reviewed: 2026-07-26
 depends_on: []
-verifies_with:
-  - ops/checks/preflight.sh
+verifies_with: []
 ---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
 # network.md
 

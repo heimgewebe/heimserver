@@ -1,18 +1,20 @@
 ---
 id: runtime
 role: reality
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: status
 title: Runtime Index (Aggregator)
 summary: Aggregierter Runtime-Status über Heimnetz-Layer
-last_reviewed: 2026-04-28
+last_reviewed: 2026-07-26
 depends_on:
   - architecture/constitution.md
   - architecture/network.md
 verifies_with:
   - ops/audit/collect.sh
 ---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
 # runtime.md (Aggregator)
 

@@ -17,10 +17,10 @@ The following top-level paths exist but are not tracked as canonical zones or di
 The following scripts were discovered via `Makefile` references or by scanning the `scripts/ci/` directory but are not registered in `audit/impl-registry.yaml`:
 - `ops/checks/redact_snapshot.sh`
 - `ops/checks/snapshot.sh`
-- `ops/init-secrets-path.sh`
 - `ops/install-hooks.sh`
 - `scripts/ci/check-repo-index-consistency.sh`
 - `scripts/ci/check-runbook-invariants.sh`
+- `scripts/ci/check_retired_reference_contract.py`
 - `scripts/docmeta/generate-agent-readiness.py`
 - `scripts/docmeta/generate-architecture-drift.py`
 - `scripts/docmeta/generate-doc-coverage.py`

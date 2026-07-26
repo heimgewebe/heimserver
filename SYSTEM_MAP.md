@@ -8,46 +8,46 @@
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [constitution.md](architecture/constitution.md) | `constitution` | - | deprecated | 2026-07-26 | `ops/checks/preflight.sh`, `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
+| [constitution.md](architecture/constitution.md) | `constitution` | - | deprecated | 2026-07-26 | `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
 | [docmeta.schema.md](architecture/docmeta.schema.md) | `docmeta.schema` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
-| [naming.md](architecture/naming.md) | `naming` | - | active | 2026-06-25 | `ops/checks/preflight.sh`, `scripts/tests/test_caddy_template.py` |
-| [network.md](architecture/network.md) | `network` | - | deprecated | 2026-07-26 | `ops/checks/preflight.sh` |
-| [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
+| [naming.md](architecture/naming.md) | `naming` | - | deprecated | 2026-07-26 | `scripts/tests/test_caddy_template.py` |
+| [network.md](architecture/network.md) | `network` | - | deprecated | 2026-07-26 | - |
+| [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | deprecated | 2026-07-26 | - |
 | [glossary.md](architecture/glossary.md) | `glossary` | - | active | 2026-03-11 | - |
-| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | deprecated | 2026-07-26 | `ops/checks/preflight.sh`, `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
-| [nodes/heimberry.md](architecture/nodes/heimberry.md) | `node-heimberry` | - | active | 2026-04-28 | - |
+| [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | deprecated | 2026-07-26 | `scripts/tests/test_preflight_mock.sh`, `scripts/tests/test_caddy_template.py` |
+| [nodes/heimberry.md](architecture/nodes/heimberry.md) | `node-heimberry` | - | deprecated | 2026-07-26 | - |
 | [nodes/heimserver.md](architecture/nodes/heimserver.md) | `node-heimserver` | - | deprecated | 2026-07-26 | - |
-| [nodes/heim-pc.md](architecture/nodes/heim-pc.md) | `node-heim-pc` | - | active | 2026-04-28 | - |
-| [nodes/ipad.md](architecture/nodes/ipad.md) | `node-ipad` | - | active | 2026-04-28 | - |
+| [nodes/heim-pc.md](architecture/nodes/heim-pc.md) | `node-heim-pc` | - | deprecated | 2026-07-26 | - |
+| [nodes/ipad.md](architecture/nodes/ipad.md) | `node-ipad` | - | deprecated | 2026-07-26 | - |
 
 ## Zone: REALITY
 **Path:** `runtime/`
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [runtime.md](runtime/runtime.md) | `runtime` | - | active | 2026-04-28 | `ops/audit/collect.sh` |
+| [runtime.md](runtime/runtime.md) | `runtime` | - | deprecated | 2026-07-26 | `ops/audit/collect.sh` |
 
 ## Zone: ACTION
 **Path:** `operations/`
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [operations.md](operations/operations.md) | `operations` | - | active | 2026-06-25 | `ops/audit/collect.sh` |
+| [operations.md](operations/operations.md) | `operations` | - | deprecated | 2026-07-26 | `ops/audit/collect.sh` |
 
 ## Zone: RUNBOOKS
 **Path:** `runbooks/`
 
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
-| [index.md](runbooks/index.md) | `runbooks-index` | entry | active | 2026-06-25 | `scripts/ci/check-runbook-invariants.sh` |
+| [index.md](runbooks/index.md) | `runbooks-index` | entry | deprecated | 2026-07-26 | `scripts/ci/check-runbook-invariants.sh` |
 | [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
-| [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | - | active | 2026-02-25 | `ops/checks/preflight.sh` |
-| [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | - | active | 2026-03-07 | - |
-| [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | - | deprecated | 2026-04-28 | - |
-| [heimberry-bootstrap.md](runbooks/heimberry-bootstrap.md) | `runbook-heimberry-bootstrap` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
-| [weltgewebe-dyndns.md](runbooks/weltgewebe-dyndns.md) | `runbook-weltgewebe-dyndns` | - | deprecated | 2026-07-16 | `scripts/tests/test_weltgewebe_ddns.py`, `scripts/tests/test_ddns_bundle.sh` |
-| [dns-migration.md](runbooks/dns-migration.md) | `runbook-dns-migration` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
-| [tailscale-migration.md](runbooks/tailscale-migration.md) | `runbook-tailscale-migration` | - | active | 2026-04-28 | `ops/checks/preflight.sh` |
+| [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | - | deprecated | 2026-07-26 | - |
+| [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | - | deprecated | 2026-07-26 | - |
+| [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | - | deprecated | 2026-07-26 | - |
+| [heimberry-bootstrap.md](runbooks/heimberry-bootstrap.md) | `runbook-heimberry-bootstrap` | - | deprecated | 2026-07-26 | - |
+| [weltgewebe-dyndns.md](runbooks/weltgewebe-dyndns.md) | `runbook-weltgewebe-dyndns` | - | deprecated | 2026-07-26 | `scripts/tests/test_weltgewebe_ddns.py`, `scripts/tests/test_ddns_bundle.sh` |
+| [dns-migration.md](runbooks/dns-migration.md) | `runbook-dns-migration` | - | deprecated | 2026-07-26 | - |
+| [tailscale-migration.md](runbooks/tailscale-migration.md) | `runbook-tailscale-migration` | - | deprecated | 2026-07-26 | - |
 
 ## Zone: DECISIONS
 **Path:** `docs/decisions/`
@@ -85,7 +85,7 @@ Documents that depend on others:
 - **0001-adopt-agentic-blueprint.md** depends on: `docmeta.schema`, `glossary`
 
 ## Automated Checks
-- [`ops/checks/preflight.sh`](ops/checks/preflight.sh)
+- [`scripts/ci/check_retired_reference_contract.py`](scripts/ci/check_retired_reference_contract.py)
 - [`scripts/ci/check-runbook-invariants.sh`](scripts/ci/check-runbook-invariants.sh)
 - [`scripts/ci/check_repo_index_consistency.py`](scripts/ci/check_repo_index_consistency.py)
 - [`scripts/ci/check-doc-review-age.py`](scripts/ci/check-doc-review-age.py)

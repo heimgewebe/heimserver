@@ -2,16 +2,18 @@
 id: runbooks-index
 role: runbooks
 doc_role: entry
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: reference
 title: Runbooks Index
 summary: Entrypoint for execution guides
-last_reviewed: 2026-06-25
+last_reviewed: 2026-07-26
 depends_on: []
 verifies_with:
   - scripts/ci/check-runbook-invariants.sh
 ---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
 # Runbooks Index
 

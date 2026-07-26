@@ -1,9 +1,9 @@
-.PHONY: help preflight snapshot redact hooks secrets validate-warnings validate-shell-tests validate-ddns-syntax validate-ddns-unit validate-ddns-bundle validate-ddns-systemd validate-ddns validate-generated generate diff-check validate
+.PHONY: help preflight snapshot redact hooks secrets validate-retired-reference validate-warnings validate-shell-tests validate-ddns-syntax validate-ddns-unit validate-ddns-bundle validate-ddns-systemd validate-ddns validate-generated generate diff-check validate
 
 help:
 	@echo "Targets:"
-	@echo "  make preflight  - run ops checks"
-	@echo "  make snapshot   - write audit snapshot outside git"
+	@echo "  make preflight  - explicit historical host read (requires ALLOW_HISTORICAL_HOST_READ=1)"
+	@echo "  make snapshot   - explicit historical host read (requires ALLOW_HISTORICAL_HOST_READ=1)"
 	@echo "  make redact     - create redacted snapshot copy (review before sharing)"
 	@echo "  make hooks      - install git hooks (local clone)"
 	@echo "  make secrets    - init /etc/heimserver/secrets (needs sudo)"
@@ -13,9 +13,11 @@ help:
 	@echo "  make diff-check - run git diff --check"
 
 preflight:
+	@test "$(ALLOW_HISTORICAL_HOST_READ)" = "1" || (echo "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1"; exit 2)
 	bash ops/checks/preflight.sh
 
 snapshot:
+	@test "$(ALLOW_HISTORICAL_HOST_READ)" = "1" || (echo "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1"; exit 2)
 	bash ops/checks/snapshot.sh
 
 redact:
@@ -27,7 +29,11 @@ hooks:
 	bash ops/install-hooks.sh
 
 secrets:
-	sudo bash ops/init-secrets-path.sh
+	@echo "Blocked: Heimserver is retired; reintroduce this target only through a new Bureau task and service-bound infra contract"
+	@exit 2
+
+validate-retired-reference:
+	python3 scripts/ci/check_retired_reference_contract.py
 
 validate-warnings:
 	-python3 scripts/ci/check-doc-review-age.py
@@ -112,6 +118,6 @@ validate-generated: generate
 diff-check:
 	git diff --check
 
-validate: preflight validate-shell-tests validate-ddns validate-generated
+validate: validate-retired-reference validate-shell-tests validate-ddns validate-generated
 	python3 scripts/ci/check_repo_index_consistency.py
 	$(MAKE) validate-warnings
