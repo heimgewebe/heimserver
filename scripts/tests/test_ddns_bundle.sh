@@ -28,6 +28,23 @@ set -e
 [[ "$LIVE_CHECK_STATUS" -eq 2 ]]
 grep -Fq "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" <<<"$LIVE_CHECK_OUTPUT"
 
+set +e
+RELATIVE_OUTPUT="$(DESTDIR=relative-fixture "$BUNDLE" --check 2>&1)"
+RELATIVE_STATUS=$?
+set -e
+[[ "$RELATIVE_STATUS" -ne 0 ]]
+grep -Fq "DESTDIR must be an absolute fixture path" <<<"$RELATIVE_OUTPUT"
+
+ln -s / "$TMP/root-link"
+for root_equivalent in / /tmp/.. "$TMP/root-link"; do
+  set +e
+  ROOT_OUTPUT="$(env -u ALLOW_HISTORICAL_HOST_READ DESTDIR="$root_equivalent" "$BUNDLE" --check 2>&1)"
+  ROOT_STATUS=$?
+  set -e
+  [[ "$ROOT_STATUS" -eq 2 ]]
+  grep -Fq "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" <<<"$ROOT_OUTPUT"
+done
+
 install -d -m 0700 -- "$CONFIG"
 install -D -m 0755 -- "$ROOT/scripts/heimberry/weltgewebe_ddns.py" "$PROGRAM"
 install -D -m 0644 -- "$ROOT/ops/systemd/weltgewebe-ddns.service" "$SERVICE"
@@ -44,6 +61,17 @@ DESTDIR="$TMP/root" "$BUNDLE" --check
 cmp --silent "$ROOT/scripts/heimberry/weltgewebe_ddns.py" "$PROGRAM"
 cmp --silent "$ROOT/ops/systemd/weltgewebe-ddns.service" "$SERVICE"
 cmp --silent "$ROOT/ops/systemd/weltgewebe-ddns.timer" "$TIMER"
+
+rm -f -- "$PROGRAM"
+ln -s /bin/true "$PROGRAM"
+set +e
+ESCAPE_OUTPUT="$(DESTDIR="$TMP/root" "$BUNDLE" --check 2>&1)"
+ESCAPE_STATUS=$?
+set -e
+[[ "$ESCAPE_STATUS" -ne 0 ]]
+grep -Fq "fixture path escapes DESTDIR" <<<"$ESCAPE_OUTPUT"
+rm -f -- "$PROGRAM"
+install -D -m 0755 -- "$ROOT/scripts/heimberry/weltgewebe_ddns.py" "$PROGRAM"
 
 if grep -q '^ConditionFileIsExecutable=' "$SERVICE"; then
   echo "unexpected executable condition" >&2

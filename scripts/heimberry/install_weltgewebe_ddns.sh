@@ -15,12 +15,6 @@ RETIRE=0
 ALLOW_ANY_HOST="${WELTGEWEBE_DDNS_ALLOW_ANY_HOST:-0}"
 ALLOW_HISTORICAL_HOST_READ="${ALLOW_HISTORICAL_HOST_READ:-0}"
 
-PROGRAM_PATH="$DESTDIR/usr/local/sbin/weltgewebe-ddns"
-SERVICE_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.service"
-TIMER_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.timer"
-CONFIG_DIR="$DESTDIR/etc/weltgewebe-ddns"
-
-
 usage() {
   cat <<'EOF'
 Usage: scripts/heimberry/install_weltgewebe_ddns.sh [--check | --retire]
@@ -28,14 +22,19 @@ Usage: scripts/heimberry/install_weltgewebe_ddns.sh [--check | --retire]
 Only --check remains available and performs a read-only file drift comparison.
 The default install path, --retire and the former --activate path are blocked
 before file or service mutation because this repository is retired. Live --check
-also requires ALLOW_HISTORICAL_HOST_READ=1. DESTDIR may be set for isolated
---check fixtures without live-host authorization.
+also requires ALLOW_HISTORICAL_HOST_READ=1. DESTDIR may point to an existing,
+absolute, non-root fixture; every resolved check target must remain below it.
 EOF
 }
 
 fail() {
   printf 'ERROR: %s\n' "$*" >&2
   exit 1
+}
+
+block_historical_host_read() {
+  printf '%s\n' "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" >&2
+  exit 2
 }
 
 log() {
@@ -74,10 +73,19 @@ if ((CHECK_ONLY == 0)); then
   exit 2
 fi
 
-if [[ -z "$DESTDIR" && "$ALLOW_HISTORICAL_HOST_READ" != "1" ]]; then
-  printf '%s\n' "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" >&2
-  exit 2
+if [[ -n "$DESTDIR" ]]; then
+  [[ "$DESTDIR" == /* ]] || fail "DESTDIR must be an absolute fixture path"
+  [[ -d "$DESTDIR" ]] || fail "DESTDIR fixture root must exist for --check"
+  DESTDIR="$(realpath -e -- "$DESTDIR")" || fail "unable to canonicalize DESTDIR fixture root"
+  [[ "$DESTDIR" != "/" ]] || block_historical_host_read
+elif [[ "$ALLOW_HISTORICAL_HOST_READ" != "1" ]]; then
+  block_historical_host_read
 fi
+
+PROGRAM_PATH="$DESTDIR/usr/local/sbin/weltgewebe-ddns"
+SERVICE_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.service"
+TIMER_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.timer"
+CONFIG_DIR="$DESTDIR/etc/weltgewebe-ddns"
 
 for source in "$SOURCE_PROGRAM" "$SOURCE_SERVICE" "$SOURCE_TIMER"; do
   [[ -f "$source" ]] || fail "source file missing: $source"
@@ -108,10 +116,23 @@ if ((RETIRE == 1)); then
   exit 0
 fi
 
+assert_fixture_containment() {
+  local target=$1
+  local resolved
+
+  [[ -n "$DESTDIR" ]] || return 0
+  resolved="$(realpath -e -- "$target")" || fail "fixture path missing or unresolved: $target"
+  case "$resolved" in
+    "$DESTDIR"/*) ;;
+    *) fail "fixture path escapes DESTDIR: $target -> $resolved" ;;
+  esac
+}
+
 compare_file() {
   local source=$1
   local target=$2
 
+  assert_fixture_containment "$target"
   [[ -f "$target" ]] || fail "installed file missing: $target"
   cmp --silent -- "$source" "$target" || fail "installed file differs: $target"
 }
@@ -124,6 +145,7 @@ check_installation() {
   [[ "$(stat -c '%a' "$PROGRAM_PATH")" == "755" ]] || fail "unexpected mode on $PROGRAM_PATH"
   [[ "$(stat -c '%a' "$SERVICE_PATH")" == "644" ]] || fail "unexpected mode on $SERVICE_PATH"
   [[ "$(stat -c '%a' "$TIMER_PATH")" == "644" ]] || fail "unexpected mode on $TIMER_PATH"
+  assert_fixture_containment "$CONFIG_DIR"
   [[ -d "$CONFIG_DIR" ]] || fail "configuration directory missing: $CONFIG_DIR"
   [[ "$(stat -c '%a' "$CONFIG_DIR")" == "700" ]] || fail "unexpected mode on $CONFIG_DIR"
 
