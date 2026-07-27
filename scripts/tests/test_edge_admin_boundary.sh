@@ -144,6 +144,7 @@ run_test() {
     PATH="$TEST_DIR/bin:$PATH" \
     EDGE_DIR="/opt/heimgewebe/edge" \
     COMPOSE_FILE="/opt/heimgewebe/edge/docker-compose.yml" \
+    ALLOW_HISTORICAL_HOST_READ=1 \
     GOOD_ID="$GOOD_ID" \
     ALT_ID="$ALT_ID" \
     SHORT_ID="$SHORT_ID" \

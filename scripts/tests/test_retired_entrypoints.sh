@@ -39,6 +39,13 @@ expect_blocked \
   "$tmp/audit-cwd" \
   "$repo_root/ops/audit/collect.sh"
 [ ! -e "$tmp/audit-cwd/ops/audit/snapshots" ] || fail "direct audit collector created output before guard"
+mkdir -p "$tmp/admin-boundary-tmp"
+expect_blocked \
+  "direct Caddy admin boundary probe" \
+  "Blocked: historical host read" \
+  env TMPDIR="$tmp/admin-boundary-tmp" bash scripts/edge/check_admin_boundary.sh
+[ -z "$(find "$tmp/admin-boundary-tmp" -mindepth 1 -maxdepth 1 -name 'heimserver-admin-boundary.*' -print -quit)" ] || \
+  fail "direct Caddy admin boundary probe created temporary output before guard"
 expect_blocked "direct secrets initialization" "Blocked: Heimserver is retired" bash ops/init-secrets-path.sh
 
 mkdir -p "$tmp/edge"

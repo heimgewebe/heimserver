@@ -46,6 +46,7 @@ HOST_READ_SCRIPTS = (
     "ops/checks/preflight.sh",
     "ops/checks/snapshot.sh",
     "ops/audit/collect.sh",
+    "scripts/edge/check_admin_boundary.sh",
 )
 BLOCKED_MUTATION_SCRIPTS = (
     "ops/init-secrets-path.sh",
@@ -61,6 +62,12 @@ HOST_READ_OPERATIONS = {
     "ops/checks/preflight.sh": ("hostname", "ip -br", "ss -"),
     "ops/checks/snapshot.sh": ('ts="$(date ', 'repo_root="$(git rev-parse', "mkdir -p"),
     "ops/audit/collect.sh": ('TIMESTAMP="$(date ', "mkdir -p", "sysctl "),
+    "scripts/edge/check_admin_boundary.sh": (
+        "require_cmd docker",
+        "docker compose",
+        "docker exec",
+        "docker inspect",
+    ),
 }
 MUTATION_OPERATIONS = {
     "ops/init-secrets-path.sh": ("mkdir -p", "chmod "),

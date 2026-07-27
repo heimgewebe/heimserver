@@ -56,6 +56,11 @@ if [[ -n "$EXPECTED_CONTAINER_ID" ]] && ! is_container_id "$EXPECTED_CONTAINER_I
   sysfail "container_id_syntax" "Invalid container ID syntax: $EXPECTED_CONTAINER_ID"
 fi
 
+if [[ "${ALLOW_HISTORICAL_HOST_READ:-}" != "1" ]]; then
+  printf '%s\n' "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" >&2
+  exit 2
+fi
+
 require_cmd docker
 require_cmd python3
 require_cmd mktemp

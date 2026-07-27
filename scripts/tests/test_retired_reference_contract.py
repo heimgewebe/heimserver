@@ -23,6 +23,7 @@ class RetiredReferenceContractTests(unittest.TestCase):
                 "ops/audit/collect.sh",
                 "ops/checks/preflight.sh",
                 "ops/checks/snapshot.sh",
+                "scripts/edge/check_admin_boundary.sh",
             },
         )
         self.assertEqual(
