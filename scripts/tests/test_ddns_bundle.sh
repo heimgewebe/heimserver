@@ -37,12 +37,14 @@ grep -Fq "DESTDIR must be an absolute fixture path" <<<"$RELATIVE_OUTPUT"
 
 ln -s / "$TMP/root-link"
 for root_equivalent in / /tmp/.. "$TMP/root-link"; do
-  set +e
-  ROOT_OUTPUT="$(env -u ALLOW_HISTORICAL_HOST_READ DESTDIR="$root_equivalent" "$BUNDLE" --check 2>&1)"
-  ROOT_STATUS=$?
-  set -e
-  [[ "$ROOT_STATUS" -eq 2 ]]
-  grep -Fq "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" <<<"$ROOT_OUTPUT"
+  for authorization in 0 1; do
+    set +e
+    ROOT_OUTPUT="$(ALLOW_HISTORICAL_HOST_READ="$authorization" DESTDIR="$root_equivalent" "$BUNDLE" --check 2>&1)"
+    ROOT_STATUS=$?
+    set -e
+    [[ "$ROOT_STATUS" -eq 2 ]]
+    grep -Fq "Blocked: DESTDIR resolves to the live root" <<<"$ROOT_OUTPUT"
+  done
 done
 
 install -d -m 0700 -- "$CONFIG"
