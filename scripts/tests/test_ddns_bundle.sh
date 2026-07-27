@@ -21,6 +21,13 @@ set -e
 grep -Fq "Blocked: Heimserver is retired" <<<"$DEFAULT_OUTPUT"
 [[ ! -e "$TMP/root" ]]
 
+set +e
+LIVE_CHECK_OUTPUT="$(env -u ALLOW_HISTORICAL_HOST_READ "$BUNDLE" --check 2>&1)"
+LIVE_CHECK_STATUS=$?
+set -e
+[[ "$LIVE_CHECK_STATUS" -eq 2 ]]
+grep -Fq "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" <<<"$LIVE_CHECK_OUTPUT"
+
 install -d -m 0700 -- "$CONFIG"
 install -D -m 0755 -- "$ROOT/scripts/heimberry/weltgewebe_ddns.py" "$PROGRAM"
 install -D -m 0644 -- "$ROOT/ops/systemd/weltgewebe-ddns.service" "$SERVICE"

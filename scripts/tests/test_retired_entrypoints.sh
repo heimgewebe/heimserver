@@ -80,6 +80,22 @@ expect_blocked \
   "Blocked: Heimserver is retired" \
   scripts/heimberry/install_weltgewebe_ddns.sh --activate
 
+mkdir -p "$tmp/fake-bin"
+cat >"$tmp/fake-bin/hostname" <<'EOF'
+#!/usr/bin/env bash
+: >"${HOSTNAME_PROBE_SENTINEL:?}"
+printf '%s\n' heimberry
+EOF
+chmod 0755 "$tmp/fake-bin/hostname"
+expect_blocked \
+  "live DDNS installation check" \
+  "Blocked: historical host read" \
+  env \
+  PATH="$tmp/fake-bin:$PATH" \
+  HOSTNAME_PROBE_SENTINEL="$tmp/hostname-probe-called" \
+  scripts/heimberry/install_weltgewebe_ddns.sh --check
+[ ! -e "$tmp/hostname-probe-called" ] || fail "live DDNS check called hostname before authorization guard"
+
 expect_blocked "make preflight" "Blocked: historical host read" make preflight
 expect_blocked "make snapshot" "Blocked: historical host read" env SNAPSHOT_DIR="$tmp/make-snapshot" make snapshot
 [ ! -e "$tmp/make-snapshot" ] || fail "make snapshot created output before guard"

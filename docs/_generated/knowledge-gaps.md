@@ -12,6 +12,5 @@ _No major terminology gaps detected (Glossary is present)._
 _No actionable epistemic gaps detected._
 
 ## Reference Review Signals (Contextual)
-- Reference review signal: `runbook-adding-docs` (`runbooks/adding-docs.md`) has no detected incoming references. (doc_role=leaf (default policy: optional))
 - Reference review signal: `docs.decisions.0001` (`docs/decisions/0001-adopt-agentic-blueprint.md`) has no detected incoming references. (reference_policy=optional (explicitly set))
 - Reference review signal: `docs.index` (`docs/index.md`) has no detected incoming references. (doc_role=entry (default policy: optional))

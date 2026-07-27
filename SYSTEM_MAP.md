@@ -13,7 +13,7 @@
 | [naming.md](architecture/naming.md) | `naming` | - | deprecated | 2026-07-26 | - |
 | [network.md](architecture/network.md) | `network` | - | deprecated | 2026-07-26 | - |
 | [networking/port-matrix.md](architecture/networking/port-matrix.md) | `port-matrix` | - | deprecated | 2026-07-26 | - |
-| [glossary.md](architecture/glossary.md) | `glossary` | - | active | 2026-03-11 | - |
+| [glossary.md](architecture/glossary.md) | `glossary` | - | deprecated | 2026-07-27 | - |
 | [heimnetz-2026.md](architecture/heimnetz-2026.md) | `heimnetz-2026` | - | deprecated | 2026-07-26 | - |
 | [nodes/heimberry.md](architecture/nodes/heimberry.md) | `node-heimberry` | - | deprecated | 2026-07-26 | - |
 | [nodes/heimserver.md](architecture/nodes/heimserver.md) | `node-heimserver` | - | deprecated | 2026-07-26 | - |
@@ -42,7 +42,7 @@
 | Document | ID | Doc Role | Status | Reviewed | Verifies With |
 |---|---|---|---|---|---|
 | [index.md](runbooks/index.md) | `runbooks-index` | entry | deprecated | 2026-07-26 | - |
-| [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | - | active | 2026-02-18 | `scripts/ci/check_repo_index_consistency.py` |
+| [adding-docs.md](runbooks/adding-docs.md) | `runbook-adding-docs` | - | deprecated | 2026-07-27 | - |
 | [ops.runbook.edge-caddy-port-conflict.md](runbooks/ops.runbook.edge-caddy-port-conflict.md) | `ops.runbook.edge-caddy-port-conflict` | - | deprecated | 2026-07-26 | - |
 | [ops.runbook.weltgewebe-stack.md](runbooks/ops.runbook.weltgewebe-stack.md) | `ops-runbook-weltgewebe-stack` | - | deprecated | 2026-07-26 | - |
 | [ops.runbook.heimserver-edge.md](runbooks/ops.runbook.heimserver-edge.md) | `ops-runbook-heimserver-edge` | - | deprecated | 2026-07-26 | - |

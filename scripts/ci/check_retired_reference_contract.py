@@ -9,12 +9,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.lib.docmeta import load_repo_index, parse_frontmatter
+from scripts.lib.docmeta import load_repo_index, parse_frontmatter, parse_impl_registry
 
 ACTIVE_REPOSITORY_DOCUMENTS = {
     "architecture/docmeta.schema.md",
-    "architecture/glossary.md",
-    "runbooks/adding-docs.md",
 }
 HISTORICAL_ZONES = {"norm", "reality", "action", "runbooks"}
 BANNER = "Historische Referenz — nicht ausführen."
@@ -47,6 +45,7 @@ HOST_READ_SCRIPTS = (
     "ops/checks/snapshot.sh",
     "ops/audit/collect.sh",
     "scripts/edge/check_admin_boundary.sh",
+    "scripts/heimberry/install_weltgewebe_ddns.sh",
 )
 BLOCKED_MUTATION_SCRIPTS = (
     "ops/init-secrets-path.sh",
@@ -68,6 +67,11 @@ HOST_READ_OPERATIONS = {
         "docker exec",
         "docker inspect",
     ),
+    "scripts/heimberry/install_weltgewebe_ddns.sh": (
+        '"$(hostname -s)"',
+        '[[ -f "$target" ]]',
+        "stat -c",
+    ),
 }
 MUTATION_OPERATIONS = {
     "ops/init-secrets-path.sh": ("mkdir -p", "chmod "),
@@ -82,6 +86,15 @@ MUTATION_OPERATIONS = {
         "install -d -m 0700",
     ),
 }
+RETIRED_RUNTIME_IMPLEMENTATIONS = {
+    "impl.ops.preflight": "ops/checks/preflight.sh",
+    "impl.heimberry.weltgewebe-ddns-updater": "scripts/heimberry/weltgewebe_ddns.py",
+    "impl.heimberry.weltgewebe-ddns-installer": "scripts/heimberry/install_weltgewebe_ddns.sh",
+    "impl.systemd.weltgewebe-ddns-service": "ops/systemd/weltgewebe-ddns.service",
+    "impl.systemd.weltgewebe-ddns-timer": "ops/systemd/weltgewebe-ddns.timer",
+}
+RETIRED_IMPLEMENTATION_STATUSES = {"deprecated", "archived"}
+
 MUTATION_DISCOVERY_ROOTS = ("ops", "scripts/edge", "scripts/heimberry")
 MUTATION_FINGERPRINTS = (
     re.compile(
@@ -119,6 +132,35 @@ def _discover_retained_mutators() -> set[str]:
             if any(pattern.search(text) for pattern in MUTATION_FINGERPRINTS):
                 discovered.add(relative)
     return discovered
+
+
+def _retired_runtime_implementation_errors(
+    registry_path: Path | None = None,
+) -> list[str]:
+    path = registry_path or ROOT / "audit/impl-registry.yaml"
+    implementations = {
+        implementation.get("id"): implementation
+        for implementation in parse_impl_registry(str(path))
+    }
+    errors: list[str] = []
+    for implementation_id, expected_path in RETIRED_RUNTIME_IMPLEMENTATIONS.items():
+        implementation = implementations.get(implementation_id)
+        if implementation is None:
+            errors.append(
+                f"audit/impl-registry.yaml: retired runtime implementation missing: {implementation_id}"
+            )
+            continue
+        if implementation.get("path") != expected_path:
+            errors.append(
+                f"audit/impl-registry.yaml: {implementation_id} path mismatch: "
+                f"{implementation.get('path')} != {expected_path}"
+            )
+        if implementation.get("status") not in RETIRED_IMPLEMENTATION_STATUSES:
+            errors.append(
+                f"audit/impl-registry.yaml: {implementation_id} remains active: "
+                f"{implementation.get('status')}"
+            )
+    return errors
 
 
 def main() -> int:
@@ -170,6 +212,8 @@ def main() -> int:
 
     for path in sorted(indexed_documents - ACTIVE_REPOSITORY_DOCUMENTS - discovered_documents):
         errors.append(f"{path}: indexed historical document is missing")
+
+    errors.extend(_retired_runtime_implementation_errors())
 
     checks = manifest.get("checks", [])
     if FORBIDDEN_STANDARD_CHECK in checks:
@@ -295,6 +339,7 @@ def main() -> int:
         "discoveredHistoricalDocuments": len(historical_documents),
         "discoveredMutationEntrypoints": len(discovered_mutators),
         "guardedHostReadEntrypoints": len(HOST_READ_SCRIPTS),
+        "retiredRuntimeImplementations": len(RETIRED_RUNTIME_IMPLEMENTATIONS),
         "errors": errors,
         "status": "valid" if not errors else "invalid",
     }

@@ -1,75 +1,37 @@
 ---
 id: runbook-adding-docs
 role: runbooks
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: guide
-title: Adding Docs Guide
-summary: How to add canonical documents
-last_reviewed: 2026-02-18
-depends_on: []
-verifies_with:
-  - scripts/ci/check_repo_index_consistency.py
----
-
-# Adding Docs Guide
-
-**Goal:** Correctly add a new canonical document to the Heimserver repository.
-
-## 1. Create the File
-
-Create your markdown file in the appropriate directory (`architecture/`, `runtime/`, `operations/`, or `runbooks/`).
-
-**Template:**
-```markdown
----
-id: my-new-doc
-role: norm
-status: active
-canonicality: canonical
-doc_type: guide
-title: My New Document
-summary: Short summary of what this document defines
-last_reviewed: 2026-02-18
+title: Historical Heimserver documentation workflow
+summary: Historical record of how canonical Heimserver documents were formerly added
+last_reviewed: 2026-07-27
 depends_on: []
 verifies_with: []
 ---
 
-# Title matching filename
+# Historical Heimserver documentation workflow
 
-Content...
-```
+> **Historische Referenz — nicht ausführen.**
 
-## 2. Register in Manifest
+This document records the former documentation process of the retired Heimserver repository. It must not be used to create new active or canonical operational documents in `architecture/`, `runtime/`, `operations/`, or `runbooks/`.
 
-Add the filename to `manifest/repo-index.yaml` under the correct zone.
+Current documentation changes belong in the repository that currently owns the affected system or service. Its own `AGENTS.md`, repository metadata, schemas, review rules, and generators define the applicable workflow.
 
-**Example:**
-```yaml
-zones:
-  norm:
-    path: architecture/
-    canonical_docs:
-      - ...
-      - my-new-doc.md
-```
+## Former process
 
-## 3. Verify Consistency
+The retired repository previously used the following sequence:
 
-Run the consistency check to ensure the frontmatter is valid and the file is registered correctly.
+1. A Markdown document was created in a zone selected by its former norm, reality, action, or runbook role.
+2. The document received YAML frontmatter and was registered in `manifest/repo-index.yaml`.
+3. Repository consistency checks validated the identifier, metadata, and index relationship.
+4. Generated indexes and maps were refreshed and committed with the source document.
 
-```bash
-python3 scripts/ci/check_repo_index_consistency.py
-```
+The former `active` and `canonical` template is intentionally not reproduced here. Copying it into a historical zone would falsely recreate current authority.
 
-## 4. Update System Map
+## Historical validation references
 
-Regenerate the system map to include your new document.
+The static commands retained in this repository validate archival consistency only. They do not authorize operational documentation, runtime changes, deployments, host reads, or service activation.
 
-```bash
-python3 scripts/generate-system-map.py
-```
-
-## 5. Commit
-
-Commit both the new file, the updated manifest, and the updated `SYSTEM_MAP.md`.
+The repository-wide retirement checker is `scripts/ci/check_retired_reference_contract.py`. Generated files remain derived outputs and must not be edited manually.

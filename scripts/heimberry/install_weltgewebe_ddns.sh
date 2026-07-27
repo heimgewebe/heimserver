@@ -13,6 +13,7 @@ ACTIVATE=0
 CHECK_ONLY=0
 RETIRE=0
 ALLOW_ANY_HOST="${WELTGEWEBE_DDNS_ALLOW_ANY_HOST:-0}"
+ALLOW_HISTORICAL_HOST_READ="${ALLOW_HISTORICAL_HOST_READ:-0}"
 
 PROGRAM_PATH="$DESTDIR/usr/local/sbin/weltgewebe-ddns"
 SERVICE_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.service"
@@ -26,8 +27,9 @@ Usage: scripts/heimberry/install_weltgewebe_ddns.sh [--check | --retire]
 
 Only --check remains available and performs a read-only file drift comparison.
 The default install path, --retire and the former --activate path are blocked
-before file or service mutation because this repository is retired. DESTDIR may
-be set for isolated --check fixtures.
+before file or service mutation because this repository is retired. Live --check
+also requires ALLOW_HISTORICAL_HOST_READ=1. DESTDIR may be set for isolated
+--check fixtures without live-host authorization.
 EOF
 }
 
@@ -69,6 +71,11 @@ fi
 
 if ((CHECK_ONLY == 0)); then
   printf '%s\n' "Blocked: Heimserver is retired; DDNS installation and service mutation are unavailable from this repository" >&2
+  exit 2
+fi
+
+if [[ -z "$DESTDIR" && "$ALLOW_HISTORICAL_HOST_READ" != "1" ]]; then
+  printf '%s\n' "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" >&2
   exit 2
 fi
 

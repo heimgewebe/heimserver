@@ -3,7 +3,7 @@ implementations:
   - id: impl.ops.preflight
     path: ops/checks/preflight.sh
     impl_type: script
-    status: active
+    status: deprecated
     documented_by:
       - architecture/constitution.md
       - operations/operations.md
@@ -34,7 +34,7 @@ implementations:
   - id: impl.heimberry.weltgewebe-ddns-updater
     path: scripts/heimberry/weltgewebe_ddns.py
     impl_type: script
-    status: active
+    status: deprecated
     documented_by:
       - runbooks/weltgewebe-dyndns.md
       - operations/operations.md
@@ -46,7 +46,7 @@ implementations:
   - id: impl.heimberry.weltgewebe-ddns-installer
     path: scripts/heimberry/install_weltgewebe_ddns.sh
     impl_type: script
-    status: active
+    status: deprecated
     documented_by:
       - runbooks/weltgewebe-dyndns.md
       - operations/operations.md
@@ -58,7 +58,7 @@ implementations:
   - id: impl.systemd.weltgewebe-ddns-service
     path: ops/systemd/weltgewebe-ddns.service
     impl_type: systemd-unit
-    status: active
+    status: deprecated
     documented_by:
       - runbooks/weltgewebe-dyndns.md
       - operations/operations.md
@@ -70,7 +70,7 @@ implementations:
   - id: impl.systemd.weltgewebe-ddns-timer
     path: ops/systemd/weltgewebe-ddns.timer
     impl_type: systemd-unit
-    status: active
+    status: deprecated
     documented_by:
       - runbooks/weltgewebe-dyndns.md
       - operations/operations.md
