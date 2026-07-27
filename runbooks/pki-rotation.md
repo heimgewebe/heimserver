@@ -1,12 +1,27 @@
-# Runbook: PKI / Caddy internal CA Rotation (ohne private keys in Git)
+---
+id: runbook-pki-rotation
+role: runbooks
+status: deprecated
+canonicality: explanatory
+doc_type: runbook
+title: Historical PKI Rotation Runbook
+summary: Historische Anleitung für die frühere Heimserver-PKI-Rotation
+last_reviewed: 2026-07-26
+depends_on: []
+verifies_with: []
+---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
+
+# Historical Runbook: PKI / Caddy internal CA Rotation
 
 ## Ziel
 CA/Cert-Management dokumentieren, ohne Root-Keys zu versionieren.
 
-## Kanonischer Secrets-Pfad
+## Früher verwendeter Secrets-Pfad
 - `/etc/heimserver/secrets/pki/`
 
-## Vorgehen (konzeptionell)
+## Früheres Vorgehen (historisch)
 
 1) Bestandsaufnahme
 - Wo speichert Caddy seine PKI (Data Dir / Volume)?

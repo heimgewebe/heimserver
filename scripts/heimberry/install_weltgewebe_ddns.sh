@@ -13,32 +13,33 @@ ACTIVATE=0
 CHECK_ONLY=0
 RETIRE=0
 ALLOW_ANY_HOST="${WELTGEWEBE_DDNS_ALLOW_ANY_HOST:-0}"
-
-PROGRAM_PATH="$DESTDIR/usr/local/sbin/weltgewebe-ddns"
-SERVICE_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.service"
-TIMER_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.timer"
-CONFIG_DIR="$DESTDIR/etc/weltgewebe-ddns"
-
+ALLOW_HISTORICAL_HOST_READ="${ALLOW_HISTORICAL_HOST_READ:-0}"
 
 usage() {
   cat <<'EOF'
 Usage: scripts/heimberry/install_weltgewebe_ddns.sh [--check | --retire]
 
-Without an option, install or refresh the archived program and systemd unit
-files but do not start the timer. --check performs a read-only file drift
-comparison. --retire disables the legacy timer, removes its explicit activation
-marker and clears the historical service failure state without deleting
-credentials.
-
-The former --activate path is intentionally refused: Weltgewebe production now
-runs on the public VPS wg-prod-1. DESTDIR may be set for staging and tests;
---retire is unavailable with DESTDIR.
+Only --check remains available and performs a read-only file drift comparison.
+The default install path, --retire and the former --activate path are blocked
+before file or service mutation because this repository is retired. Live --check
+also requires ALLOW_HISTORICAL_HOST_READ=1. DESTDIR may point to an existing,
+absolute, non-root fixture; every resolved check target must remain below it.
 EOF
 }
 
 fail() {
   printf 'ERROR: %s\n' "$*" >&2
   exit 1
+}
+
+block_historical_host_read() {
+  printf '%s\n' "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" >&2
+  exit 2
+}
+
+block_root_destdir() {
+  printf '%s\n' "Blocked: DESTDIR resolves to the live root; remove DESTDIR for an explicitly authorized live --check" >&2
+  exit 2
 }
 
 log() {
@@ -72,9 +73,24 @@ if ((ACTIVATE > 1 || CHECK_ONLY > 1 || RETIRE > 1 || ACTIVATE + CHECK_ONLY + RET
   fail "choose exactly one of --activate, --check or --retire"
 fi
 
-if ((ACTIVATE == 1)); then
-  fail "--activate is retired: canonical Weltgewebe production runs on wg-prod-1"
+if ((CHECK_ONLY == 0)); then
+  printf '%s\n' "Blocked: Heimserver is retired; DDNS installation and service mutation are unavailable from this repository" >&2
+  exit 2
 fi
+
+if [[ -n "$DESTDIR" ]]; then
+  [[ "$DESTDIR" == /* ]] || fail "DESTDIR must be an absolute fixture path"
+  [[ -d "$DESTDIR" ]] || fail "DESTDIR fixture root must exist for --check"
+  DESTDIR="$(realpath -e -- "$DESTDIR")" || fail "unable to canonicalize DESTDIR fixture root"
+  [[ "$DESTDIR" != "/" ]] || block_root_destdir
+elif [[ "$ALLOW_HISTORICAL_HOST_READ" != "1" ]]; then
+  block_historical_host_read
+fi
+
+PROGRAM_PATH="$DESTDIR/usr/local/sbin/weltgewebe-ddns"
+SERVICE_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.service"
+TIMER_PATH="$DESTDIR/etc/systemd/system/weltgewebe-ddns.timer"
+CONFIG_DIR="$DESTDIR/etc/weltgewebe-ddns"
 
 for source in "$SOURCE_PROGRAM" "$SOURCE_SERVICE" "$SOURCE_TIMER"; do
   [[ -f "$source" ]] || fail "source file missing: $source"
@@ -105,30 +121,55 @@ if ((RETIRE == 1)); then
   exit 0
 fi
 
+resolve_checked_path() {
+  local target=$1
+  local resolved
+
+  if [[ -z "$DESTDIR" ]]; then
+    printf '%s\n' "$target"
+    return 0
+  fi
+
+  resolved="$(realpath -e -- "$target")" || fail "fixture path missing or unresolved: $target"
+  case "$resolved" in
+    "$DESTDIR"/*) printf '%s\n' "$resolved" ;;
+    *) fail "fixture path escapes DESTDIR: $target -> $resolved" ;;
+  esac
+}
+
 compare_file() {
   local source=$1
   local target=$2
+  local resolved
 
-  [[ -f "$target" ]] || fail "installed file missing: $target"
-  cmp --silent -- "$source" "$target" || fail "installed file differs: $target"
+  resolved="$(resolve_checked_path "$target")"
+  [[ -f "$resolved" ]] || fail "installed file missing: $target"
+  cmp --silent -- "$source" "$resolved" || fail "installed file differs: $target"
+  printf '%s\n' "$resolved"
 }
 
 check_installation() {
-  compare_file "$SOURCE_PROGRAM" "$PROGRAM_PATH"
-  compare_file "$SOURCE_SERVICE" "$SERVICE_PATH"
-  compare_file "$SOURCE_TIMER" "$TIMER_PATH"
+  local resolved_program
+  local resolved_service
+  local resolved_timer
+  local resolved_config
 
-  [[ "$(stat -c '%a' "$PROGRAM_PATH")" == "755" ]] || fail "unexpected mode on $PROGRAM_PATH"
-  [[ "$(stat -c '%a' "$SERVICE_PATH")" == "644" ]] || fail "unexpected mode on $SERVICE_PATH"
-  [[ "$(stat -c '%a' "$TIMER_PATH")" == "644" ]] || fail "unexpected mode on $TIMER_PATH"
-  [[ -d "$CONFIG_DIR" ]] || fail "configuration directory missing: $CONFIG_DIR"
-  [[ "$(stat -c '%a' "$CONFIG_DIR")" == "700" ]] || fail "unexpected mode on $CONFIG_DIR"
+  resolved_program="$(compare_file "$SOURCE_PROGRAM" "$PROGRAM_PATH")"
+  resolved_service="$(compare_file "$SOURCE_SERVICE" "$SERVICE_PATH")"
+  resolved_timer="$(compare_file "$SOURCE_TIMER" "$TIMER_PATH")"
+  resolved_config="$(resolve_checked_path "$CONFIG_DIR")"
+
+  [[ "$(stat -c '%a' "$resolved_program")" == "755" ]] || fail "unexpected mode on $PROGRAM_PATH"
+  [[ "$(stat -c '%a' "$resolved_service")" == "644" ]] || fail "unexpected mode on $SERVICE_PATH"
+  [[ "$(stat -c '%a' "$resolved_timer")" == "644" ]] || fail "unexpected mode on $TIMER_PATH"
+  [[ -d "$resolved_config" ]] || fail "configuration directory missing: $CONFIG_DIR"
+  [[ "$(stat -c '%a' "$resolved_config")" == "700" ]] || fail "unexpected mode on $CONFIG_DIR"
 
   if [[ -z "$DESTDIR" ]]; then
-    [[ "$(stat -c '%u:%g' "$PROGRAM_PATH")" == "0:0" ]] || fail "unexpected owner on $PROGRAM_PATH"
-    [[ "$(stat -c '%u:%g' "$SERVICE_PATH")" == "0:0" ]] || fail "unexpected owner on $SERVICE_PATH"
-    [[ "$(stat -c '%u:%g' "$TIMER_PATH")" == "0:0" ]] || fail "unexpected owner on $TIMER_PATH"
-    [[ "$(stat -c '%u:%g' "$CONFIG_DIR")" == "0:0" ]] || fail "unexpected owner on $CONFIG_DIR"
+    [[ "$(stat -c '%u:%g' "$resolved_program")" == "0:0" ]] || fail "unexpected owner on $PROGRAM_PATH"
+    [[ "$(stat -c '%u:%g' "$resolved_service")" == "0:0" ]] || fail "unexpected owner on $SERVICE_PATH"
+    [[ "$(stat -c '%u:%g' "$resolved_timer")" == "0:0" ]] || fail "unexpected owner on $TIMER_PATH"
+    [[ "$(stat -c '%u:%g' "$resolved_config")" == "0:0" ]] || fail "unexpected owner on $CONFIG_DIR"
   fi
 
   log "installed files match the repository sources"

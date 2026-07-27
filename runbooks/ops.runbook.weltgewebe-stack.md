@@ -1,20 +1,23 @@
 ---
 id: ops-runbook-weltgewebe-stack
 role: runbooks
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: runbook
-title: Weltgewebe Stack Runbook
-summary: Operations for Weltgewebe app stack
-last_reviewed: 2026-03-07
+title: Historical Weltgewebe Stack Runbook
+summary: Historical operations for the former Weltgewebe app stack on Heimserver
+last_reviewed: 2026-07-26
 depends_on:
   - architecture/naming.md
   - architecture/networking/port-matrix.md
+verifies_with: []
 ---
 
-# Ops Runbook: Weltgewebe Stack
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
-Scope: Kanonische Wahrheit und operative Checks für den Weltgewebe-Stack auf dem Heimserver.
+# Historisches Ops Runbook: Weltgewebe Stack
+
+Scope: Historische Beschreibung früherer Checks für den damaligen Weltgewebe-Stack auf dem Heimserver.
 
 ## 1. Architektur-Entscheidung: Vollwertiger Stack & Lokale UI
 

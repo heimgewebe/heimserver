@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
-# Drift-safe in-place Caddyfile synchronization for a single-file bind mount.
-# Exit codes: 0=success/no-op, 1=contract or drift violation,
-# 2=diagnosis impossible, 255=rollback could not be fully verified.
+# Historical drift-safe Caddyfile synchronization implementation.
+# Direct execution is retired and exits 2 before any host access or mutation.
+# The former implementation and its historical exit semantics remain below as
+# evidence only.
 set -euo pipefail
+
+printf '%s\n' "Blocked: Heimserver is retired; Caddy deployment mutation is unavailable from this repository" >&2
+exit 2
+
+# Historical implementation preserved for reference. This file is unconditionally blocked while the repository is retired.
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"

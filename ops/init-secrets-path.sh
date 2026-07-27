@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Initializes the canonical secrets directory with safe permissions.
-# Run as root (recommended): sudo bash ops/init-secrets-path.sh
+printf '%s\n' "Blocked: Heimserver is retired; reintroduce this script only through a new Bureau task and service-bound infra contract" >&2
+exit 2
+
+# Historical implementation preserved for reference. This file is unconditionally blocked while the repository is retired.
 
 BASE="/etc/heimserver/secrets"
 

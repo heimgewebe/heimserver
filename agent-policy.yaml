@@ -50,8 +50,8 @@ requires_target_proof_for:
   - ops/checks/
 
 required_checks_before_patch:
+  - python3 scripts/ci/check_retired_reference_contract.py
   - python3 scripts/ci/check_repo_index_consistency.py
-  - bash ops/checks/preflight.sh
   - python3 scripts/ci/check-doc-review-age.py
   - bash scripts/ci/check-runbook-invariants.sh
   - python3 -m unittest scripts/tests/test_weltgewebe_ddns.py

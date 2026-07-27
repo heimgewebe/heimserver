@@ -1,5 +1,20 @@
-# Edge Synchronization Runbook
-⛔️ OPERATIONAL RUNBOOK
+---
+id: runbook-edge-sync
+role: runbooks
+status: deprecated
+canonicality: explanatory
+doc_type: runbook
+title: Historical Edge Synchronization Runbook
+summary: Historical synchronization procedure for the former Heimserver edge stack
+last_reviewed: 2026-07-26
+depends_on: []
+verifies_with: []
+---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
+
+# Historical Edge Synchronization Runbook
+⛔️ HISTORICAL OPERATIONAL RUNBOOK · DO NOT EXECUTE
 
 **Target:** `/opt/heimgewebe/edge`
 **Source:** `edge/` (Repo Template)

@@ -1,23 +1,24 @@
 ---
 id: runbook-dns-migration
 role: runbooks
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: runbook
-title: DNS Migration Runbook (Heimserver -> Heimberry)
-summary: Migrationsablauf für die DNS-Truth-Autorität auf Heimberry
-last_reviewed: 2026-04-28
+title: Historical DNS Migration Runbook (Heimserver -> Heimberry)
+summary: Historischer Migrationsablauf für die frühere DNS-Truth-Verlagerung auf Heimberry
+last_reviewed: 2026-07-26
 depends_on:
   - architecture/heimnetz-2026.md
   - runtime/runtime.md
-verifies_with:
-  - ops/checks/preflight.sh
+verifies_with: []
 ---
 
-# DNS Migration: Heimserver → Heimberry
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
+
+# Historische DNS-Migration: Heimserver → Heimberry
 
 ## Ziel
-DNS-Truth von Heimserver auf Heimberry verlagern, ohne Dual-Authority.
+Früherer Zielzustand: DNS-Truth von Heimserver auf Heimberry verlagern, ohne Dual-Authority.
 
 ## Minimalablauf
 1. Heimberry DNS-Funktion validieren.

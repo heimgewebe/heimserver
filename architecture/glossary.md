@@ -1,71 +1,55 @@
 ---
 id: glossary
 role: norm
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: reference
-title: Glossary
-summary: Canonical definitions of terms
-last_reviewed: 2026-03-11
+title: Historical Heimserver glossary
+summary: Historical definitions from the retired Heimserver operating model
+last_reviewed: 2026-07-27
 depends_on:
   - constitution
-verifies_with:
+verifies_with: []
 ---
 
-# Glossary (Glossar)
+# Historical Heimserver glossary
 
-This glossary defines canonical terms used across the Heimserver infrastructure to ensure semantic consistency, particularly for agents and operational governance.
+> **Historische Referenz — nicht ausführen.**
 
-## K
+These definitions describe the former Heimserver operating model. They do not define current infrastructure, runtime health, deployment authority, or recovery authority. Current infrastructure truth belongs to `heimgewebe/infra` and to fresh runtime evidence from the active systems.
 
-**Kanon (Canon)**
-*Etymologie: Griechisch 'kanon' (Richtscheit, Maßstab).*
-The definitive, documented truth of the infrastructure's intended or actual state, residing strictly in `architecture/` (Norm) or `runtime/` (Reality).
+## Canon
 
-## D
+The former repository used **Canon** for documented intended or observed Heimserver state in `architecture/` and `runtime/`. Those documents are now historical evidence rather than current authority.
 
-**Drift**
-*Etymologie: Englisch 'drift' (Abweichung, langsames Treiben).*
-The divergence between the observed runtime reality (e.g., actual open ports, running containers) and the normative architecture defined in the Canon. Identified via `preflight.sh`.
+## Drift
 
-## E
+**Drift** described a difference between the former Heimserver architecture and an observed host state. The historical `ops/checks/preflight.sh` probe may now run only with explicit `ALLOW_HISTORICAL_HOST_READ=1` authorization and does not establish current system truth.
 
-**Edge**
-*Etymologie: Englisch 'edge' (Kante, Rand).*
-The entry point from the public internet into the Heimserver, strictly managed by the Edge-Caddy gateway. It handles TLS termination and ingress.
+## Edge
 
-## I
+**Edge** referred to the retired Heimserver ingress role previously implemented through Edge-Caddy. The repository no longer assigns that role to any host or service.
 
-**Internal Only (Policy)**
-*Etymologie: Klartext-Konvention für netzwerkinterne Sichtbarkeit.*
-A security boundary stipulating that application containers (e.g., Weltgewebe UI, API, NATS, DB) must not bind host ports. They communicate strictly over internal Docker networks.
+## Internal Only
 
-## P
+**Internal Only** described the former container-network boundary under which application containers did not publish direct host ports. It remains useful only for interpreting historical configurations.
 
-**Port-Ownership**
-*Etymologie: Englisch 'ownership' (Besitzrecht).*
-The exclusive assignment of host ports to specific services or roles (e.g., 8081 exclusively to `pihole-FTL`). Formally specified in `networking/port-matrix.md`.
+## Port ownership
 
-## S
+**Port ownership** described the former exclusive assignment of host ports to services. Historical examples, including port 8081 and Pi-hole, do not reserve current ports or establish present service ownership.
 
-**Splitbrain**
-*Etymologie: Med. 'split-brain', hier für inkonsistente Wahrheitsquellen.*
-A state where multiple conflicting sources of truth exist, usually caused by failing to synchronize runtime reality, documentation, and configuration files.
+## Splitbrain
 
-## P
+**Splitbrain** described conflicting historical sources of intended and observed state. Current disagreements must be resolved in the active authoritative repositories and runtime surfaces, not in this retired repository.
 
-**Preflight**
-*Etymologie: Luftfahrt 'pre-flight check' (Startüberprüfung).*
-The primary suite of operational checks (`ops/checks/preflight.sh`) executed before and after actions to measure Drift and enforce the Port Matrix Guard.
+## Preflight
 
-## W
+**Preflight** referred to the former host-reading suite in `ops/checks/preflight.sh`. It is no longer a standard operational check and requires explicit historical-read authorization when used for bounded evidence work.
 
-**Weltgewebe**
-*Etymologie: Neologismus für das verteilte Applikationsnetzwerk.*
-The application stack hosted on the Heimserver. It is strictly separated from the Heimserver's operational deployment configuration.
+## Weltgewebe
 
-## H
+**Weltgewebe** referred to the application stack formerly described as hosted through Heimserver infrastructure. This repository does not define its current hosting, routing, or deployment state.
 
-**Heimserver**
-*Etymologie: Deutsch 'Heim' + 'Server', das physische/operative Fundament.*
-The underlying host and operational configuration (this repository) serving as the Edge-Node for Weltgewebe and defining security, networking, and deployment bounds.
+## Heimserver
+
+**Heimserver** referred to the retired host and this repository's former operational configuration. The host has no active role, exposure, fleet membership, or execution authority.

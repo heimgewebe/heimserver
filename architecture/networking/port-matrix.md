@@ -1,21 +1,22 @@
 ---
 id: port-matrix
 role: norm
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: architecture
-title: Port Matrix
-summary: Formal port ownership specification
-last_reviewed: 2026-02-25
+title: Historical Port Matrix
+summary: Historical port ownership specification for the former Heimserver and gateway layout
+last_reviewed: 2026-07-26
 depends_on:
   - architecture/network.md
-verifies_with:
-  - ops/checks/preflight.sh
+verifies_with: []
 ---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
 # Port-Matrix Heimserver & Gateway-Ownership
 
-**Dokumentklasse:** ARCHITEKTUR · INVARIANTE
+**Dokumentklasse:** HISTORISCHE ARCHITEKTUR · FRÜHERE INVARIANTE
 **Stand:** 2026-02-25
 **Scope:** Host-Namespace Ports (TCP/UDP)
 

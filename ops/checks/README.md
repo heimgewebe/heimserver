@@ -63,6 +63,6 @@ Commands:
 
 ## Scripts
 
-- `preflight.sh` — schnelle Assertions, keine Änderungen
-- `snapshot.sh` — schreibt strukturiert in ops/audit/snapshots
+- `preflight.sh` — historischer hostlesender Read; ohne `ALLOW_HISTORICAL_HOST_READ=1` fail-closed
+- `snapshot.sh` — historischer hostlesender Read; ohne `ALLOW_HISTORICAL_HOST_READ=1` fail-closed
 - `redact_snapshot.sh` — best-effort Redaction (vor dem Teilen prüfen)

@@ -19,6 +19,17 @@ import urllib.parse
 import urllib.request
 from typing import NoReturn
 
+if __name__ == "__main__":
+    print(
+        "Blocked: Heimserver is retired; public DNS mutation is unavailable "
+        "from this repository",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
+# Historical implementation remains importable for isolated regression tests.
+# Direct execution is unconditionally blocked above.
+
 CONFIG_DIR = pathlib.Path("/etc/weltgewebe-ddns")
 STATE_DIR = pathlib.Path("/var/lib/weltgewebe-ddns")
 LOCK_FILE = pathlib.Path("/run/weltgewebe-ddns/lock")

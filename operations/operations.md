@@ -2,22 +2,23 @@
 id: operations
 role: action
 reference_policy: optional
-status: active
-canonicality: canonical
+status: deprecated
+canonicality: explanatory
 doc_type: policy
-title: Operations Policy
-summary: Operational procedures protocol
-last_reviewed: 2026-06-25
+title: Historical Operations Policy
+summary: Historical operational procedures from the former Heimserver service layer
+last_reviewed: 2026-07-26
 depends_on:
   - runtime/runtime.md
-verifies_with:
-  - ops/audit/collect.sh
+verifies_with: []
 ---
+
+> **Historische Referenz — nicht ausführen.** Dieses Dokument bewahrt einen früheren Stand. Es besitzt keine heutige Runtime-, Netzwerk-, Deployment-, Recovery- oder Infrastrukturautorität. Aktuelle Wahrheit liegt in `heimgewebe/infra` und frischen Runtime-Reads; eine Reaktivierung erfordert einen neuen Bureau-Task und einen dienstgebundenen Infra-Vertrag.
 
 # operations.md
 
-Betriebs- und Eingriffsprotokoll
-⛔️ OPERATIVES DOKUMENT · KANONISCH
+Historisches Betriebs- und Eingriffsprotokoll
+⛔️ HISTORISCHES OPERATIVES DOKUMENT · NICHT AUSFÜHREN
 
 Stand: 2026-02-13
 Scope: Heimserver · Heimgewebe · WireGuard · Pi-hole · Caddy

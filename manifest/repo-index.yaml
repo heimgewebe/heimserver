@@ -17,6 +17,8 @@ zones:
     path: runtime/
     canonical_docs:
       - runtime.md
+      - heimberry.md
+      - heimserver.md
   action:
     path: operations/
     canonical_docs:
@@ -33,6 +35,13 @@ zones:
       - weltgewebe-dyndns.md
       - dns-migration.md
       - tailscale-migration.md
+      - dns-pihole-wildcard.md
+      - edge.sync.md
+      - ops.runbook.leitstand-gateway.md
+      - pki-rotation.md
+      - preflight.md
+      - wireguard-rotation.md
+      - CHANGELOG.md
   decisions:
     path: docs/decisions/
     canonical_docs:
@@ -43,7 +52,7 @@ zones:
       - index.md
 
 checks:
-  - ops/checks/preflight.sh
+  - scripts/ci/check_retired_reference_contract.py
   - scripts/ci/check-runbook-invariants.sh
   - scripts/ci/check_repo_index_consistency.py
   - scripts/ci/check-doc-review-age.py

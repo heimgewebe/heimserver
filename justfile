@@ -5,16 +5,16 @@ default:
   @just --list
 
 preflight:
-  bash ops/checks/preflight.sh
+  make preflight
 
 snapshot:
-  bash ops/checks/snapshot.sh
+  make snapshot
 
 redact SNAP:
-  bash ops/checks/redact_snapshot.sh "{{SNAP}}"
+  make redact SNAP="{{SNAP}}"
 
 hooks:
-  bash ops/install-hooks.sh
+  make hooks
 
 secrets:
-  sudo bash ops/init-secrets-path.sh
+  make secrets

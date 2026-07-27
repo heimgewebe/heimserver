@@ -77,6 +77,7 @@ with tempfile.TemporaryDirectory() as tmp:
             "GOOD_ID": GOOD_ID,
             "EDGE_DIR": str(edgedir),
             "COMPOSE_FILE": str(edgedir / "docker-compose.yml"),
+            "ALLOW_HISTORICAL_HOST_READ": "1",
         }
     )
 

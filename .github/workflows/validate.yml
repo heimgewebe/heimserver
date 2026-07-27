@@ -36,6 +36,9 @@ jobs:
           shellcheck scripts/heimberry/install_weltgewebe_ddns.sh
           shellcheck scripts/tests/test_ddns_bundle.sh
 
+      - name: Retired reference contract
+        run: python3 scripts/ci/check_retired_reference_contract.py
+
       - name: Repository index consistency
         run: python3 scripts/ci/check_repo_index_consistency.py
 

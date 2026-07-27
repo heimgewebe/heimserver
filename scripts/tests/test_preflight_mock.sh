@@ -8,6 +8,7 @@ log() { echo "TEST: $*"; }
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
 SCRIPT="./ops/checks/preflight.sh"
+export ALLOW_HISTORICAL_HOST_READ=1
 MOCK_BIN=$(mktemp -d)
 export PATH="$MOCK_BIN:$PATH"
 

@@ -8,13 +8,50 @@ trap 'rm -rf "$TMP"' EXIT
 
 "$BUNDLE" --help >/dev/null
 
-DESTDIR="$TMP/root" "$BUNDLE"
-DESTDIR="$TMP/root" "$BUNDLE" --check
-
 PROGRAM="$TMP/root/usr/local/sbin/weltgewebe-ddns"
 SERVICE="$TMP/root/etc/systemd/system/weltgewebe-ddns.service"
 TIMER="$TMP/root/etc/systemd/system/weltgewebe-ddns.timer"
 CONFIG="$TMP/root/etc/weltgewebe-ddns"
+
+set +e
+DEFAULT_OUTPUT="$(DESTDIR="$TMP/root" "$BUNDLE" 2>&1)"
+DEFAULT_STATUS=$?
+set -e
+[[ "$DEFAULT_STATUS" -eq 2 ]]
+grep -Fq "Blocked: Heimserver is retired" <<<"$DEFAULT_OUTPUT"
+[[ ! -e "$TMP/root" ]]
+
+set +e
+LIVE_CHECK_OUTPUT="$(env -u ALLOW_HISTORICAL_HOST_READ "$BUNDLE" --check 2>&1)"
+LIVE_CHECK_STATUS=$?
+set -e
+[[ "$LIVE_CHECK_STATUS" -eq 2 ]]
+grep -Fq "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" <<<"$LIVE_CHECK_OUTPUT"
+
+set +e
+RELATIVE_OUTPUT="$(DESTDIR=relative-fixture "$BUNDLE" --check 2>&1)"
+RELATIVE_STATUS=$?
+set -e
+[[ "$RELATIVE_STATUS" -ne 0 ]]
+grep -Fq "DESTDIR must be an absolute fixture path" <<<"$RELATIVE_OUTPUT"
+
+ln -s / "$TMP/root-link"
+for root_equivalent in / /tmp/.. "$TMP/root-link"; do
+  for authorization in 0 1; do
+    set +e
+    ROOT_OUTPUT="$(ALLOW_HISTORICAL_HOST_READ="$authorization" DESTDIR="$root_equivalent" "$BUNDLE" --check 2>&1)"
+    ROOT_STATUS=$?
+    set -e
+    [[ "$ROOT_STATUS" -eq 2 ]]
+    grep -Fq "Blocked: DESTDIR resolves to the live root" <<<"$ROOT_OUTPUT"
+  done
+done
+
+install -d -m 0700 -- "$CONFIG"
+install -D -m 0755 -- "$ROOT/scripts/heimberry/weltgewebe_ddns.py" "$PROGRAM"
+install -D -m 0644 -- "$ROOT/ops/systemd/weltgewebe-ddns.service" "$SERVICE"
+install -D -m 0644 -- "$ROOT/ops/systemd/weltgewebe-ddns.timer" "$TIMER"
+DESTDIR="$TMP/root" "$BUNDLE" --check
 
 [[ -x "$PROGRAM" ]]
 [[ "$(stat -c '%a' "$PROGRAM")" == "755" ]]
@@ -26,6 +63,17 @@ CONFIG="$TMP/root/etc/weltgewebe-ddns"
 cmp --silent "$ROOT/scripts/heimberry/weltgewebe_ddns.py" "$PROGRAM"
 cmp --silent "$ROOT/ops/systemd/weltgewebe-ddns.service" "$SERVICE"
 cmp --silent "$ROOT/ops/systemd/weltgewebe-ddns.timer" "$TIMER"
+
+rm -f -- "$PROGRAM"
+ln -s /bin/true "$PROGRAM"
+set +e
+ESCAPE_OUTPUT="$(DESTDIR="$TMP/root" "$BUNDLE" --check 2>&1)"
+ESCAPE_STATUS=$?
+set -e
+[[ "$ESCAPE_STATUS" -ne 0 ]]
+grep -Fq "fixture path escapes DESTDIR" <<<"$ESCAPE_OUTPUT"
+rm -f -- "$PROGRAM"
+install -D -m 0755 -- "$ROOT/scripts/heimberry/weltgewebe_ddns.py" "$PROGRAM"
 
 if grep -q '^ConditionFileIsExecutable=' "$SERVICE"; then
   echo "unexpected executable condition" >&2
@@ -47,14 +95,14 @@ grep -q '^  systemctl daemon-reload$' "$BUNDLE"
 grep -q '^  systemctl disable --now weltgewebe-ddns.timer$' "$BUNDLE"
 grep -Fq "  rm -f -- \"\$CONFIG_DIR/ENABLE_RETIRED_RUNTIME\"" "$BUNDLE"
 
-if DESTDIR="$TMP/root" "$BUNDLE" --activate >/dev/null 2>&1; then
-  echo "expected --activate to be rejected with DESTDIR" >&2
-  exit 1
-fi
-
-printf 'sentinel\n' > "$CONFIG/existing-file"
-DESTDIR="$TMP/root" "$BUNDLE"
-[[ "$(cat "$CONFIG/existing-file")" == "sentinel" ]]
+for blocked_mode in --activate --retire; do
+  set +e
+  BLOCKED_OUTPUT="$(DESTDIR="$TMP/root" "$BUNDLE" "$blocked_mode" 2>&1)"
+  BLOCKED_STATUS=$?
+  set -e
+  [[ "$BLOCKED_STATUS" -eq 2 ]]
+  grep -Fq "Blocked: Heimserver is retired" <<<"$BLOCKED_OUTPUT"
+done
 
 printf '\n# drift\n' >> "$PROGRAM"
 if DESTDIR="$TMP/root" "$BUNDLE" --check >/dev/null 2>&1; then

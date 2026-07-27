@@ -25,7 +25,7 @@ Dieses Repo bewahrt die frühere Trennung zwischen Norm und Realität als histor
 - **Historische Architektur:** `architecture/constitution.md`
 - **Netz-Architektur:** `architecture/network.md`
 - **Namens-Architektur:** `architecture/naming.md`
-- **Historische/Repositorylokale Checks:** `ops/checks/preflight.sh`
+- **Historischer hostlesender Runtime-Read:** `ops/checks/preflight.sh` (kein Standardcheck; nur mit expliziter Laufzeitautorisierung)
 - **Historisches Operationsprotokoll:** `operations/operations.md`
 - **Historische Runbooks:** `runbooks/`
 - **Templates:** `security/templates/`
@@ -60,8 +60,8 @@ Diese Dateien werden automatisch durch Skripte generiert und dürfen niemals man
 - Drift-Trigger: Änderungen an Docker/Compose, Firewall/iptables/netfilter-persistent, WireGuard peers/routes, Caddy/TLS/Hostnames, DNS (FritzBox/Resolver).
 
 ## Erforderliche Checks
-Die Einhaltung der Repo-Regeln wird durch folgende Checks gewährleistet, die zwingend auszuführen sind:
-- `bash ops/checks/preflight.sh`
+Die Einhaltung der Repo-Regeln wird durch folgende ausschließlich statische beziehungsweise isolierte Checks gewährleistet, die zwingend auszuführen sind:
+- `python3 scripts/ci/check_retired_reference_contract.py`
 - `python3 scripts/ci/check_repo_index_consistency.py`
 - `python3 scripts/ci/check-doc-review-age.py`
 - `bash scripts/ci/check-runbook-invariants.sh`

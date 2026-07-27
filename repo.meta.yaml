@@ -21,10 +21,14 @@ entrypoints:
 canonical_sources:
   - repo.meta.yaml
   - manifest/repo-index.yaml
+  - docs/index.md
+
+historical_reference_sources:
   - architecture/
   - runtime/
-  - ops/checks/preflight.sh
-  - docs/index.md
+  - operations/
+  - runbooks/
+  - ops/
 
 discovery_roots:
   - architecture/
@@ -79,7 +83,7 @@ external_sensitive_paths:
   - /etc/weltgewebe-ddns/
 
 required_checks:
-  - bash ops/checks/preflight.sh
+  - python3 scripts/ci/check_retired_reference_contract.py
   - python3 scripts/ci/check_repo_index_consistency.py
   - python3 scripts/ci/check-doc-review-age.py
   - bash scripts/ci/check-runbook-invariants.sh
@@ -100,8 +104,8 @@ related_repos:
   - leitstand
 
 keywords:
-  - ops
-  - infrastructure
-  - edge
-  - gateway
-  - agent-ready
+  - historical-reference
+  - retired
+  - infrastructure-history
+  - contract-evidence
+  - private-archive
