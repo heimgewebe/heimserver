@@ -30,7 +30,49 @@ expect_blocked() {
 expect_blocked "direct preflight" "Blocked: historical host read" bash ops/checks/preflight.sh
 expect_blocked "direct snapshot" "Blocked: historical host read" env SNAPSHOT_DIR="$tmp/snapshot" bash ops/checks/snapshot.sh
 [ ! -e "$tmp/snapshot" ] || fail "direct snapshot created output before guard"
+mkdir -p "$tmp/audit-cwd"
+expect_blocked \
+  "direct audit collector" \
+  "Blocked: historical host read" \
+  bash -c "cd \"\$1\" && bash \"\$2\"" \
+  _ \
+  "$tmp/audit-cwd" \
+  "$repo_root/ops/audit/collect.sh"
+[ ! -e "$tmp/audit-cwd/ops/audit/snapshots" ] || fail "direct audit collector created output before guard"
 expect_blocked "direct secrets initialization" "Blocked: Heimserver is retired" bash ops/init-secrets-path.sh
+
+mkdir -p "$tmp/edge"
+printf 'live-sentinel\n' >"$tmp/edge/Caddyfile"
+printf 'candidate-sentinel\n' >"$tmp/edge/Caddyfile.template"
+expect_blocked \
+  "direct Caddy sync" \
+  "Blocked: Heimserver is retired" \
+  env \
+  LIVE_FILE="$tmp/edge/Caddyfile" \
+  CANDIDATE_FILE="$tmp/edge/Caddyfile.template" \
+  LOCK_FILE="$tmp/edge/sync.lock" \
+  bash scripts/edge/sync_caddyfile.sh
+[ "$(cat "$tmp/edge/Caddyfile")" = "live-sentinel" ] || fail "direct Caddy sync modified the live fixture"
+[ ! -e "$tmp/edge/sync.lock" ] || fail "direct Caddy sync created a lock before guard"
+
+expect_blocked \
+  "direct DDNS updater" \
+  "Blocked: Heimserver is retired" \
+  python3 scripts/heimberry/weltgewebe_ddns.py
+expect_blocked \
+  "default DDNS installer" \
+  "Blocked: Heimserver is retired" \
+  env DESTDIR="$tmp/ddns-default" scripts/heimberry/install_weltgewebe_ddns.sh
+[ ! -e "$tmp/ddns-default" ] || fail "default DDNS installer created output before guard"
+expect_blocked \
+  "DDNS retire service mutation" \
+  "Blocked: Heimserver is retired" \
+  scripts/heimberry/install_weltgewebe_ddns.sh --retire
+expect_blocked \
+  "DDNS activation" \
+  "Blocked: Heimserver is retired" \
+  scripts/heimberry/install_weltgewebe_ddns.sh --activate
+
 expect_blocked "make preflight" "Blocked: historical host read" make preflight
 expect_blocked "make snapshot" "Blocked: historical host read" env SNAPSHOT_DIR="$tmp/make-snapshot" make snapshot
 [ ! -e "$tmp/make-snapshot" ] || fail "make snapshot created output before guard"

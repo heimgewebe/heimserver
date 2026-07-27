@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "${ALLOW_HISTORICAL_HOST_READ:-}" != "1" ]; then
+  printf '%s\n' "Blocked: historical host read requires ALLOW_HISTORICAL_HOST_READ=1" >&2
+  exit 2
+fi
+
 # ops/audit/collect.sh
 # Ziel: Operativen Status festhalten, OHNE Secrets zu leaken.
 # Speicherort: ops/audit/snapshots/<YYYY-MM-DD-HHMM>/

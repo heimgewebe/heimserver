@@ -41,5 +41,6 @@ The following scripts were discovered via `Makefile` references or by scanning t
 - `scripts/tests/test_edge_sync_runbook.sh`
 - `scripts/tests/test_preflight_mock.sh`
 - `scripts/tests/test_retired_entrypoints.sh`
+- `scripts/tests/test_retired_reference_contract.py`
 
 _Recommendation: Register these scripts to ensure they are formally tracked and documented._

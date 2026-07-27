@@ -41,6 +41,7 @@ validate-warnings:
 	bash scripts/tests/test_preflight_mock.sh
 
 validate-shell-tests:
+	shellcheck ops/audit/collect.sh
 	shellcheck ops/checks/preflight.sh
 	shellcheck ops/checks/snapshot.sh
 	shellcheck ops/init-secrets-path.sh
@@ -56,12 +57,14 @@ validate-shell-tests:
 	shellcheck scripts/tests/test_ddns_bundle.sh
 	python3 -m py_compile scripts/edge/validate_caddy_contract.py
 	python3 -m py_compile scripts/edge/validate_compose_contract.py
+	python3 -m py_compile scripts/tests/test_retired_reference_contract.py
 	python3 -m py_compile scripts/tests/test_caddy_template.py
 	python3 -m py_compile scripts/tests/edge_contract_json_mutations.py
 	python3 -m py_compile scripts/tests/test_edge_noop_proof.py
 	python3 -m py_compile scripts/tests/test_edge_ipv4_only.py
 	python3 -m py_compile scripts/tests/test_edge_compose_stderr.py
 	bash scripts/tests/test_retired_entrypoints.sh
+	python3 -m unittest scripts/tests/test_retired_reference_contract.py
 	python3 scripts/tests/test_caddy_template.py
 	bash scripts/tests/test_edge_admin_boundary.sh
 	bash scripts/tests/test_edge_sync_runbook.sh

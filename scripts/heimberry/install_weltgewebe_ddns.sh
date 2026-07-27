@@ -24,15 +24,10 @@ usage() {
   cat <<'EOF'
 Usage: scripts/heimberry/install_weltgewebe_ddns.sh [--check | --retire]
 
-Without an option, install or refresh the archived program and systemd unit
-files but do not start the timer. --check performs a read-only file drift
-comparison. --retire disables the legacy timer, removes its explicit activation
-marker and clears the historical service failure state without deleting
-credentials.
-
-The former --activate path is intentionally refused: Weltgewebe production now
-runs on the public VPS wg-prod-1. DESTDIR may be set for staging and tests;
---retire is unavailable with DESTDIR.
+Only --check remains available and performs a read-only file drift comparison.
+The default install path, --retire and the former --activate path are blocked
+before file or service mutation because this repository is retired. DESTDIR may
+be set for isolated --check fixtures.
 EOF
 }
 
@@ -72,8 +67,9 @@ if ((ACTIVATE > 1 || CHECK_ONLY > 1 || RETIRE > 1 || ACTIVATE + CHECK_ONLY + RET
   fail "choose exactly one of --activate, --check or --retire"
 fi
 
-if ((ACTIVATE == 1)); then
-  fail "--activate is retired: canonical Weltgewebe production runs on wg-prod-1"
+if ((CHECK_ONLY == 0)); then
+  printf '%s\n' "Blocked: Heimserver is retired; DDNS installation and service mutation are unavailable from this repository" >&2
+  exit 2
 fi
 
 for source in "$SOURCE_PROGRAM" "$SOURCE_SERVICE" "$SOURCE_TIMER"; do
